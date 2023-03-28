@@ -14,5 +14,14 @@ public class UserService {
 	public List<User> findAll(){
 		return userRepository.findAll();
 	}
+	
+	public void deleteUserById(Integer id) {
+		try {
+	        userRepository.deleteById(id);
+	    } catch(Exception e) {
+	       e.getMessage();
+	    }
+	}
+
 
 }
