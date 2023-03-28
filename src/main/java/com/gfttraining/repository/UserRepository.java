@@ -1,4 +1,4 @@
-package com.gfttraining.builders;
+package com.gfttraining.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
