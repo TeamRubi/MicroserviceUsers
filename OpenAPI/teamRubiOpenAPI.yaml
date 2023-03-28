@@ -1,0 +1,367 @@
+openapi: 3.0.0
+info:
+  title: Usuarios
+  description: Usuarios
+  license: 
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+  version: 1.0.1
+  contact:
+    name: Perico de los Palotes
+    url: https://thebookingapi/info
+    email: contact@thebookingapi.com
+servers:
+  - url: http://teamRubi.com/v1
+  
+externalDocs:
+  description: optional external doc
+  url: 'http://externaldoc'
+  
+tags:
+- name: "Users"
+  description: "Everything about your users"
+
+   
+paths: 
+
+  
+  /users:
+    get:
+      tags:
+         - Users
+      summary: returns list of users
+      description: returns list of users availables
+      operationId: getUsers
+      responses:
+        200: 
+          description: Ok
+          content:
+            application/json:
+             schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+                  
+        500: 
+          description: error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'           
+          
+    post:
+      tags:
+          - Users
+      summary: add a new user by adding file ('csv','json')
+      description: new user is created
+      operationId: createUsers
+      requestBody:
+        description: User data required to create a user
+        required: true
+        content:
+          application/json:
+            schema:
+               $ref: '#/components/schemas/User'
+      responses:
+        200: 
+          description: Ok
+          content:
+            application/json:
+             schema:
+               $ref: '#/components/schemas/User'
+        409:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'   
+            
+  /users/{id}:
+    get:
+      tags:
+        - Users
+      summary: returns a user
+      description: return details of a user given its id
+      operationId: getUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200: 
+          description: Ok     
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        404: 
+          description: not found error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse' 
+        500: 
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+          - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      summary: add a new user
+      description: new user is created
+      operationId: createUser
+      requestBody:
+        description: User data required to create a user
+        required: true
+        content:
+          application/json:
+            schema:
+               $ref: '#/components/schemas/User'
+      responses:
+        200: 
+          description: Ok
+          content:
+            application/json:
+             schema:
+               $ref: '#/components/schemas/User'
+        409:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+                  
+    put:
+      tags:
+         - Users
+      summary: edit a user
+      description: a user is edited
+      operationId: editUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: User data required to edit a user
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        200: 
+          description: User is updated
+        400: 
+          description: invalid User
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'   
+        500: 
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+         - Users
+      summary: deletes a user
+      description: deletes a user
+      operationId: deleteUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200: 
+          description: User was sucessfully deleted     
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        404: 
+          description: not found error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'             
+        500: 
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  /users/{name}:
+    get:
+      tags:
+        - Users
+      summary: returns a user by name
+      description: returns a user by name
+      operationId: getUserByName
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200: 
+            description: Ok     
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/User'
+
+        404: 
+            description: not found error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'             
+        500: 
+            description: error response
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'   
+                
+                
+                
+  /favorite/{id_user}/{id_product}:
+    get:
+      tags:
+         - Users
+      summary: returns a favorite product by id user
+      description: returns a favorite product by id user
+      operationId: getfavoriteProduct
+      parameters:
+        - name: id_user
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: id_product
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200: 
+          description: Ok     
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+        404: 
+          description: not found error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'             
+        500: 
+          description: error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'   
+  
+    delete:
+      tags:
+         - Users
+      summary: deletes a favorite product by user id
+      description: deletes a favorite product by user id
+      operationId: deleteFavoriteUser
+      parameters:
+        - name: id_user
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: id_product
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200: 
+          description: Ok     
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        404: 
+          description: not found error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User' 
+        500: 
+          description: error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'   
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - lastname
+        - address
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: Pepito
+        lastname:
+          type: string
+          example: Los palotes
+        address:
+          type: string
+          example: Calle Joc de la Bola nº6
+        points of fidelity (carrito):
+          type: integer
+          format: int64
+          example: 25
+        buy_average (carrito):
+          type: integer
+          format: double
+          example: 23.59
+    ErrorResponse:
+      type: object
+      properties:
+        msg:
+          type: string
+        error_code:
+          type: integer        
