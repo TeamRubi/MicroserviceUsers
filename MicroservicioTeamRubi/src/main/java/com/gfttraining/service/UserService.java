@@ -1,8 +1,9 @@
-package com.gfttraining.builders;
+package com.gfttraining.service;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.gfttraining.customer.User;
+import com.gfttraining.repository.UserRepository;
 
 @Service
 public class UserService {
