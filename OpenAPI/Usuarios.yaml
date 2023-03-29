@@ -209,7 +209,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
   
-  /users/{name}:
+  /users/name/{name}:
     get:
       tags:
         - Users
