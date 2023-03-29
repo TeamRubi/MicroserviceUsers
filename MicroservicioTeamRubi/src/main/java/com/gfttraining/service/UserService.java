@@ -15,6 +15,16 @@ public class UserService {
 	public List<User> findAll(){
 		return userRepository.findAll();
 	}
+	
+	public void saveUser(User user) {
+		userRepository.save(user);
+	}
+	public void saveAllUsers(List<User> usersList) {
+		userRepository.saveAll(usersList);
+	}
+	public void deleteAllUsers() {
+		userRepository.deleteAll();
+	}
 
 	public void deleteUserById(Integer id) {
 		try {

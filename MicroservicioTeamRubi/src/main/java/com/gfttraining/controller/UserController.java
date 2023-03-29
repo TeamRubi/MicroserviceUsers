@@ -1,7 +1,10 @@
 package com.gfttraining.controller;
 import java.util.List;
 
+import javax.persistence.PostRemove;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,5 +36,21 @@ public class UserController {
 	public User createUser(@RequestBody User user) {
 		return userService.createUser(user);
 	}
-
+	
+	@PostMapping("/users/import")
+    public ResponseEntity<Void> saveAllImportedUsers(@RequestBody List<User> users) {
+		try {
+			deleteAllUsers();
+            userService.saveAllUsers(users);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+	}
+	
+	public void deleteAllUsers() {
+		userService.deleteAllUsers();
+	}
+	
 }
