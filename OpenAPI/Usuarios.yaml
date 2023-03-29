@@ -334,7 +334,6 @@ components:
         - name
         - lastname
         - address
-        - paymentMethod
       properties:
         id:
           type: integer
