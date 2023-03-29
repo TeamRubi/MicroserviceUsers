@@ -1,4 +1,4 @@
-package com.gfttraining.customer;
+package com.gfttraining.user;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;

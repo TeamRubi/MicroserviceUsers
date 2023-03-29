@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.gfttraining.customer.User;
 import com.gfttraining.service.UserService;
+import com.gfttraining.user.User;
 @RestController
-public class UserResource {
+public class UserController {
 
 	@Autowired
 	private UserService userService;
@@ -23,7 +23,7 @@ public class UserResource {
 		return userService.findAll();
 	}
 
-	@DeleteMapping("/users/delete/{id}")
+	@DeleteMapping("/users/{id}")
 	public ResponseEntity<Void> deleteUserById(@PathVariable int id){
 		userService.deleteUserById(id);
 		return ResponseEntity.noContent().build();

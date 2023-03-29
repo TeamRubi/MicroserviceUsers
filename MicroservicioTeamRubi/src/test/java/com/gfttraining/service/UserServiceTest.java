@@ -12,8 +12,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import com.gfttraining.customer.User;
 import com.gfttraining.repository.UserRepository;
+import com.gfttraining.user.User;
 
 
 @ExtendWith(MockitoExtension.class)
