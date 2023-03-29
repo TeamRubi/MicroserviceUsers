@@ -43,8 +43,25 @@ class UserServiceTest {
 		assertEquals(userTest1.getName(), result.getName());
 		
 		verify(repository, times(1)).findById(1);
+	
+	}
+	
+	@Test
+	void getUserByName_test(){
+		String name="Erna";
+		User userTest1= new User();
+		userTest1.setId(1);
+		userTest1.setName("Erna");
 		
+		when(repository.findByName("Erna")).thenReturn((userTest1));
 		
+		User result = userService.findUserByName("Erna");
+		
+		assertNotNull(result);
+		assertEquals(userTest1.getName(), result.getName());
+		
+		verify(repository, times(1)).findByName("Erna");
+	
 	}
 	
 	@Test

@@ -46,6 +46,20 @@ class UserControllerTest {
 			
 	}
 	
+	@Test
+	void getUserByName_test() throws Exception {
+		User userTest1= new User("Erna","Witcomb","02 New Castle Terrace","PAYPAL");
+		
+		Mockito
+			.when(userService.findUserByName("Erna"))
+			.thenReturn(userTest1);
+		
+		mockMvc.perform(MockMvcRequestBuilders.get("/users/name/{name}","Erna"))
+			   .andExpect(MockMvcResultMatchers.status().isOk())
+			   .andExpect(MockMvcResultMatchers.jsonPath("@.name", is("Erna")));
+			
+	}
+	
 	
 	@Test
 	void deleteUserById_test() throws Exception {

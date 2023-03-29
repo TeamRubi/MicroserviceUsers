@@ -22,6 +22,11 @@ public class UserService {
 		Optional<User> user = userRepository.findById(id);
 		return user.get();
 	}
+	
+	public User findUserByName(String name){
+		Optional<User> user = Optional.ofNullable(userRepository.findByName(name));
+		return user.get();
+	}
 
 	public void deleteUserById(Integer id) {
 		try {
