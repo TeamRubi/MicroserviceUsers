@@ -7,20 +7,25 @@ import com.gfttraining.repository.UserRepository;
 
 @Service
 public class UserService {
-	
+
 	@Autowired
 	private UserRepository userRepository;
-	
+
 	public List<User> findAll(){
 		return userRepository.findAll();
 	}
-	
+
 	public void deleteUserById(Integer id) {
 		try {
-	        userRepository.deleteById(id);
-	    } catch(Exception e) {
-	       e.getMessage();
-	    }
+			userRepository.deleteById(id);
+		} catch(Exception e) {
+			e.getMessage();
+		}
+	}
+
+	public User createUser(User user) {
+
+		return userRepository.save(user);
 	}
 
 

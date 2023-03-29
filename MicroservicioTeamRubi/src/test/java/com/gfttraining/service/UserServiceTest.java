@@ -30,8 +30,6 @@ class UserServiceTest {
 		when(repository.save(user)).thenReturn(user);
 		User createduser = userService.createUser(user);
 		assertEquals(user, createduser);
-
-
 	}
 
 }
