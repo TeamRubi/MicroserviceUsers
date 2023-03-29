@@ -1,10 +1,13 @@
 package com.gfttraining.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,12 +28,12 @@ class UserServiceTest {
 	@Mock
 	private UserRepository repository;
 
+
 	@Test
 	void deleteUserById_test(){
 		int id=1;
 		userService.deleteUserById(id);
 		verify(repository, times(1)).deleteById(1);;
-
 	}
 
 	@Test
@@ -38,7 +41,9 @@ class UserServiceTest {
 		User user = new User("Pepito", "Perez", "calle falsa", "TRANSFERENCIA");
 		when(repository.save(user)).thenReturn(user);
 		User createduser = userService.createUser(user);
-		assertEquals(user, createduser);
+		assertThat(user).isEqualTo(createduser);
 	}
+
+
 
 }
