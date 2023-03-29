@@ -1,9 +1,12 @@
 package com.gfttraining.user;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+
+import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +28,23 @@ class UserControllerTest {
 	
 	@MockBean
 	private UserService userService;
+	
+	
+	
+
+	@Test
+	void getUserById_test() throws Exception {
+		User userTest1= new User("Erna","Witcomb","02 New Castle Terrace","PAYPAL");
+		
+		Mockito
+			.when(userService.findUserById(1))
+			.thenReturn(userTest1);
+		
+		mockMvc.perform(MockMvcRequestBuilders.get("/users/{id}",1))
+			   .andExpect(MockMvcResultMatchers.status().isOk())
+			   .andExpect(MockMvcResultMatchers.jsonPath("@.name", is("Erna")));
+			
+	}
 	
 	
 	@Test

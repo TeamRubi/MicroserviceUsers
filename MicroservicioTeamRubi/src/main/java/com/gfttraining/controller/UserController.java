@@ -22,6 +22,11 @@ public class UserController {
 	public List<User> getAllUsers(){
 		return userService.findAll();
 	}
+	
+	@GetMapping("/users/{id}")
+	public User GetUserById(@PathVariable int id){
+		return userService.findUserById(id);
+	}
 
 	@DeleteMapping("/users/{id}")
 	public ResponseEntity<Void> deleteUserById(@PathVariable int id){
