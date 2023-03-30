@@ -44,6 +44,4 @@ class UserServiceTest {
 		assertThat(user).isEqualTo(createduser);
 	}
 
-
-
 }
