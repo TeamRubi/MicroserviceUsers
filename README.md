@@ -5,6 +5,7 @@
 ### /users
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 ### Getuserbyid
 - Create and endpoint that shows a user by passing the id
 
@@ -14,6 +15,8 @@
 ### DeleteUserbyid
 - Create and endpoint that deletes user by passing the id
 =======
+=======
+>>>>>>> 9eab7c3572293f1665ba3248b5e3228be92bb4ea
 #### GET
 
 - Descripción: devuelve una lista de usuarios disponibles
@@ -23,7 +26,10 @@
   - 500:
 
 ### /users/import
+<<<<<<< HEAD
 >>>>>>> 36a289ecfd06cb179911b3144f3dd082d0a00474
+=======
+>>>>>>> 9eab7c3572293f1665ba3248b5e3228be92bb4ea
 
 #### POST
 
@@ -39,6 +45,7 @@
   - 409:
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 ### Getuserbyid
 - Testing the endpoint to verify its functionality **Service and Integration Test**
 
@@ -49,6 +56,8 @@
 - Testing the endpoint to verify its functionality **Service and Integration Test**
 
 =======
+=======
+>>>>>>> 9eab7c3572293f1665ba3248b5e3228be92bb4ea
 ### /users/{id}
 
 #### GET
@@ -68,4 +77,7 @@
   - 500:
 
 #### POST
+<<<<<<< HEAD
 >>>>>>> 36a289ecfd06cb179911b3144f3dd082d0a00474
+=======
+>>>>>>> 9eab7c3572293f1665ba3248b5e3228be92bb4ea

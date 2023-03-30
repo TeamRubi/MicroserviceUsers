@@ -35,7 +35,9 @@ public class UserService {
 			throw new EntityNotFoundException("Usuario con el nombre: "+name+" no encontrado");
 		}
 		return user.get();
+
 	}
+
 
 	public void saveUser(User user) {
 		userRepository.save(user);
