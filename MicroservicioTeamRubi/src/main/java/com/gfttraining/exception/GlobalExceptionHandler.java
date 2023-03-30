@@ -16,7 +16,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 	
 	@ExceptionHandler
 	public ResponseEntity<ExceptionResponse> handlerException(EntityNotFoundException exception,WebRequest req){
-		ExceptionResponse res = new ExceptionResponse(new Date(),"Id no encontrado");
+		ExceptionResponse res = new ExceptionResponse(new Date(),exception.getMessage(),null);
 		
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.NOT_FOUND);
 	};
