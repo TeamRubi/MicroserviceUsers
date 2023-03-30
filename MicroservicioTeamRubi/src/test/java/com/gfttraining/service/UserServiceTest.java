@@ -77,11 +77,7 @@ class UserServiceTest {
 		int id=1;
 		userService.deleteUserById(id);
 
-		verify(repository, times(1)).deleteById(1);;
-
 		verify(repository, times(1)).deleteById(1);
-
-
 	}
 
 	@Test

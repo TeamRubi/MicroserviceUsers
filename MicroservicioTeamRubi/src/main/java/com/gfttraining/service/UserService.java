@@ -2,6 +2,8 @@ package com.gfttraining.service;
 import java.util.List;
 import java.util.Optional;
 
+import javax.persistence.EntityNotFoundException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,11 +23,17 @@ public class UserService {
 
 	public User findUserById(Integer id){
 		Optional<User> user = userRepository.findById(id);
+		if(user.isEmpty()) {
+			throw new EntityNotFoundException("Usuario con el id: "+id+" no encontrado");
+		}
 		return user.get();
 	}
 	
 	public User findUserByName(String name){
 		Optional<User> user = Optional.ofNullable(userRepository.findByName(name));
+		if(user.isEmpty()) {
+			throw new EntityNotFoundException("Usuario con el nombre: "+name+" no encontrado");
+		}
 		return user.get();
 	}
 
@@ -43,7 +51,7 @@ public class UserService {
 		try {
 			userRepository.deleteById(id);
 		} catch(Exception e) {
-			e.getMessage();
+			throw new EntityNotFoundException("No se ha podido eliminar el usuario con el id: "+id+" de la base de datos");
 		}
 	}
 
