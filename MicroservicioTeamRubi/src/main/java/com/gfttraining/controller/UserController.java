@@ -27,17 +27,17 @@ public class UserController {
 	public List<User> getAllUsers(){
 		return userService.findAll();
 	}
-	
+
 	@GetMapping("/users/{id}")
 	public User GetUserById(@PathVariable int id){
 		return userService.findUserById(id);
 	}
-	
+
 	@GetMapping("/users/name/{name}")
 	public User GetUserById(@PathVariable String name){
 		return userService.findUserByName(name);
 	}
-	
+
 
 	@DeleteMapping("/users/{id}")
 	public ResponseEntity<Void> deleteUserById(@PathVariable int id){
@@ -49,23 +49,23 @@ public class UserController {
 	public User createUser(@RequestBody User user) {
 		return userService.createUser(user);
 	}
-	
+
 	@PostMapping("/users/import")
 	public ResponseEntity<Void> saveAllImportedUsers(@RequestParam("file") MultipartFile file) {
-	try {
-	deleteAllUsers();
-	ObjectMapper objectMapper = new ObjectMapper();
-	List<User> users = objectMapper.readValue(file.getBytes(), new TypeReference<List<User>>(){});
-	userService.saveAllUsers(users);
-	return new ResponseEntity<>(HttpStatus.OK);
-	} catch (Exception e) {
-	e.printStackTrace();
-	return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-	}
+		try {
+			deleteAllUsers();
+			ObjectMapper objectMapper = new ObjectMapper();
+			List<User> users = objectMapper.readValue(file.getBytes(), new TypeReference<List<User>>(){});
+			userService.saveAllUsers(users);
+			return new ResponseEntity<>(HttpStatus.CREATED);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	public void deleteAllUsers() {
-	userService.deleteAllUsers();
+		userService.deleteAllUsers();
 	}
-	
+
 }

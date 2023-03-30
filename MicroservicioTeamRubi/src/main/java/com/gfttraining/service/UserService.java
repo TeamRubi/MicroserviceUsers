@@ -19,7 +19,6 @@ public class UserService {
 	public List<User> findAll(){
 		return userRepository.findAll();
 	}
-	
 
 	public User findUserById(Integer id){
 		Optional<User> user = userRepository.findById(id);
@@ -28,7 +27,7 @@ public class UserService {
 		}
 		return user.get();
 	}
-	
+
 	public User findUserByName(String name){
 		Optional<User> user = Optional.ofNullable(userRepository.findByName(name));
 		if(user.isEmpty()) {
@@ -38,13 +37,14 @@ public class UserService {
 
 	}
 
-
 	public void saveUser(User user) {
 		userRepository.save(user);
 	}
+
 	public void saveAllUsers(List<User> usersList) {
 		userRepository.saveAll(usersList);
 	}
+
 	public void deleteAllUsers() {
 		userRepository.deleteAll();
 	}
@@ -58,7 +58,6 @@ public class UserService {
 	}
 
 	public User createUser(User user) {
-
 		return userRepository.save(user);
 	}
 
