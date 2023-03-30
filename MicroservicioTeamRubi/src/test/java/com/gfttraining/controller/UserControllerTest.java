@@ -47,7 +47,7 @@ class UserControllerTest {
 
         ResponseEntity<Void> response = userController.saveAllImportedUsers(file);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertThat(HttpStatus.OK.equals(response.getStatusCode()));
         verify(userService).deleteAllUsers();
         verify(userService).saveAllUsers(anyList());
         
