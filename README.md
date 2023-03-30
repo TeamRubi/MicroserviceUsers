@@ -1,20 +1,48 @@
+## USUARIOS
 
-# Microservicio Usuarios
+## Rutas
 
-## Features
+### /users
 
-### Getuserbyid
-- Create and endpoint that shows a user by passing the id
+#### GET
 
-### DeleteUserbyid
-- Create and endpoint that deletes user by passing the id
+- Descripción: devuelve una lista de usuarios disponibles
+- Operation ID: getUsers
+- Respuestas:
+  - 200:
+  - 500:
 
+### /users/import
 
-## Testing Features
+#### POST
 
-### Getuserbyid
-- Testing the endpoint to verify its functionality **Service and Integration Test**
+- Descripción: agrega un nuevo usuario mediante la carga de un archivo JSON
+- Operation ID: createUsers
+- Request body:
+  - Descripción: URL del archivo JSON
+  - Obligatorio: true
+  - Content:
+    - application/json:
+- Respuestas:
+  - 200:
+  - 409:
 
-### DeleteUserbyid
-- Testing the endpoint to verify its functionality **Service and Integration Test**
+### /users/{id}
 
+#### GET
+
+- Tags:
+  - Usuarios
+- Resumen: devuelve un usuario
+- Descripción: devuelve los detalles de un usuario dado su ID
+- Operation ID: getUser
+- Parámetros:
+  - Nombre: id
+  - En: path
+  - Obligatorio: true
+- Respuestas:
+  - 200:
+  - 404:
+  - 500:
+
+#### POST
