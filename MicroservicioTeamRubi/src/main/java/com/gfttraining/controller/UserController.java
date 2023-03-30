@@ -1,8 +1,6 @@
 package com.gfttraining.controller;
 import java.util.List;
 
-import javax.persistence.PostRemove;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,8 +9,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.service.UserService;
 import com.gfttraining.user.User;
 @RestController
@@ -49,19 +51,21 @@ public class UserController {
 	}
 	
 	@PostMapping("/users/import")
-    public ResponseEntity<Void> saveAllImportedUsers(@RequestBody List<User> users) {
-		try {
-			deleteAllUsers();
-            userService.saveAllUsers(users);
-            return new ResponseEntity<>(HttpStatus.OK);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+	public ResponseEntity<Void> saveAllImportedUsers(@RequestParam("file") MultipartFile file) {
+	try {
+	deleteAllUsers();
+	ObjectMapper objectMapper = new ObjectMapper();
+	List<User> users = objectMapper.readValue(file.getBytes(), new TypeReference<List<User>>(){});
+	userService.saveAllUsers(users);
+	return new ResponseEntity<>(HttpStatus.OK);
+	} catch (Exception e) {
+	e.printStackTrace();
+	return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 	}
-	
+	}
+
 	public void deleteAllUsers() {
-		userService.deleteAllUsers();
+	userService.deleteAllUsers();
 	}
 	
 }
