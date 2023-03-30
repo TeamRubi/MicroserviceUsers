@@ -57,7 +57,7 @@ public class UserController {
 			ObjectMapper objectMapper = new ObjectMapper();
 			List<User> users = objectMapper.readValue(file.getBytes(), new TypeReference<List<User>>(){});
 			userService.saveAllUsers(users);
-			return new ResponseEntity<>(HttpStatus.OK);
+			return new ResponseEntity<>(HttpStatus.CREATED);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
