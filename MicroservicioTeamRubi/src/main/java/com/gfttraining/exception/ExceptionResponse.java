@@ -20,8 +20,4 @@ public class ExceptionResponse {
 		this.details = details;
 	}
 
-	public ExceptionResponse(String message, Date timestamp) {
-		this.message = message;
-		this.timestamp = timestamp;
-	}
 }
