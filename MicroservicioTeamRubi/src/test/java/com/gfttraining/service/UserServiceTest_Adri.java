@@ -68,6 +68,7 @@ class UserServiceTest_Adri {
 		mockMvc.perform(post("/users")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(json)).andExpect(status().isCreated());
+
 	}
 
 
@@ -97,10 +98,5 @@ class UserServiceTest_Adri {
 				.content("{ \"name\": \"Pablo\", \"lastName\": \"Perez\" }"))
 		.andExpect(status().isCreated());
 
-
 	}
-
-
-
-
 }
