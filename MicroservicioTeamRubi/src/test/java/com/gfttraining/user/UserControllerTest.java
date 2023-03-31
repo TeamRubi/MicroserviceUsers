@@ -22,51 +22,50 @@ import com.gfttraining.service.UserService;
 @WebMvcTest(UserController.class) 
 class UserControllerTest {
 
-	
+
 	@Autowired
 	private MockMvc mockMvc;
-	
+
 	@MockBean
 	private UserService userService;
-	
-	
-	
+
+
 
 	@Test
 	void getUserById_test() throws Exception {
 		User userTest1= new User("Erna","Witcomb","02 New Castle Terrace","PAYPAL");
-		
+
 		Mockito
-			.when(userService.findUserById(1))
-			.thenReturn(userTest1);
-		
+		.when(userService.findUserById(1))
+		.thenReturn(userTest1);
+
 		mockMvc.perform(MockMvcRequestBuilders.get("/users/{id}",1))
-			   .andExpect(MockMvcResultMatchers.status().isOk())
-			   .andExpect(MockMvcResultMatchers.jsonPath("@.name", is("Erna")));
-			
+		.andExpect(MockMvcResultMatchers.status().isOk())
+		.andExpect(MockMvcResultMatchers.jsonPath("@.name", is("Erna")));
+
 	}
-	
+
 	@Test
 	void getUserByName_test() throws Exception {
 		User userTest1= new User("Erna","Witcomb","02 New Castle Terrace","PAYPAL");
-		
+
 		Mockito
-			.when(userService.findUserByName("Erna"))
-			.thenReturn(userTest1);
-		
+		.when(userService.findUserByName("Erna"))
+		.thenReturn(userTest1);
+
 		mockMvc.perform(MockMvcRequestBuilders.get("/users/name/{name}","Erna"))
-			   .andExpect(MockMvcResultMatchers.status().isOk())
-			   .andExpect(MockMvcResultMatchers.jsonPath("@.name", is("Erna")));
-			
+		.andExpect(MockMvcResultMatchers.status().isOk())
+		.andExpect(MockMvcResultMatchers.jsonPath("@.name", is("Erna")));
+
 	}
-	
-	
+
+
 	@Test
 	void deleteUserById_test() throws Exception {
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/users/{id}",4))
-			   .andExpect(MockMvcResultMatchers.status().isNoContent());
-		
+		.andExpect(MockMvcResultMatchers.status().isNoContent());
+
 		verify(userService).deleteUserById(4);
 	}
 

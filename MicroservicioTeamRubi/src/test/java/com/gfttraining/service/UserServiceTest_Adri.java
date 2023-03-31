@@ -6,6 +6,14 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -23,6 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.controller.UserController;
@@ -74,6 +83,23 @@ class UserServiceTest_Adri {
 				.content(json)).andExpect(status().isBadRequest());
 
 	}
+
+	@Test
+	public void updateUserById_IT() throws Exception {
+
+		User user = new User("Pedro", "Garcia", null, null);
+		user.setId(1);
+
+		when(userServiceMock.updateUserById(anyInt(), any(User.class))).thenReturn(user);
+
+		mockMvc.perform(MockMvcRequestBuilders.put("/users/1")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{ \"name\": \"Pablo\", \"lastName\": \"Perez\" }"))
+		.andExpect(status().isCreated());
+
+
+	}
+
 
 
 
