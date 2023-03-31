@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 import static org.mockito.ArgumentMatchers.anyList;
+import org.springframework.http.ResponseEntity;
 
 import com.gfttraining.service.UserService;
 import com.gfttraining.user.User;
@@ -35,8 +36,11 @@ class UserControllerTest {
 		User user = new User("Pepito", "Perez", "calle falsa", "TRANSFERENCIA");
 		when(userService.createUser(user)).thenReturn(user);
 
-		User createduser = userController.createUser(user);
-		assertThat(user).isEqualTo(createduser);
+		ResponseEntity<User> response = userController.createUser(user);
+
+		assertThat(user).isEqualTo(response.getBody());
+		assertThat(HttpStatus.CREATED).isEqualTo(response.getStatusCode());
+
 	}
 
 

@@ -21,7 +21,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 
 @ControllerAdvice
-public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+public class GlobalExceptionHandler {
+
 
 	@ExceptionHandler
 	public ResponseEntity<ExceptionResponse> handlerException(EntityNotFoundException exception,WebRequest req){
@@ -64,6 +65,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
 
 		ExceptionResponse res = new ExceptionResponse(new Date(),"there is no user with that id");
+
 
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.NOT_FOUND);
 	}

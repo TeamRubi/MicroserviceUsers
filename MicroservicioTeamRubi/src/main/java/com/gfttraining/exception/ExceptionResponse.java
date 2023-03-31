@@ -5,8 +5,10 @@ import java.util.List;
 
 import lombok.Data;
 
+
 @Data
 public class ExceptionResponse {
+
 	private Date timestamp;
 	private String message;
 	private List<String> details;
@@ -23,8 +25,10 @@ public class ExceptionResponse {
 		this.message = message;
 	}
 
-
-
-
+	public ExceptionResponse(String message, Date timestamp) {
+		super();
+		this.timestamp = timestamp;
+		this.message = message;
+	}
 
 }
