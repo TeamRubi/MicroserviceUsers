@@ -34,48 +34,11 @@ class UserControllerTest {
 	void createUser_test() {
 		User user = new User("Pepito", "Perez", "calle falsa", "TRANSFERENCIA");
 		when(userService.createUser(user)).thenReturn(user);
-<<<<<<< Updated upstream
-		User createduser = userController.createUser(user);
-		assertThat(user).isEqualTo(createduser);
-	}
-	
-	@Test
-	void createUsersByFile_Test() {
 
-        byte[] content = "[{\"id\":1,\"name\":\"John\",\"lastname\":\"Connor\",\"address\":\"123 Some address\",\"paymentmethod\":\"VISA\"}]".getBytes();
-        MultipartFile file = new MockMultipartFile("file", "users.json", MediaType.APPLICATION_JSON_VALUE, content);
-        doNothing().when(userService).deleteAllUsers();
-
-        ResponseEntity<Void> response = userController.saveAllImportedUsers(file);
-
-        assertThat(HttpStatus.CREATED.equals(response.getStatusCode()));
-        verify(userService).deleteAllUsers();
-        verify(userService).saveAllUsers(anyList());
-        
-=======
-<<<<<<< Updated upstream
-		ResponseEntity<User> response = userController.createUser(user);
-
-		assertThat(user).isEqualTo(response.getBody());
-		assertThat(HttpStatus.CREATED).isEqualTo(response.getStatusCode());
-=======
 		User createduser = userController.createUser(user);
 		assertThat(user).isEqualTo(createduser);
 	}
 
-	@Test
-	void createUsersByFile_Test() {
-
-		byte[] content = "[{\"id\":1,\"name\":\"John\",\"lastname\":\"Connor\",\"address\":\"123 Some address\",\"paymentmethod\":\"VISA\"}]".getBytes();
-		MultipartFile file = new MockMultipartFile("file", "users.json", MediaType.APPLICATION_JSON_VALUE, content);
-		doNothing().when(userService).deleteAllUsers();
-
-		ResponseEntity<Void> response = userController.saveAllImportedUsers(file);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		verify(userService).deleteAllUsers();
-		verify(userService).saveAllUsers(anyList());  
-	}
 
 	@Test
 	void updateUserById_test() {
@@ -89,10 +52,7 @@ class UserControllerTest {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 		assertThat(response.getBody()).isEqualTo(user);
 
-    
-        
->>>>>>> Stashed changes
->>>>>>> Stashed changes
+
 	}
 
 }

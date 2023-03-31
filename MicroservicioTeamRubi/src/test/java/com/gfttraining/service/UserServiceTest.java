@@ -36,33 +36,13 @@ class UserServiceTest {
 	@Mock
 	private UserRepository repository;
 
-<<<<<<< Updated upstream
-	
-=======
-<<<<<<< Updated upstream
-=======
 
->>>>>>> Stashed changes
 	@Test
 	void getUserById_test(){
 		int id=1;
 		User userTest1= new User();
 		userTest1.setId(1);
 		userTest1.setName("Erna");
-<<<<<<< Updated upstream
-		
-		when(repository.findById(1)).thenReturn(Optional.of(userTest1));
-		
-		User result = userService.findUserById(id);
-		
-		assertNotNull(result);
-		assertEquals(userTest1.getName(), result.getName());
-		
-		verify(repository, times(1)).findById(1);
-	
-	}
-	
-=======
 
 		when(repository.findById(1)).thenReturn(Optional.of(userTest1));
 
@@ -75,27 +55,13 @@ class UserServiceTest {
 
 	}
 
->>>>>>> Stashed changes
+
 	@Test
 	void getUserByName_test(){
 		String name="Erna";
 		User userTest1= new User();
 		userTest1.setId(1);
 		userTest1.setName("Erna");
-<<<<<<< Updated upstream
-		
-		when(repository.findByName("Erna")).thenReturn((userTest1));
-		
-		User result = userService.findUserByName("Erna");
-		
-		assertNotNull(result);
-		assertEquals(userTest1.getName(), result.getName());
-		
-		verify(repository, times(1)).findByName("Erna");
-	
-	}
-	
-=======
 
 		when(repository.findByName("Erna")).thenReturn((userTest1));
 
@@ -108,8 +74,6 @@ class UserServiceTest {
 
 	}
 
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
 	@Test
 	void deleteUserById_test(){
@@ -126,13 +90,6 @@ class UserServiceTest {
 		User createduser = userService.createUser(user);
 		assertThat(user).isEqualTo(createduser);
 	}
-
-<<<<<<< Updated upstream
-
-
-=======
-<<<<<<< Updated upstream
-=======
 
 	@Test
 	void updateUserById_test() {
@@ -172,10 +129,4 @@ class UserServiceTest {
 
 	}
 
-
-
-
-
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 }
