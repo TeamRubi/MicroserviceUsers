@@ -20,4 +20,10 @@ public class ExceptionResponse {
 		this.details = details;
 	}
 
+	public ExceptionResponse(String message, Date timestamp) {
+		super();
+		this.timestamp = timestamp;
+		this.message = message;
+	}
+
 }
