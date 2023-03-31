@@ -20,7 +20,7 @@ public class ExceptionResponse {
 		this.details = details;
 	}
 
-	public ExceptionResponse(String message, Date timestamp) {
+	public ExceptionResponse(Date timestamp, String message) {
 		this.message = message;
 		this.timestamp = timestamp;
 	}

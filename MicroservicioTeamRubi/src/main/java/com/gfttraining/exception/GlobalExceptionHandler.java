@@ -1,38 +1,31 @@
 package com.gfttraining.exception;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.persistence.EntityNotFoundException;
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
 
-import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.net.http.HttpHeaders;
-import java.util.ArrayList;
-import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
 
-
-@RestControllerAdvice
-public class GlobalExceptionHandler  {
-
+@ControllerAdvice
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
 	@ExceptionHandler
-	public ResponseEntity<ExceptionResponse> handlerException_entityNotFound(EntityNotFoundException exception,WebRequest req){
-		ExceptionResponse res = new ExceptionResponse("Id no encontrado",new Date());
+	public ResponseEntity<ExceptionResponse> handlerException(EntityNotFoundException exception,WebRequest req){
+		ExceptionResponse res = new ExceptionResponse(new Date(),exception.getMessage(),null);
 
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.NOT_FOUND);
 	};
@@ -65,10 +58,13 @@ public class GlobalExceptionHandler  {
 	}
 
 
+	@ExceptionHandler(ResponseStatusException.class)
+	public ResponseEntity<ExceptionResponse> handleResponseStatusException(ResponseStatusException ex) {
 
 
+		ExceptionResponse res = new ExceptionResponse(new Date(),"there is no user with that id");
 
-
-
+		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.NOT_FOUND);
+	}
 
 }
