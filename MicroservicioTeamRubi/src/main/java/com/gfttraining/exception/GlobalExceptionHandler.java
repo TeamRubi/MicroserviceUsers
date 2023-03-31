@@ -57,13 +57,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.BAD_REQUEST);
 	}
 
-
+	/*
 	@ExceptionHandler(ResponseStatusException.class)
 	public ResponseEntity<ExceptionResponse> handleResponseStatusException(ResponseStatusException ex) {
 
 		ExceptionResponse res = new ExceptionResponse("there is no user with that id", new Date());
 
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.NOT_FOUND);
-	}
+	}*/
 
 }
