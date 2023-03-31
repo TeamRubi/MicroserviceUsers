@@ -35,25 +35,28 @@ class UserControllerTest {
 	void createUser_test() {
 		User user = new User("Pepito", "Perez", "calle falsa", "TRANSFERENCIA");
 		when(userService.createUser(user)).thenReturn(user);
+
 		ResponseEntity<User> response = userController.createUser(user);
 
 		assertThat(user).isEqualTo(response.getBody());
 		assertThat(HttpStatus.CREATED).isEqualTo(response.getStatusCode());
+
 	}
-	
+
+
 	@Test
-	void createUsersByFile_Test() {
+	void updateUserById_test() {
 
-        byte[] content = "[{\"id\":1,\"name\":\"John\",\"lastname\":\"Connor\",\"address\":\"123 Some address\",\"paymentmethod\":\"VISA\"}]".getBytes();
-        MultipartFile file = new MockMultipartFile("file", "users.json", MediaType.APPLICATION_JSON_VALUE, content);
-        doNothing().when(userService).deleteAllUsers();
+		User user = new User("Pepito", "Perez", "calle falsa", "TRANSFERENCIA");
 
-        ResponseEntity<Void> response = userController.saveAllImportedUsers(file);
+		when(userService.updateUserById(1, user)).thenReturn(user);
 
-        assertThat(HttpStatus.CREATED.equals(response.getStatusCode()));
-        verify(userService).deleteAllUsers();
-        verify(userService).saveAllUsers(anyList());
-        
+		ResponseEntity<User> response = userController.updateUserById(1, user);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+		assertThat(response.getBody()).isEqualTo(user);
+
+
 	}
 
 }

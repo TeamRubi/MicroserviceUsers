@@ -13,11 +13,16 @@ public class ExceptionResponse {
 	private String message;
 	private List<String> details;
 
-	public ExceptionResponse(Date timestamp, String message, List<String> details) {
+	public ExceptionResponse(Date timestamp, String message, List<String> errors) {
 		super();
 		this.timestamp = timestamp;
 		this.message = message;
-		this.details = details;
+		this.details = errors;
+	}
+
+	public ExceptionResponse(Date timestamp, String message) {
+		this.timestamp = timestamp;
+		this.message = message;
 	}
 
 	public ExceptionResponse(String message, Date timestamp) {
