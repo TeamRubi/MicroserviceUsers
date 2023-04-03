@@ -11,6 +11,8 @@ import static org.mockito.Mockito.when;
 
 import org.hibernate.exception.ConstraintViolationException;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -57,20 +59,22 @@ class UserServiceTest {
 
 
 	@Test
-	void getUserByName_test(){
+	void getAllUsersByName_test(){
 		String name="Erna";
-		User userTest1= new User();
+		List <User> userListTest1 = new ArrayList<>();
+		User userTest1 = new User();
 		userTest1.setId(1);
 		userTest1.setName("Erna");
+		userListTest1.add(userTest1);
 
-		when(repository.findByName("Erna")).thenReturn((userTest1));
+		when(repository.findAllByName("Erna")).thenReturn((userListTest1));
 
-		User result = userService.findUserByName("Erna");
+		List<User> result = userService.findAllByName("Erna");
 
 		assertNotNull(result);
-		assertEquals(userTest1.getName(), result.getName());
+		assertEquals(userListTest1.get(0).getName(), result.get(0).getName());
 
-		verify(repository, times(1)).findByName("Erna");
+		verify(repository, times(1)).findAllByName("Erna");
 
 	}
 

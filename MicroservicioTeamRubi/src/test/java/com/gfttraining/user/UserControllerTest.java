@@ -5,8 +5,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,15 +49,20 @@ class UserControllerTest {
 
 	@Test
 	void getUserByName_test() throws Exception {
-		User userTest1= new User("Erna","Witcomb","02 New Castle Terrace","PAYPAL");
-
+		String name="Erna";
+		List <User> userListTest1 = new ArrayList<>();
+		User userTest1 = new User();
+		userTest1.setId(1);
+		userTest1.setName("Erna");
+		userListTest1.add(userTest1);
+		
 		Mockito
-		.when(userService.findUserByName("Erna"))
-		.thenReturn(userTest1);
+		.when(userService.findAllByName("Erna"))
+		.thenReturn(userListTest1);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/users/name/{name}","Erna"))
 		.andExpect(MockMvcResultMatchers.status().isOk())
-		.andExpect(MockMvcResultMatchers.jsonPath("@.name", is("Erna")));
+		.andExpect(MockMvcResultMatchers.jsonPath("@[0].name", is("Erna")));
 
 	}
 

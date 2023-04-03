@@ -1,4 +1,7 @@
 insert into user (name, lastname, address, paymentmethod) values ('Erna', 'Witcomb', '02 New Castle Terrace', 'PAYPAL');
+insert into user (name, lastname, address, paymentmethod) values ('Erna', 'Volta', '711 Corben Way', 'TRANSFERENCIA');
+insert into user (name, lastname, address, paymentmethod) values ('Erna', 'Pass', '02 New Castle Terrace', 'VISA');
+insert into user (name, lastname, address, paymentmethod) values ('Erna', 'Star', '449 David Street', 'VISA');
 insert into user (name, lastname, address, paymentmethod) values ('Aguistin', 'Stoter', '13417 Moose Way', 'PAYPAL');
 insert into user (name, lastname, address, paymentmethod) values ('Cassi', 'Glantz', '19 Petterle Street', 'TRANSFERENCIA');
 insert into user (name, lastname, address, paymentmethod) values ('Bili', 'Hattam', '3797 Burning Wood Alley', 'VISA');
