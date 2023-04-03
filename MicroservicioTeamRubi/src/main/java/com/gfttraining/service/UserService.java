@@ -4,9 +4,18 @@ import java.util.Optional;
 
 import javax.persistence.EntityNotFoundException;
 
+
 import org.slf4j.LoggerFactory;
+import org.modelmapper.Condition;
+import org.modelmapper.Conditions;
+import org.modelmapper.ModelMapper;
+import org.modelmapper.convention.MatchingStrategies;
+import org.springframework.beans.BeanUtils;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.gfttraining.UserMicroserviceApplication;
 import com.gfttraining.repository.UserRepository;
@@ -19,8 +28,16 @@ public class UserService {
 	
 	private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(UserMicroserviceApplication.class);
 
-	@Autowired
+
 	private UserRepository userRepository;
+
+	private ModelMapper modelMapper;
+
+	public UserService(UserRepository userRepository) {
+		this.userRepository = userRepository;
+		this.modelMapper = new ModelMapper();
+		modelMapper.getConfiguration().setPropertyCondition(Conditions.isNotNull());
+	}
 
 	public List<User> findAll(){
 		LOGGER.info("Findig all users");
@@ -75,6 +92,18 @@ public class UserService {
 
 	public User createUser(User user) {
 		return userRepository.save(user);
+	}
+
+	public User updateUserById(int id, User user) {
+
+		User existingUser = userRepository.findById(id)
+				.orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+		user.setId(existingUser.getId());
+		modelMapper.map(user, existingUser);
+
+		return userRepository.save(existingUser);
+
 	}
 
 
