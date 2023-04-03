@@ -9,15 +9,14 @@ import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 
 @ControllerAdvice
@@ -54,6 +53,7 @@ public class GlobalExceptionHandler {
 				.collect(Collectors.toList());
 
 		ExceptionResponse res = new ExceptionResponse(new Date(),"method argument not valid", errors);
+		
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.BAD_REQUEST);
 	}
 
