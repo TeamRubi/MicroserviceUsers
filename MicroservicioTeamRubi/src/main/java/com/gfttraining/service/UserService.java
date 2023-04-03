@@ -43,12 +43,12 @@ public class UserService {
 		return user.get();
 	}
 
-	public User findUserByName(String name){
-		Optional<User> user = Optional.ofNullable(userRepository.findByName(name));
-		if(user.isEmpty()) {
+	public List<User> findAllByName(String name){
+		List<User> users = userRepository.findAllByName(name);
+		if(users.isEmpty()) {
 			throw new EntityNotFoundException("Usuario con el nombre: "+name+" no encontrado");
 		}
-		return user.get();
+		return users;
 
 	}
 
