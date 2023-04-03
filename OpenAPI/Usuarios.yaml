@@ -7,9 +7,7 @@ info:
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
   version: 1.0.1
   contact:
-    name: Perico de los Palotes
-    url: https://thebookingapi/info
-    email: contact@thebookingapi.com
+    name: MicroServicio Users
 servers:
   - url: http://teamRubi.com/v1
   
@@ -211,7 +209,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
   
-  /users/{name}:
+  /users/name/{name}:
     get:
       tags:
         - Users
@@ -350,6 +348,14 @@ components:
         address:
           type: string
           example: Calle Joc de la Bola nº6
+        paymentMethod :
+          type: string
+          description: Payment method type
+          example: VISA
+          enum:
+            - VISA
+            - PAYPAL
+            - TRANSFERENCIA
         points of fidelity (carrito):
           type: integer
           format: int64
