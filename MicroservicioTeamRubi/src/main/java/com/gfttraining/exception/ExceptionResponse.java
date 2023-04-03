@@ -14,8 +14,6 @@ import lombok.Data;
 @Data
 public class ExceptionResponse {
 	
-	private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(UserMicroserviceApplication.class);
-
 	private Date timestamp;
 	private String message;
 	private List<String> details;
@@ -25,8 +23,6 @@ public class ExceptionResponse {
 		this.timestamp = timestamp;
 		this.message = message;
 		this.details = details;
-		
-//		LOGGER.error("createUser() -> " + details.toString());
 
 	}
 
@@ -35,7 +31,6 @@ public class ExceptionResponse {
 		this.timestamp = timestamp;
 		this.message = message;
 		
-//		LOGGER.error(message);
 	}
 
 }
