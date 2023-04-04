@@ -38,7 +38,7 @@ class UserControllerTest {
 	UserController userController;
 
 	@Test
-	void getAllUsers_IT() throws Exception {
+	void getAllUsers_test() throws Exception {
 
 		List<User> users = Arrays.asList(new User("Pedro", "Chapo", "Monzon", "VISA"));
 		when(userService.findAll()).thenReturn(users);
@@ -71,6 +71,20 @@ class UserControllerTest {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 		assertThat(response.getBody()).isEqualTo(user);
 
+	}
+
+	@Test
+	void getUserByEmail_test() {
+
+		User user = new User("pedro@chapo.com", "Pedro", "Chapo", "Monzon", "VISA");
+		String email = "pedro@chapo.com"; 
+
+		when(userService.findUserByEmail(email)).thenReturn(user);
+
+		ResponseEntity<User> response = userController.getUserByEmail(email);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isEqualTo(user);
 
 	}
 

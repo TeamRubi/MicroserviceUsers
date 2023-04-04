@@ -32,7 +32,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.gfttraining.controller.UserController;
 import com.gfttraining.exception.DuplicateEmailException;
 import com.gfttraining.repository.UserRepository;
 import com.gfttraining.user.User;
@@ -46,9 +48,6 @@ class UserServiceTest {
 
 	@Mock
 	private UserRepository repository;
-
-
-
 
 
 	@Test
@@ -171,6 +170,19 @@ class UserServiceTest {
 		assertThatThrownBy(()-> userService.updateUserById(1, newUser.get()))
 		.isInstanceOf(DuplicateEmailException.class)
 		.hasMessageContaining("email " + newUser.get().getEmail() + " is already in use");
+
+	}
+
+	@Test
+	void getUserByEmailWithEmailNotFound_test() {
+
+		String email = "pedro@chapo.com"; 
+
+		when(repository.findByEmail(email)).thenReturn(null);
+
+		assertThatThrownBy(()-> userService.findUserByEmail(email))
+		.isInstanceOf(ResponseStatusException.class)
+		.hasMessageContaining("User with email " + email + " not found");
 
 	}
 

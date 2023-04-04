@@ -3,6 +3,7 @@ package com.gfttraining.it;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -118,6 +119,15 @@ class UserServiceTest_IT {
 		mockMvc.perform(put("/users/2")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(json)).andExpect(status().isConflict());
+
+	}
+
+	@Test
+	void getUserByEmailWithEmailNotFound_IT() throws Exception {
+
+		String email = "newnotexistingemail@gmail.com";
+		mockMvc.perform(get("/users/email/" + email))
+		.andExpect(status().isNotFound());
 
 	}
 }
