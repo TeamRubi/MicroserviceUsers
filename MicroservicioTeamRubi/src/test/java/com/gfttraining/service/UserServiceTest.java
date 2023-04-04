@@ -5,7 +5,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -20,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.persistence.EntityNotFoundException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +31,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -67,6 +71,20 @@ class UserServiceTest {
 		verify(repository, times(1)).findById(1);
 
 	}
+	
+	
+	@Test
+	void getUserByIdNotFound_test(){
+		int id=1234;
+		
+		EntityNotFoundException exception= 
+				assertThrows(
+						EntityNotFoundException.class, 
+						() -> {userService.findUserById(id);});
+
+		assertEquals("Usuario con el id: "+id+" no encontrado", exception.getMessage());
+		
+	}
 
 
 	@Test
@@ -80,15 +98,27 @@ class UserServiceTest {
 
 		when(repository.findAllByName("Erna")).thenReturn((userListTest1));
 
-		List<User> result = userService.findAllByName("Erna");
+		List<User> result = userService.findAllByName(name);
 
 		assertNotNull(result);
 		assertEquals(userListTest1.get(0).getName(), result.get(0).getName());
 
-		verify(repository, times(1)).findAllByName("Erna");
+		verify(repository, times(1)).findAllByName(name);
 
 	}
+	
+	@Test
+	void getAllUsersByNameNotFound_test(){
+		String name="Ernaaa";
+		
+		EntityNotFoundException exception= 
+				assertThrows(
+						EntityNotFoundException.class, 
+						() -> {userService.findAllByName(name);});
 
+		assertEquals("Usuario con el nombre: "+name+" no encontrado", exception.getMessage());
+		
+	}
 
 	@Test
 	void deleteUserById_test(){
@@ -97,7 +127,23 @@ class UserServiceTest {
 
 		verify(repository, times(1)).deleteById(1);
 	}
+	
+	@Test
+	void deleteUserByIdNotFound_test(){
+		int id=1234;
+		
+		doThrow(EmptyResultDataAccessException.class)
+			.when(repository).deleteById(id);
+		
+		EntityNotFoundException exception= 
+				assertThrows(
+						EntityNotFoundException.class, 
+						() -> {userService.deleteUserById(id);});
 
+		assertEquals("No se ha podido eliminar el usuario con el id: "+id+" de la base de datos", exception.getMessage());
+		
+	}
+	
 	@Test
 	void createUser_test() {
 		User user = new User("Pepito", "Perez", "calle falsa", "TRANSFERENCIA");
