@@ -28,7 +28,7 @@ import ch.qos.logback.classic.Logger;
 
 @Service
 public class UserService {
-	
+
 	private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(UserMicroserviceApplication.class);
 
 
@@ -122,6 +122,19 @@ public class UserService {
 		return userRepository.save(existingUser);
 
 	}
+
+	public User findUserByEmail(String email){
+
+		Optional<User> user = Optional.ofNullable(userRepository.findByEmail(email));
+
+		if(user.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User with email " + email + " not found");
+		}
+
+		return user.get();
+
+	}
+
 
 
 }

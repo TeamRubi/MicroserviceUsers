@@ -34,17 +34,17 @@ import ch.qos.logback.classic.Logger;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
-	
+
 	private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(UserMicroserviceApplication.class);
 
 	@ExceptionHandler
 	public ResponseEntity<ExceptionResponse> handlerException(EntityNotFoundException exception,WebRequest req){
 		ExceptionResponse res = new ExceptionResponse(new Date(),exception.getMessage(),null);
-		
+
 		LOGGER.error(exception.getMessage());
-		
+
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.NOT_FOUND);
-	};
+	}; 
 
 	@ExceptionHandler(ConstraintViolationException.class)
 	public ResponseEntity<ExceptionResponse> handleConstraintViolationException(ConstraintViolationException ex) {
@@ -56,9 +56,9 @@ public class GlobalExceptionHandler {
 		}
 
 		ExceptionResponse res = new ExceptionResponse(new Date(),"constraint violation", errors);
-		
+
 		LOGGER.error("createUser() -> " + errors.toString());
-		
+
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.BAD_REQUEST);
 	}
 
@@ -73,7 +73,7 @@ public class GlobalExceptionHandler {
 				.collect(Collectors.toList());
 
 		ExceptionResponse res = new ExceptionResponse(new Date(),"method argument not valid", errors);
-		
+
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.BAD_REQUEST);
 	}
 
@@ -81,8 +81,10 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(ResponseStatusException.class)
 	public ResponseEntity<ExceptionResponse> handleResponseStatusException(ResponseStatusException ex) {
 
-		ExceptionResponse res = new ExceptionResponse("there is no user with that id", new Date());
-		
+		List<String> errors = new ArrayList<>(Collections.singletonList(ex.getMessage()));
+
+		ExceptionResponse res = new ExceptionResponse(new Date(),ex.getReason(), errors);
+
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.NOT_FOUND);
 	}
 

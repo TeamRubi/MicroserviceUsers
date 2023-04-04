@@ -93,8 +93,12 @@ public class UserController {
 
 		User updatedUser = userService.updateUserById(id,user);
 		return new ResponseEntity<User>(updatedUser, HttpStatus.CREATED);
+	}
 
+	@GetMapping("/users/email/{email}")
+	public ResponseEntity<User> getUserByEmail(@PathVariable String email){
 
+		return new ResponseEntity<User>(userService.findUserByEmail(email), HttpStatus.OK);
 	}
 
 }
