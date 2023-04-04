@@ -77,13 +77,9 @@ class UserServiceTest {
 	@Test
 	void getUserByIdNotFound_test(){
 		int id=1234;
-<<<<<<< Updated upstream
 		
 		when(repository.findById(id)).thenReturn((Optional.empty()));
 		
-=======
-
->>>>>>> Stashed changes
 		EntityNotFoundException exception= 
 				assertThrows(
 						EntityNotFoundException.class, 
@@ -117,14 +113,10 @@ class UserServiceTest {
 	@Test
 	void getAllUsersByNameNotFound_test(){
 		String name="Ernaaa";
-<<<<<<< Updated upstream
 		List <User> userListTest1 = new ArrayList<>();
 		
 		when(repository.findAllByName(name)).thenReturn((userListTest1));
 		
-=======
-
->>>>>>> Stashed changes
 		EntityNotFoundException exception= 
 				assertThrows(
 						EntityNotFoundException.class, 
@@ -133,9 +125,6 @@ class UserServiceTest {
 		assertEquals("Usuario con el nombre: "+name+" no encontrado", exception.getMessage());
 
 	}
-<<<<<<< Updated upstream
-	
-=======
 
 	@Test
 	void deleteUserById_test(){
@@ -145,7 +134,6 @@ class UserServiceTest {
 		verify(repository, times(1)).deleteById(1);
 	}
 
->>>>>>> Stashed changes
 	@Test
 	void deleteUserByIdNotFound_test(){
 		int id=1234;
