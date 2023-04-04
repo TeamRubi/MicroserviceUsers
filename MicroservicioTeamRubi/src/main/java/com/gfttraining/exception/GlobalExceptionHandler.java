@@ -41,8 +41,6 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ExceptionResponse> handlerException(EntityNotFoundException exception,WebRequest req){
 		ExceptionResponse res = new ExceptionResponse(new Date(),exception.getMessage(),null);
 
-		LOGGER.error(exception.getMessage());
-
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.NOT_FOUND);
 	}; 
 
@@ -74,6 +72,8 @@ public class GlobalExceptionHandler {
 
 		ExceptionResponse res = new ExceptionResponse(new Date(),"method argument not valid", errors);
 
+		LOGGER.error("createUser() -> " + errors.toString());
+
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.BAD_REQUEST);
 	}
 
@@ -85,6 +85,8 @@ public class GlobalExceptionHandler {
 
 		ExceptionResponse res = new ExceptionResponse(new Date(),ex.getReason(), errors);
 
+		LOGGER.error(ex.getReason());
+
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.NOT_FOUND);
 	}
 
@@ -93,6 +95,8 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ExceptionResponse> handleDataIntegrityViolationException(DuplicateEmailException ex) {
 
 		ExceptionResponse res = new ExceptionResponse(ex.getMessage(), new Date());
+
+		LOGGER.error("email duplicated");
 
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.CONFLICT);
 	}

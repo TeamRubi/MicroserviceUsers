@@ -98,6 +98,8 @@ public class UserService {
 			throw new DuplicateEmailException("The email " + email + " is already in use");
 		}
 
+		LOGGER.info("user " + user.getName() + " created");
+
 		return userRepository.save(user);
 
 	}
@@ -114,6 +116,8 @@ public class UserService {
 		user.setId(existingUser.getId());
 		modelMapper.map(user, existingUser);
 
+		LOGGER.info("Updated user with id " + id);
+
 		return userRepository.save(existingUser);
 
 	}
@@ -125,6 +129,8 @@ public class UserService {
 		if(user.isEmpty()) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User with email " + email + " not found");
 		}
+
+		LOGGER.info("Found user with email " + email);
 
 		return user.get();
 
