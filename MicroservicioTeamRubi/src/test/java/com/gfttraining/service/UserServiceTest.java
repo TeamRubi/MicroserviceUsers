@@ -1,6 +1,8 @@
 package com.gfttraining.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.is;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -11,6 +13,8 @@ import static org.mockito.Mockito.when;
 
 import org.hibernate.exception.ConstraintViolationException;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -20,9 +24,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
+import com.gfttraining.exception.DuplicateEmailException;
 import com.gfttraining.repository.UserRepository;
 import com.gfttraining.user.User;
 
@@ -35,6 +43,9 @@ class UserServiceTest {
 
 	@Mock
 	private UserRepository repository;
+
+
+
 
 
 	@Test
@@ -126,6 +137,35 @@ class UserServiceTest {
 		User result = userService.updateUserById(1, updatedUser);
 
 		assertThat(result.getLastname()).isNotEqualTo(null);
+
+	}
+
+
+
+	@Test
+	void createUserWithEmailThatAlreadyExists_test() {
+
+		User newUser = new User("repeatedemail@gmail.com","Pepito", "Perez", "calle falsa", "TRANSFERENCIA");
+
+		when(repository.existsByEmail("repeatedemail@gmail.com")).thenReturn(true);
+
+		assertThatThrownBy(()-> userService.createUser(newUser))
+		.isInstanceOf(DuplicateEmailException.class)
+		.hasMessageContaining("email " + newUser.getEmail() + " is already in use");
+
+	}
+
+	@Test
+	void updateUserByIdWithEmailThatAlreadyExists_test() {
+
+		Optional<User> newUser = Optional.of(new User("repeatedemail@gmail.com","Pepito", "Perez", "calle falsa", "TRANSFERENCIA"));
+
+		when(repository.existsByEmail("repeatedemail@gmail.com")).thenReturn(true);
+		when(repository.findById(1)).thenReturn(newUser);
+
+		assertThatThrownBy(()-> userService.updateUserById(1, newUser.get()))
+		.isInstanceOf(DuplicateEmailException.class)
+		.hasMessageContaining("email " + newUser.get().getEmail() + " is already in use");
 
 	}
 
