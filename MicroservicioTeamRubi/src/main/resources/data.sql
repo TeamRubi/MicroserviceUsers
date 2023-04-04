@@ -498,3 +498,4 @@ insert into user (email, name, lastname, address, paymentmethod) values ('opitth
 insert into user (email, name, lastname, address, paymentmethod) values ('aluxondt@wordpress.com', 'Arturo', 'Luxon', '33605 John Wall Junction', 'VISA');
 insert into user (email, name, lastname, address, paymentmethod) values ('vshoebottomdu@umich.edu', 'Vite', 'Shoebottom', '76 Di Loreto Street', 'TRANSFER');
 insert into user (email, name, lastname, address, paymentmethod) values ('lsindersondv@nydailynews.com', 'Leia', 'Sinderson', '028 Ridgeway Road', 'TRANSFER');
+

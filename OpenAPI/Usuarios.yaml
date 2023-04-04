@@ -45,8 +45,36 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'           
-          
+                $ref: '#/components/schemas/ErrorResponse'    
+    post:
+      tags:
+          - Users
+      summary: add a new user
+      description: new user is created
+      operationId: createUser
+      requestBody:
+        description: User data required to create a user
+        required: true
+        content:
+          application/json:
+            schema:
+               $ref: '#/components/schemas/User'
+      responses:
+        200: 
+          description: Ok
+          content:
+            application/json:
+             schema:
+               $ref: '#/components/schemas/User'
+        409:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+       
+  
+  /users/import:        
     post:
       tags:
           - Users
@@ -107,40 +135,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    post:
-      tags:
-          - Users
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-      summary: add a new user
-      description: new user is created
-      operationId: createUser
-      requestBody:
-        description: User data required to create a user
-        required: true
-        content:
-          application/json:
-            schema:
-               $ref: '#/components/schemas/User'
-      responses:
-        200: 
-          description: Ok
-          content:
-            application/json:
-             schema:
-               $ref: '#/components/schemas/User'
-        409:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-                  
     put:
       tags:
          - Users
@@ -213,9 +207,9 @@ paths:
     get:
       tags:
         - Users
-      summary: returns a user by name
-      description: returns a user by name
-      operationId: getUserByName
+      summary: returns a list of a users by a filtered name
+      description: returns a users by name
+      operationId: getUsersByName
       parameters:
         - name: name
           in: path
@@ -244,7 +238,40 @@ paths:
                 schema:
                   $ref: '#/components/schemas/ErrorResponse'   
                 
-                
+  /users/email/{email}:
+    get:
+      tags:
+        - Users
+      summary: returns a user by email
+      description: returns a user by email
+      operationId: getUserByEmail
+      parameters:
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200: 
+            description: Ok     
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/User'
+
+        404: 
+            description: not found error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'             
+        500: 
+            description: error response
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'                 
                 
   /favorite/{id_user}/{id_product}:
     get:
@@ -331,6 +358,7 @@ components:
       type: object
       required:
         - id
+        - email
         - name
         - lastname
         - address
@@ -339,6 +367,9 @@ components:
           type: integer
           format: int64
           example: 1
+        email:
+          type: string
+          example: pepito@example.com
         name:
           type: string
           example: Pepito
@@ -356,18 +387,24 @@ components:
             - VISA
             - PAYPAL
             - TRANSFERENCIA
-        points of fidelity (carrito):
+        points of fidelity:
           type: integer
           format: int64
           example: 25
-        buy_average (carrito):
+        buy_average:
           type: integer
           format: double
           example: 23.59
+        id_favorite:
+          type: integer
+          format: int64
+          example: 1
     ErrorResponse:
       type: object
       properties:
-        msg:
+        timestamp:
+          type: integer    
+        message:
           type: string
-        error_code:
-          type: integer        
+        details:
+          type: string        
