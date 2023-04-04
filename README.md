@@ -10,7 +10,17 @@
 - Operation ID: getUsers
 - Respuestas:
   - 200:
+  - 404:
   - 500:
+
+#### POST
+- Descripción: Crea un usuario a partir de un cuerpo 
+- Operation ID: createUsers
+- Respuestas:
+  - 201:
+  - 409:
+  - 500:
+
 
 ### /users/import
 
@@ -24,7 +34,7 @@
   - Content:
     - application/json:
 - Respuestas:
-  - 200:
+  - 201:
   - 409:
 
 ### /users/{id}
@@ -45,4 +55,66 @@
   - 404:
   - 500:
 
-#### POST
+#### PUT
+- Tags:
+  - Usuarios
+- Resumen: edita un usuario
+- Descripción: permite editar un usuario 
+- Operation ID: editUser
+- Parámetros:
+  - Nombre: id
+  - En: path
+  - Obligatorio: true
+- Respuestas:
+  - 200:
+  - 404:
+  - 500:
+
+#### DELETE
+- Tags:
+  - Usuarios
+- Resumen: elimina un usuario
+- Descripción: permite eliminar un usuario a traves de un ID
+- Operation ID: deleteUser
+- Parámetros:
+  - Nombre: id
+  - En: path
+  - Obligatorio: true
+- Respuestas:
+  - 204:
+  - 404:
+  - 500:
+
+### /users/name/{name}
+
+#### GET
+- Tags:
+  - Usuarios
+- Resumen: devuelve usuarios
+- Descripción: devuelve los detalles de un usuario o varios dado su nombre
+- Operation ID: getUsersbyName
+- Parámetros:
+  - Nombre: name
+  - En: path
+  - Obligatorio: true
+- Respuestas:
+  - 200:
+  - 404:
+  - 500:
+
+### /users/email/{email}
+
+#### GET
+- Tags:
+  - Usuarios
+- Resumen: devuelve un usuario
+- Descripción: devuelve los detalles de un usuario dado su email
+- Operation ID: getUserbyEmail
+- Parámetros:
+  - Nombre: email
+  - En: path
+  - Obligatorio: true
+- Respuestas:
+  - 200:
+  - 404:
+  - 500:
