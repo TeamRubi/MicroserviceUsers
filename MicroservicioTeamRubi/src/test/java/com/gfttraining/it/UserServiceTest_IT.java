@@ -1,4 +1,4 @@
-package com.gfttraining.service;
+package com.gfttraining.it;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,7 +22,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -35,45 +37,35 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.controller.UserController;
+import com.gfttraining.service.UserService;
 import com.gfttraining.user.User;
 
-@ExtendWith(MockitoExtension.class)
-@WebMvcTest(UserController.class)
-class UserServiceTest_Adri {
+@SpringBootTest
+@AutoConfigureMockMvc
+class UserServiceTest_IT {
 
 	@Autowired
 	private MockMvc mockMvc;
 
-	@MockBean
-	UserService userServiceMock;
+	@Autowired
+	UserService userService;
 
-	@Test
-	void getAllUsers_Test() throws Exception {
-
-		List<User> users = Arrays.asList(new User("Pedro", "Chapo", "Monzon", "VISA"));
-		when(userServiceMock.findAll()).thenReturn(users);
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/users"))
-		.andExpect(MockMvcResultMatchers.jsonPath("$[0].name", is("Pedro")));
-
-	}
 
 	@Test 
-	void createUserBasic_ITtest() throws Exception {
+	void createUserBasic_IT() throws Exception {
 
 		ObjectMapper objectMapper = new ObjectMapper();
-		User user = new User("Pablo", "Perez", "Avinguda Diagonal 5", "VISA");
+		User user = new User("example@gmail.com", "Pablo", "Perez", "Avinguda Diagonal 5", "VISA");
 		String json = objectMapper.writeValueAsString(user);
 
 		mockMvc.perform(post("/users")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(json)).andExpect(status().isCreated());
-
 	}
 
 
 	@Test
-	void createUserWithoutRequiredFields_ITtest() throws Exception {
+	void createUserWithoutRequiredFields_IT() throws Exception {
 
 		ObjectMapper objectMapper = new ObjectMapper();
 		User user = new User("Pablo", null, "Avinguda Diagonal 5", "VISA");
@@ -88,15 +80,44 @@ class UserServiceTest_Adri {
 	@Test
 	public void updateUserById_IT() throws Exception {
 
-		User user = new User("Pedro", "Garcia", null, null);
-		user.setId(1);
-
-		when(userServiceMock.updateUserById(anyInt(), any(User.class))).thenReturn(user);
-
 		mockMvc.perform(MockMvcRequestBuilders.put("/users/1")
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("{ \"name\": \"Pablo\", \"lastName\": \"Perez\" }"))
+				.content("{ \"name\": \"Pablo\", \"lastName\": \"Garcia\" }"))
 		.andExpect(status().isCreated());
+
+	}
+
+	@Test 
+	void createUserWithRepeatedEmail_IT() throws Exception {
+
+		ObjectMapper objectMapper = new ObjectMapper();
+		User existingUser = new User("pabloperez@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5", "VISA");
+
+		userService.createUser(existingUser);
+
+		User user = new User("pabloperez@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5", "VISA");
+		String json = objectMapper.writeValueAsString(user);
+
+		mockMvc.perform(post("/users")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json)).andExpect(status().isConflict());
+
+	}
+
+	@Test 
+	void updateUserByIdWithRepeatedEmail_IT() throws Exception {
+
+		ObjectMapper objectMapper = new ObjectMapper();
+		User existingUser = new User("pablo@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5", "VISA");
+
+		userService.updateUserById(1, existingUser);
+
+		User user = new User("pablo@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5", "VISA");
+		String json = objectMapper.writeValueAsString(user);
+
+		mockMvc.perform(put("/users/2")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json)).andExpect(status().isConflict());
 
 	}
 }

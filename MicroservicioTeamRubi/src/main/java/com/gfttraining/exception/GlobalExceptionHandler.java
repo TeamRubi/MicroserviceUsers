@@ -1,6 +1,7 @@
 package com.gfttraining.exception;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,9 +20,16 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.gfttraining.UserMicroserviceApplication;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+
+import com.gfttraining.UserMicroserviceApplication;
 import ch.qos.logback.classic.Logger;
+
 
 
 @ControllerAdvice
@@ -77,5 +85,16 @@ public class GlobalExceptionHandler {
 		
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.NOT_FOUND);
 	}
+
+
+	@ExceptionHandler(DuplicateEmailException.class)
+	public ResponseEntity<ExceptionResponse> handleDataIntegrityViolationException(DuplicateEmailException ex) {
+
+		ExceptionResponse res = new ExceptionResponse(ex.getMessage(), new Date());
+
+		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.CONFLICT);
+	}
+
+
 
 }

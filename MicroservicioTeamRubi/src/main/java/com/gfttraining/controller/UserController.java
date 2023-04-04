@@ -65,7 +65,7 @@ public class UserController {
 	}
 
 	@PostMapping("/users")
-	public ResponseEntity<User> createUser(@RequestBody User user) {
+	public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
 		return new ResponseEntity<>(userService.createUser(user), HttpStatus.CREATED);
 	}
 
@@ -89,12 +89,11 @@ public class UserController {
 
 
 	@PutMapping("/users/{id}")
-	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public ResponseEntity<User> updateUserById(@PathVariable int id, @RequestBody User user) {
 
 		User updatedUser = userService.updateUserById(id,user);
 		return new ResponseEntity<User>(updatedUser, HttpStatus.CREATED);
-	
+
 
 	}
 
