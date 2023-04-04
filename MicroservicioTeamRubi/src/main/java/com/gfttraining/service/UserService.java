@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.gfttraining.exception.DuplicateEmailException;
 import com.gfttraining.repository.UserRepository;
 import com.gfttraining.user.User;
 
@@ -73,13 +74,25 @@ public class UserService {
 	}
 
 	public User createUser(User user) {
+
+		String email = user.getEmail();
+
+		if(userRepository.existsByEmail(email)) {
+			throw new DuplicateEmailException("The email " + email + " is already in use");
+		}
+
 		return userRepository.save(user);
+
 	}
 
 	public User updateUserById(int id, User user) {
 
 		User existingUser = userRepository.findById(id)
 				.orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+		if(userRepository.existsByEmail(user.getEmail())) {
+			throw new DuplicateEmailException("The email " + user.getEmail() + " is already in use");
+		}
 
 		user.setId(existingUser.getId());
 		modelMapper.map(user, existingUser);
