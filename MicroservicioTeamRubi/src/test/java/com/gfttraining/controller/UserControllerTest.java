@@ -1,10 +1,14 @@
 package com.gfttraining.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +19,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.web.multipart.MultipartFile;
 import static org.mockito.ArgumentMatchers.anyList;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +36,17 @@ class UserControllerTest {
 
 	@InjectMocks
 	UserController userController;
+
+	@Test
+	void getAllUsers_IT() throws Exception {
+
+		List<User> users = Arrays.asList(new User("Pedro", "Chapo", "Monzon", "VISA"));
+		when(userService.findAll()).thenReturn(users);
+
+		List<User> existingUsers = userController.getAllUsers();
+		assertThat(existingUsers).containsAll(users);
+
+	}
 
 	@Test
 	void createUser_test() {
