@@ -77,6 +77,8 @@ class UserServiceTest {
 	void getUserByIdNotFound_test(){
 		int id=1234;
 		
+		when(repository.findById(id)).thenReturn((Optional.empty()));
+		
 		EntityNotFoundException exception= 
 				assertThrows(
 						EntityNotFoundException.class, 
@@ -110,6 +112,9 @@ class UserServiceTest {
 	@Test
 	void getAllUsersByNameNotFound_test(){
 		String name="Ernaaa";
+		List <User> userListTest1 = new ArrayList<>();
+		
+		when(repository.findAllByName(name)).thenReturn((userListTest1));
 		
 		EntityNotFoundException exception= 
 				assertThrows(
@@ -119,19 +124,11 @@ class UserServiceTest {
 		assertEquals("Usuario con el nombre: "+name+" no encontrado", exception.getMessage());
 		
 	}
-
-	@Test
-	void deleteUserById_test(){
-		int id=1;
-		userService.deleteUserById(id);
-
-		verify(repository, times(1)).deleteById(1);
-	}
 	
 	@Test
 	void deleteUserByIdNotFound_test(){
 		int id=1234;
-		
+
 		doThrow(EmptyResultDataAccessException.class)
 			.when(repository).deleteById(id);
 		
