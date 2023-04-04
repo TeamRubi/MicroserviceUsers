@@ -12,8 +12,6 @@ import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Check;
 
-import javax.annotation.Nullable;
-
 
 import lombok.Data;
 
