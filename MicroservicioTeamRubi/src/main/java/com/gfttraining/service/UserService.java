@@ -70,11 +70,6 @@ public class UserService {
 
 	}
 
-	public void saveUser(User user) {
-		userRepository.save(user);
-		LOGGER.info("Saved user to DB");
-	}
-
 	public void saveAllUsers(List<User> usersList) {
 		userRepository.saveAll(usersList);
 		LOGGER.info("Saved all users to DB");

@@ -11,6 +11,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
 
 
 import org.hibernate.exception.ConstraintViolationException;
@@ -71,21 +72,25 @@ class UserServiceTest {
 		verify(repository, times(1)).findById(1);
 
 	}
-	
-	
+
+
 	@Test
 	void getUserByIdNotFound_test(){
 		int id=1234;
+<<<<<<< Updated upstream
 		
 		when(repository.findById(id)).thenReturn((Optional.empty()));
 		
+=======
+
+>>>>>>> Stashed changes
 		EntityNotFoundException exception= 
 				assertThrows(
 						EntityNotFoundException.class, 
 						() -> {userService.findUserById(id);});
 
 		assertEquals("Usuario con el id: "+id+" no encontrado", exception.getMessage());
-		
+
 	}
 
 
@@ -108,39 +113,55 @@ class UserServiceTest {
 		verify(repository, times(1)).findAllByName(name);
 
 	}
-	
+
 	@Test
 	void getAllUsersByNameNotFound_test(){
 		String name="Ernaaa";
+<<<<<<< Updated upstream
 		List <User> userListTest1 = new ArrayList<>();
 		
 		when(repository.findAllByName(name)).thenReturn((userListTest1));
 		
+=======
+
+>>>>>>> Stashed changes
 		EntityNotFoundException exception= 
 				assertThrows(
 						EntityNotFoundException.class, 
 						() -> {userService.findAllByName(name);});
 
 		assertEquals("Usuario con el nombre: "+name+" no encontrado", exception.getMessage());
-		
+
 	}
+<<<<<<< Updated upstream
 	
+=======
+
+	@Test
+	void deleteUserById_test(){
+		int id=1;
+		userService.deleteUserById(id);
+
+		verify(repository, times(1)).deleteById(1);
+	}
+
+>>>>>>> Stashed changes
 	@Test
 	void deleteUserByIdNotFound_test(){
 		int id=1234;
 
 		doThrow(EmptyResultDataAccessException.class)
-			.when(repository).deleteById(id);
-		
+		.when(repository).deleteById(id);
+
 		EntityNotFoundException exception= 
 				assertThrows(
 						EntityNotFoundException.class, 
 						() -> {userService.deleteUserById(id);});
 
 		assertEquals("No se ha podido eliminar el usuario con el id: "+id+" de la base de datos", exception.getMessage());
-		
+
 	}
-	
+
 	@Test
 	void createUser_test() {
 		User user = new User("Pepito", "Perez", "calle falsa", "TRANSFERENCIA");
@@ -166,6 +187,20 @@ class UserServiceTest {
 		verify(repository, times(1)).findById(1);
 		verify(repository, times(1)).save(existingUser);
 		assertThat(updatedUser.getName()).isEqualTo(result.getName());
+
+	}
+
+	@Test
+	void updateUserByIdNoValidId_test() {
+
+		User existingUser = new User("Pepito", "Perez", "calle falsa", "TRANSFERENCIA");
+
+		when(repository.findById(anyInt())).thenReturn(Optional.empty());
+
+		assertThatThrownBy(()-> userService.updateUserById(anyInt(), existingUser))
+		.isInstanceOf(ResponseStatusException.class)
+		.hasMessageContaining("User not found");
+
 
 	}
 
@@ -214,6 +249,19 @@ class UserServiceTest {
 		.isInstanceOf(DuplicateEmailException.class)
 		.hasMessageContaining("email " + newUser.get().getEmail() + " is already in use");
 
+	}
+
+	@Test
+	void getUserByEmailBasic_test() {
+
+		User existingUser = new User("pedro@chapo.com", "Pedro", "Chapo", "calle falsa", "VISA");
+		String email = "pedro@chapo.com"; 
+
+		userService.createUser(existingUser);
+		when(repository.findByEmail(email)).thenReturn(existingUser);
+
+		User foundUser = userService.findUserByEmail(email);
+		assertThat(foundUser).isEqualTo(existingUser);
 	}
 
 	@Test
