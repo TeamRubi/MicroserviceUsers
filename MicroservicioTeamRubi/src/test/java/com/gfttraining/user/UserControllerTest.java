@@ -1,12 +1,9 @@
 package com.gfttraining.user;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -20,6 +17,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import com.gfttraining.controller.UserController;
 import com.gfttraining.service.UserService;
+import com.gfttraining.userEntity.UserEntity;
 
 @WebMvcTest(UserController.class) 
 class UserControllerTest {
@@ -35,7 +33,7 @@ class UserControllerTest {
 
 	@Test
 	void getUserById_test() throws Exception {
-		User userTest1= new User("Erna","Witcomb","02 New Castle Terrace","PAYPAL");
+		UserEntity userTest1= new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
 
 		Mockito
 		.when(userService.findUserById(1))
@@ -49,9 +47,9 @@ class UserControllerTest {
 
 	@Test
 	void getUserByName_test() throws Exception {
-		String name="Erna";
-		List <User> userListTest1 = new ArrayList<>();
-		User userTest1 = new User();
+
+		List <UserEntity> userListTest1 = new ArrayList<>();
+		UserEntity userTest1 = new UserEntity();
 		userTest1.setId(1);
 		userTest1.setName("Erna");
 		userListTest1.add(userTest1);
