@@ -125,6 +125,46 @@ class UserServiceTest {
 		assertEquals("Usuario con el nombre: "+name+" no encontrado", exception.getMessage());
 
 	}
+	
+	@Test
+	void getAllUsers() {
+        List<User> expectedUsers = new ArrayList<>();
+        expectedUsers.add(new User("John", "Doe", null, null));
+        expectedUsers.add(new User("Jane", "Doe", null, null));
+        
+        when(repository.findAll()).thenReturn(expectedUsers);
+
+        UserService userService = new UserService(repository);
+
+        List<User> actualUsers = userService.findAll();
+
+        assertEquals(expectedUsers, actualUsers);
+	}
+	
+    @Test
+    void testSaveAllUsers() {
+        // Arrange
+        List<User> usersList = new ArrayList<>();
+        usersList.add(new User("John", "Doe", null, null));
+        usersList.add(new User("Jane", "Doe", null, null));
+
+        UserService userService = new UserService(repository);
+
+        userService.saveAllUsers(usersList);
+
+        verify(repository).saveAll(usersList);
+        
+    }
+    
+    @Test
+    void testDeleteAllUsers() {
+        UserService userService = new UserService(repository);
+
+        userService.deleteAllUsers();
+
+        verify(repository).deleteAll();
+        
+    }
 
 	@Test
 	void deleteUserById_test(){
