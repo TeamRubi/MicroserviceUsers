@@ -1,25 +1,17 @@
 package com.gfttraining.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.is;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.ArgumentMatchers.*;
 
-
-import org.hibernate.exception.ConstraintViolationException;
-
-
-import java.util.Arrays;
 import java.util.ArrayList;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -30,16 +22,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.gfttraining.controller.UserController;
 import com.gfttraining.exception.DuplicateEmailException;
 import com.gfttraining.repository.UserRepository;
 import com.gfttraining.user.User;
@@ -57,14 +42,14 @@ class UserServiceTest {
 
 	@Test
 	void getUserById_test(){
-		int id=1;
+
 		User userTest1= new User();
 		userTest1.setId(1);
 		userTest1.setName("Erna");
 
 		when(repository.findById(1)).thenReturn(Optional.of(userTest1));
 
-		User result = userService.findUserById(id);
+		User result = userService.findUserById(1);
 
 		assertNotNull(result);
 		assertEquals(userTest1.getName(), result.getName());
@@ -76,23 +61,22 @@ class UserServiceTest {
 
 	@Test
 	void getUserByIdNotFound_test(){
-		int id=1234;
 		
-		when(repository.findById(id)).thenReturn((Optional.empty()));
+		when(repository.findById(1234)).thenReturn((Optional.empty()));
 		
 		EntityNotFoundException exception= 
 				assertThrows(
 						EntityNotFoundException.class, 
-						() -> {userService.findUserById(id);});
+						() -> {userService.findUserById(1234);});
 
-		assertEquals("Usuario con el id: "+id+" no encontrado", exception.getMessage());
+		assertEquals("Usuario con el id: "+1234+" no encontrado", exception.getMessage());
 
 	}
 
 
 	@Test
 	void getAllUsersByName_test(){
-		String name="Erna";
+		
 		List <User> userListTest1 = new ArrayList<>();
 		User userTest1 = new User();
 		userTest1.setId(1);
@@ -101,28 +85,27 @@ class UserServiceTest {
 
 		when(repository.findAllByName("Erna")).thenReturn((userListTest1));
 
-		List<User> result = userService.findAllByName(name);
+		List<User> result = userService.findAllByName("Erna");
 
 		assertNotNull(result);
 		assertEquals(userListTest1.get(0).getName(), result.get(0).getName());
 
-		verify(repository, times(1)).findAllByName(name);
+		verify(repository, times(1)).findAllByName("Erna");
 
 	}
 
 	@Test
 	void getAllUsersByNameNotFound_test(){
-		String name="Ernaaa";
 		List <User> userListTest1 = new ArrayList<>();
 		
-		when(repository.findAllByName(name)).thenReturn((userListTest1));
+		when(repository.findAllByName("Ernaaa")).thenReturn((userListTest1));
 		
 		EntityNotFoundException exception= 
 				assertThrows(
 						EntityNotFoundException.class, 
-						() -> {userService.findAllByName(name);});
+						() -> {userService.findAllByName("Ernaaa");});
 
-		assertEquals("Usuario con el nombre: "+name+" no encontrado", exception.getMessage());
+		assertEquals("Usuario con el nombre: "+"Ernaaa"+" no encontrado", exception.getMessage());
 
 	}
 	
@@ -143,7 +126,7 @@ class UserServiceTest {
 	
     @Test
     void testSaveAllUsers() {
-        // Arrange
+
         List<User> usersList = new ArrayList<>();
         usersList.add(new User("John", "Doe", null, null));
         usersList.add(new User("Jane", "Doe", null, null));
@@ -158,6 +141,7 @@ class UserServiceTest {
     
     @Test
     void testDeleteAllUsers() {
+    	
         UserService userService = new UserService(repository);
 
         userService.deleteAllUsers();
@@ -168,25 +152,24 @@ class UserServiceTest {
 
 	@Test
 	void deleteUserById_test(){
-		int id=1;
-		userService.deleteUserById(id);
+
+		userService.deleteUserById(1);
 
 		verify(repository, times(1)).deleteById(1);
 	}
 
 	@Test
 	void deleteUserByIdNotFound_test(){
-		int id=1234;
 
 		doThrow(EmptyResultDataAccessException.class)
-		.when(repository).deleteById(id);
+		.when(repository).deleteById(1234);
 
 		EntityNotFoundException exception= 
 				assertThrows(
 						EntityNotFoundException.class, 
-						() -> {userService.deleteUserById(id);});
+						() -> {userService.deleteUserById(1234);});
 
-		assertEquals("No se ha podido eliminar el usuario con el id: "+id+" de la base de datos", exception.getMessage());
+		assertEquals("No se ha podido eliminar el usuario con el id: "+1234+" de la base de datos", exception.getMessage());
 
 	}
 
@@ -283,25 +266,22 @@ class UserServiceTest {
 	void getUserByEmailBasic_test() {
 
 		User existingUser = new User("pedro@chapo.com", "Pedro", "Chapo", "calle falsa", "VISA");
-		String email = "pedro@chapo.com"; 
 
 		userService.createUser(existingUser);
-		when(repository.findByEmail(email)).thenReturn(existingUser);
+		when(repository.findByEmail("pedro@chapo.com")).thenReturn(existingUser);
 
-		User foundUser = userService.findUserByEmail(email);
+		User foundUser = userService.findUserByEmail("pedro@chapo.com");
 		assertThat(foundUser).isEqualTo(existingUser);
 	}
 
 	@Test
 	void getUserByEmailWithEmailNotFound_test() {
 
-		String email = "pedro@chapo.com"; 
+		when(repository.findByEmail("pedro@chapo.com")).thenReturn(null);
 
-		when(repository.findByEmail(email)).thenReturn(null);
-
-		assertThatThrownBy(()-> userService.findUserByEmail(email))
+		assertThatThrownBy(()-> userService.findUserByEmail("pedro@chapo.com"))
 		.isInstanceOf(ResponseStatusException.class)
-		.hasMessageContaining("User with email " + email + " not found");
+		.hasMessageContaining("User with email " + "pedro@chapo.com" + " not found");
 
 	}
 
