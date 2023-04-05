@@ -33,4 +33,4 @@ build/
 .vscode/
 
 ### LOGS ###
-*.log
+/MicroservicioTeamRubi/src/main/resources/*.log
