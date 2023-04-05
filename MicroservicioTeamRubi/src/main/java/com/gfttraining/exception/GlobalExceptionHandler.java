@@ -1,5 +1,6 @@
 package com.gfttraining.exception;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.server.ResponseStatusException;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,17 +30,17 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import com.gfttraining.UserMicroserviceApplication;
 import ch.qos.logback.classic.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 
-
+@Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-	private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(UserMicroserviceApplication.class);
 
 	@ExceptionHandler
 	public ResponseEntity<ExceptionResponse> handlerException(EntityNotFoundException exception,WebRequest req){
-		ExceptionResponse res = new ExceptionResponse(new Date(),exception.getMessage(),null);
+		ExceptionResponse res = new ExceptionResponse(LocalDate.now(), exception.getMessage(),null);
 
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.NOT_FOUND);
 	}; 
@@ -53,9 +54,9 @@ public class GlobalExceptionHandler {
 			errors.add(violation.getPropertyPath() + ": " + violation.getMessage());
 		}
 
-		ExceptionResponse res = new ExceptionResponse(new Date(),"constraint violation", errors);
+		ExceptionResponse res = new ExceptionResponse(LocalDate.now(),"constraint violation", errors);
 
-		LOGGER.error("createUser() -> " + errors.toString());
+		log.error("createUser() -> " + errors.toString());
 
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.BAD_REQUEST);
 	}
@@ -70,9 +71,9 @@ public class GlobalExceptionHandler {
 				.map(error -> error.getField() + ": " + error.getDefaultMessage())
 				.collect(Collectors.toList());
 
-		ExceptionResponse res = new ExceptionResponse(new Date(),"method argument not valid", errors);
+		ExceptionResponse res = new ExceptionResponse(LocalDate.now(),"method argument not valid", errors);
 
-		LOGGER.error("createUser() -> " + errors.toString());
+		log.error("createUser() -> " + errors.toString());
 
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.BAD_REQUEST);
 	}
@@ -83,9 +84,9 @@ public class GlobalExceptionHandler {
 
 		List<String> errors = new ArrayList<>(Collections.singletonList(ex.getMessage()));
 
-		ExceptionResponse res = new ExceptionResponse(new Date(),ex.getReason(), errors);
+		ExceptionResponse res = new ExceptionResponse(LocalDate.now(),ex.getReason(), errors);
 
-		LOGGER.error(ex.getReason());
+		log.error(ex.getReason());
 
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.NOT_FOUND);
 	}
@@ -94,9 +95,9 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(DuplicateEmailException.class)
 	public ResponseEntity<ExceptionResponse> handleDataIntegrityViolationException(DuplicateEmailException ex) {
 
-		ExceptionResponse res = new ExceptionResponse(ex.getMessage(), new Date());
+		ExceptionResponse res = new ExceptionResponse(ex.getMessage(), LocalDate.now());
 
-		LOGGER.error("email duplicated");
+		log.error("email duplicated");
 
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.CONFLICT);
 	}

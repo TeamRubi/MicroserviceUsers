@@ -14,7 +14,9 @@ import org.hibernate.annotations.Check;
 
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor
 @Data
 @Entity
 @Table(name="user")
@@ -45,6 +47,8 @@ public class User {
 	@Nullable
 	private int productId;*/
 
+
+
 	public User(String name, String lastname, String address, String paymentmethod) {
 		this.name = name;
 		this.lastname = lastname;
@@ -59,8 +63,6 @@ public class User {
 		this.address = address;
 		this.paymentmethod = paymentmethod;
 	}
-
-	public User() {}
 
 
 }
