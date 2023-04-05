@@ -24,7 +24,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.gfttraining.service.UserService;
-import com.gfttraining.user.User;
+import com.gfttraining.userEntity.UserEntity;
 
 @ExtendWith(MockitoExtension.class)
 class UserControllerTest {
@@ -38,10 +38,10 @@ class UserControllerTest {
 	@Test
 	void getAllUsers_test() throws Exception {
 
-		List<User> users = Arrays.asList(new User("Pedro", "Chapo", "Monzon", "VISA"));
+		List<UserEntity> users = Arrays.asList(new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA"));
 		when(userService.findAll()).thenReturn(users);
 
-		List<User> existingUsers = userController.getAllUsers();
+		List<UserEntity> existingUsers = userController.getAllUsers();
 		assertThat(existingUsers).containsAll(users);
 
 	}
@@ -90,9 +90,9 @@ class UserControllerTest {
 
 	@Test
 	void createUser_test() {
-		User user = new User("Pepito", "Perez", "calle falsa", "TRANSFERENCIA");
+		UserEntity user = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
 		when(userService.createUser(user)).thenReturn(user);
-		ResponseEntity<User> response = userController.createUser(user);
+		ResponseEntity<UserEntity> response = userController.createUser(user);
 
 		assertThat(user).isEqualTo(response.getBody());
 		assertThat(HttpStatus.CREATED).isEqualTo(response.getStatusCode());
@@ -102,11 +102,11 @@ class UserControllerTest {
 	@Test
 	void updateUserById_test() {
 
-		User user = new User("Pepito", "Perez", "calle falsa", "TRANSFERENCIA");
+		UserEntity user = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
 
 		when(userService.updateUserById(1, user)).thenReturn(user);
 
-		ResponseEntity<User> response = userController.updateUserById(1, user);
+		ResponseEntity<UserEntity> response = userController.updateUserById(1, user);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 		assertThat(response.getBody()).isEqualTo(user);
@@ -116,12 +116,12 @@ class UserControllerTest {
 	@Test
 	void getUserByEmail_test() {
 
-		User user = new User("pedro@chapo.com", "Pedro", "Chapo", "Monzon", "VISA");
+		UserEntity user = new UserEntity("pedro@chapo.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
 		String email = "pedro@chapo.com"; 
 
 		when(userService.findUserByEmail(email)).thenReturn(user);
 
-		ResponseEntity<User> response = userController.getUserByEmail(email);
+		ResponseEntity<UserEntity> response = userController.getUserByEmail(email);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody()).isEqualTo(user);

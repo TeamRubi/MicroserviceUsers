@@ -27,7 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.gfttraining.exception.DuplicateEmailException;
 import com.gfttraining.repository.UserRepository;
-import com.gfttraining.user.User;
+import com.gfttraining.userEntity.UserEntity;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -43,13 +43,13 @@ class UserServiceTest {
 	@Test
 	void getUserById_test(){
 
-		User userTest1= new User();
+		UserEntity userTest1= new UserEntity();
 		userTest1.setId(1);
 		userTest1.setName("Erna");
 
 		when(repository.findById(1)).thenReturn(Optional.of(userTest1));
 
-		User result = userService.findUserById(1);
+		UserEntity result = userService.findUserById(1);
 
 		assertNotNull(result);
 		assertEquals(userTest1.getName(), result.getName());
@@ -77,15 +77,15 @@ class UserServiceTest {
 	@Test
 	void getAllUsersByName_test(){
 		
-		List <User> userListTest1 = new ArrayList<>();
-		User userTest1 = new User();
+		List <UserEntity> userListTest1 = new ArrayList<>();
+		UserEntity userTest1 = new UserEntity();
 		userTest1.setId(1);
 		userTest1.setName("Erna");
 		userListTest1.add(userTest1);
 
 		when(repository.findAllByName("Erna")).thenReturn((userListTest1));
 
-		List<User> result = userService.findAllByName("Erna");
+		List<UserEntity> result = userService.findAllByName("Erna");
 
 		assertNotNull(result);
 		assertEquals(userListTest1.get(0).getName(), result.get(0).getName());
@@ -96,7 +96,7 @@ class UserServiceTest {
 
 	@Test
 	void getAllUsersByNameNotFound_test(){
-		List <User> userListTest1 = new ArrayList<>();
+		List <UserEntity> userListTest1 = new ArrayList<>();
 		
 		when(repository.findAllByName("Ernaaa")).thenReturn((userListTest1));
 		
@@ -111,15 +111,15 @@ class UserServiceTest {
 	
 	@Test
 	void getAllUsers() {
-        List<User> expectedUsers = new ArrayList<>();
-        expectedUsers.add(new User("John", "Doe", null, null));
-        expectedUsers.add(new User("Jane", "Doe", null, null));
+        List<UserEntity> expectedUsers = new ArrayList<>();
+        expectedUsers.add(new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA"));
+        expectedUsers.add(new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA"));
         
         when(repository.findAll()).thenReturn(expectedUsers);
 
         UserService userService = new UserService(repository);
 
-        List<User> actualUsers = userService.findAll();
+        List<UserEntity> actualUsers = userService.findAll();
 
         assertEquals(expectedUsers, actualUsers);
 	}
@@ -127,9 +127,9 @@ class UserServiceTest {
     @Test
     void testSaveAllUsers() {
 
-        List<User> usersList = new ArrayList<>();
-        usersList.add(new User("John", "Doe", null, null));
-        usersList.add(new User("Jane", "Doe", null, null));
+        List<UserEntity> usersList = new ArrayList<>();
+        usersList.add(new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA"));
+        usersList.add(new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA"));
 
         UserService userService = new UserService(repository);
 
@@ -175,25 +175,25 @@ class UserServiceTest {
 
 	@Test
 	void createUser_test() {
-		User user = new User("Pepito", "Perez", "calle falsa", "TRANSFERENCIA");
+		UserEntity user = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
 		when(repository.save(user)).thenReturn(user);
-		User createduser = userService.createUser(user);
+		UserEntity createduser = userService.createUser(user);
 		assertThat(user).isEqualTo(createduser);
 	}
 
 	@Test
 	void updateUserById_test() {
 
-		User existingUser = new User("Pepito", "Perez", "calle falsa", "TRANSFERENCIA");
+		UserEntity existingUser = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
 		existingUser.setId(1);
 
-		User updatedUser = new User();
+		UserEntity updatedUser = new UserEntity();
 		updatedUser.setName("Jose");
 
 		when(repository.findById(1)).thenReturn(Optional.of(existingUser));
 		when(repository.save(existingUser)).thenReturn(existingUser);
 
-		User result = userService.updateUserById(1, updatedUser);
+		UserEntity result = userService.updateUserById(1, updatedUser);
 
 		verify(repository, times(1)).findById(1);
 		verify(repository, times(1)).save(existingUser);
@@ -204,7 +204,7 @@ class UserServiceTest {
 	@Test
 	void updateUserByIdNoValidId_test() {
 
-		User existingUser = new User("Pepito", "Perez", "calle falsa", "TRANSFERENCIA");
+		UserEntity existingUser = new UserEntity("pepe@pepe.com","Pepito", "Perez", "calle falsa","SPAIN", "TRANSFERENCIA");
 
 		when(repository.findById(anyInt())).thenReturn(Optional.empty());
 
@@ -218,16 +218,16 @@ class UserServiceTest {
 	@Test
 	void updateUserByIdWithNullValues_test() {
 
-		User existingUser = new User("Pepito", "Perez", "calle falsa", "TRANSFERENCIA");
+		UserEntity existingUser = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa","SPAIN", "TRANSFERENCIA");
 		existingUser.setId(1);
 
-		User updatedUser = new User();
+		UserEntity updatedUser = new UserEntity();
 		updatedUser.setName("Jose");
 
 		when(repository.findById(1)).thenReturn(Optional.of(existingUser));
 		when(repository.save(existingUser)).thenReturn(existingUser);
 
-		User result = userService.updateUserById(1, updatedUser);
+		UserEntity result = userService.updateUserById(1, updatedUser);
 
 		assertThat(result.getLastname()).isNotEqualTo(null);
 
@@ -238,7 +238,7 @@ class UserServiceTest {
 	@Test
 	void createUserWithEmailThatAlreadyExists_test() {
 
-		User newUser = new User("repeatedemail@gmail.com","Pepito", "Perez", "calle falsa", "TRANSFERENCIA");
+		UserEntity newUser = new UserEntity("repeatedemail@gmail.com","Pepito", "Perez", "calle falsa","SPAIN", "TRANSFERENCIA");
 
 		when(repository.existsByEmail("repeatedemail@gmail.com")).thenReturn(true);
 
@@ -251,7 +251,7 @@ class UserServiceTest {
 	@Test
 	void updateUserByIdWithEmailThatAlreadyExists_test() {
 
-		Optional<User> newUser = Optional.of(new User("repeatedemail@gmail.com","Pepito", "Perez", "calle falsa", "TRANSFERENCIA"));
+		Optional<UserEntity> newUser = Optional.of(new UserEntity("repeatedemail@gmail.com","Pepito", "Perez", "calle falsa","SPAIN", "TRANSFERENCIA"));
 
 		when(repository.existsByEmail("repeatedemail@gmail.com")).thenReturn(true);
 		when(repository.findById(1)).thenReturn(newUser);
@@ -265,12 +265,12 @@ class UserServiceTest {
 	@Test
 	void getUserByEmailBasic_test() {
 
-		User existingUser = new User("pedro@chapo.com", "Pedro", "Chapo", "calle falsa", "VISA");
+		UserEntity existingUser = new UserEntity("pedro@chapo.com", "Pedro", "Chapo", "calle falsa","SPAIN", "VISA");
 
 		userService.createUser(existingUser);
 		when(repository.findByEmail("pedro@chapo.com")).thenReturn(existingUser);
 
-		User foundUser = userService.findUserByEmail("pedro@chapo.com");
+		UserEntity foundUser = userService.findUserByEmail("pedro@chapo.com");
 		assertThat(foundUser).isEqualTo(existingUser);
 	}
 

@@ -4,16 +4,16 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.gfttraining.user.User;
+import com.gfttraining.userEntity.UserEntity;
 
-public interface UserRepository extends JpaRepository<User, Integer>{
+public interface UserRepository extends JpaRepository<UserEntity, Integer>{
 
-	User findByName(String name);
+	UserEntity findByName(String name);
 
-	User findByEmail(String email);
+	UserEntity findByEmail(String email);
 
 	boolean existsByEmail(String email);
 
-	List<User> findAllByName(String name);
+	List<UserEntity> findAllByName(String name);
 
 }

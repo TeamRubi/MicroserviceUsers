@@ -4,33 +4,21 @@ import java.util.Optional;
 
 import javax.persistence.EntityNotFoundException;
 
-
-import org.slf4j.LoggerFactory;
-import org.modelmapper.Condition;
 import org.modelmapper.Conditions;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.convention.MatchingStrategies;
-import org.springframework.beans.BeanUtils;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-
 import com.gfttraining.exception.DuplicateEmailException;
-import com.gfttraining.UserMicroserviceApplication;
-
 import com.gfttraining.repository.UserRepository;
-import com.gfttraining.user.User;
+import com.gfttraining.userEntity.UserEntity;
 
-import ch.qos.logback.classic.Logger;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class UserService {
-
-	private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(UserMicroserviceApplication.class);
-
 
 	private UserRepository userRepository;
 
@@ -42,55 +30,55 @@ public class UserService {
 		modelMapper.getConfiguration().setPropertyCondition(Conditions.isNotNull());
 	}
 
-	public List<User> findAll(){
-		LOGGER.info("Findig all users");
+	public List<UserEntity> findAll(){
+		log.info("Findig all users");
 		return userRepository.findAll();
 	}
 
-	public User findUserById(Integer id){
-		Optional<User> user = userRepository.findById(id);
+	public UserEntity findUserById(Integer id){
+		Optional<UserEntity> user = userRepository.findById(id);
 		if(user.isEmpty()) {
-			LOGGER.error("findUserById() -> no such user with the ID: " + id);
+			log.error("findUserById() -> no such user with the ID: " + id);
 			throw new EntityNotFoundException("Usuario con el id: "+id+" no encontrado");
 		}
-		LOGGER.info("Found user by ID");
+		log.info("Found user by ID");
 		return user.get();
 	}
 
 
-	public List<User> findAllByName(String name){
-		List<User> users = userRepository.findAllByName(name);
+	public List<UserEntity> findAllByName(String name){
+		List<UserEntity> users = userRepository.findAllByName(name);
 		if(users.isEmpty()) {
-			LOGGER.error("findUserByName() -> no such user with the name: " + name);
+			log.error("findUserByName() -> no such user with the name: " + name);
 			throw new EntityNotFoundException("Usuario con el nombre: "+name+" no encontrado");
 		}
-		LOGGER.info("Found user by Name");
+		log.info("Found user by Name");
 		return users;
 
 
 	}
 
-	public void saveAllUsers(List<User> usersList) {
+	public void saveAllUsers(List<UserEntity> usersList) {
 		userRepository.saveAll(usersList);
-		LOGGER.info("Saved all users to DB");
+		log.info("Saved all users to DB");
 	}
 
 	public void deleteAllUsers() {
 		userRepository.deleteAll();
-		LOGGER.info("Deleted all users");
+		log.info("Deleted all users");
 	}
 
 	public void deleteUserById(Integer id) {
 		try {
 			userRepository.deleteById(id);
-			LOGGER.info("Deleted user by ID");
+			log.info("Deleted user by ID");
 		} catch(Exception e) {
-			LOGGER.error("deleteUserById() -> coud not delete user with the ID: " + id);
+			log.error("deleteUserById() -> coud not delete user with the ID: " + id);
 			throw new EntityNotFoundException("No se ha podido eliminar el usuario con el id: "+id+" de la base de datos");
 		}
 	}
 
-	public User createUser(User user) {
+	public UserEntity createUser(UserEntity user) {
 
 		String email = user.getEmail();
 
@@ -98,15 +86,15 @@ public class UserService {
 			throw new DuplicateEmailException("The email " + email + " is already in use");
 		}
 
-		LOGGER.info("user " + user.getName() + " created");
+		log.info("user " + user.getName() + " created");
 
 		return userRepository.save(user);
 
 	}
 
-	public User updateUserById(int id, User user) {
+	public UserEntity updateUserById(int id, UserEntity user) {
 
-		User existingUser = userRepository.findById(id)
+		UserEntity existingUser = userRepository.findById(id)
 				.orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
 		if(userRepository.existsByEmail(user.getEmail())) {
@@ -116,21 +104,21 @@ public class UserService {
 		user.setId(existingUser.getId());
 		modelMapper.map(user, existingUser);
 
-		LOGGER.info("Updated user with id " + id);
+		log.info("Updated user with id " + id);
 
 		return userRepository.save(existingUser);
 
 	}
 
-	public User findUserByEmail(String email){
+	public UserEntity findUserByEmail(String email){
 
-		Optional<User> user = Optional.ofNullable(userRepository.findByEmail(email));
+		Optional<UserEntity> user = Optional.ofNullable(userRepository.findByEmail(email));
 
 		if(user.isEmpty()) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User with email " + email + " not found");
 		}
 
-		LOGGER.info("Found user with email " + email);
+		log.info("Found user with email " + email);
 
 		return user.get();
 

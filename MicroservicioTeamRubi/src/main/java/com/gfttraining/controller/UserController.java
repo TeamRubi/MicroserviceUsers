@@ -1,40 +1,25 @@
 package com.gfttraining.controller;
 import java.util.List;
 
-import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.service.UserService;
-import com.gfttraining.user.User;
+import com.gfttraining.userEntity.UserEntity;
 
 @RestController
 public class UserController {
@@ -43,17 +28,17 @@ public class UserController {
 	private UserService userService;
 
 	@GetMapping("/users")
-	public List<User> getAllUsers(){
+	public List<UserEntity> getAllUsers(){
 		return userService.findAll();
 	}
 
 	@GetMapping("/users/{id}")
-	public User GetUserById(@PathVariable int id){
+	public UserEntity GetUserById(@PathVariable int id){
 		return userService.findUserById(id);
 	}
 
 	@GetMapping("/users/name/{name}")
-	public List<User> GetUserById(@PathVariable String name){
+	public List<UserEntity> GetUserById(@PathVariable String name){
 		return userService.findAllByName(name);
 	}
 
@@ -65,7 +50,7 @@ public class UserController {
 	}
 
 	@PostMapping("/users")
-	public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
+	public ResponseEntity<UserEntity> createUser(@Valid @RequestBody UserEntity user) {
 		return new ResponseEntity<>(userService.createUser(user), HttpStatus.CREATED);
 	}
 
@@ -74,7 +59,7 @@ public class UserController {
 		try {
 			deleteAllUsers();
 			ObjectMapper objectMapper = new ObjectMapper();
-			List<User> users = objectMapper.readValue(file.getBytes(), new TypeReference<List<User>>(){});
+			List<UserEntity> users = objectMapper.readValue(file.getBytes(), new TypeReference<List<UserEntity>>(){});
 			userService.saveAllUsers(users);
 			return new ResponseEntity<>(HttpStatus.CREATED);
 		} catch (Exception e) {
@@ -89,16 +74,16 @@ public class UserController {
 
 
 	@PutMapping("/users/{id}")
-	public ResponseEntity<User> updateUserById(@PathVariable int id, @RequestBody User user) {
+	public ResponseEntity<UserEntity> updateUserById(@PathVariable int id, @RequestBody UserEntity user) {
 
-		User updatedUser = userService.updateUserById(id,user);
-		return new ResponseEntity<User>(updatedUser, HttpStatus.CREATED);
+		UserEntity updatedUser = userService.updateUserById(id,user);
+		return new ResponseEntity<UserEntity>(updatedUser, HttpStatus.CREATED);
 	}
 
 	@GetMapping("/users/email/{email}")
-	public ResponseEntity<User> getUserByEmail(@PathVariable String email){
+	public ResponseEntity<UserEntity> getUserByEmail(@PathVariable String email){
 
-		return new ResponseEntity<User>(userService.findUserByEmail(email), HttpStatus.OK);
+		return new ResponseEntity<UserEntity>(userService.findUserByEmail(email), HttpStatus.OK);
 	}
 
 }

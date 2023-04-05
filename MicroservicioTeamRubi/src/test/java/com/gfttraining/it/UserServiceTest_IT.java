@@ -1,45 +1,21 @@
 package com.gfttraining.it;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-
-import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-
-import java.util.Arrays;
-import java.util.List;
-
-import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gfttraining.controller.UserController;
 import com.gfttraining.service.UserService;
-import com.gfttraining.user.User;
+import com.gfttraining.userEntity.UserEntity;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -56,7 +32,7 @@ class UserServiceTest_IT {
 	void createUserBasic_IT() throws Exception {
 
 		ObjectMapper objectMapper = new ObjectMapper();
-		User user = new User("example@gmail.com", "Pablo", "Perez", "Avinguda Diagonal 5", "VISA");
+		UserEntity user = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
 		String json = objectMapper.writeValueAsString(user);
 
 		mockMvc.perform(post("/users")
@@ -69,7 +45,7 @@ class UserServiceTest_IT {
 	void createUserWithoutRequiredFields_IT() throws Exception {
 
 		ObjectMapper objectMapper = new ObjectMapper();
-		User user = new User("Pablo", null, "Avinguda Diagonal 5", "VISA");
+		UserEntity user = new UserEntity("pepe@pepe.com", null, "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
 		String json = objectMapper.writeValueAsString(user);
 
 		mockMvc.perform(post("/users")
@@ -92,11 +68,11 @@ class UserServiceTest_IT {
 	void createUserWithRepeatedEmail_IT() throws Exception {
 
 		ObjectMapper objectMapper = new ObjectMapper();
-		User existingUser = new User("pabloperez@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5", "VISA");
+		UserEntity existingUser = new UserEntity("pabloperez@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5","SPAIN", "VISA");
 
 		userService.createUser(existingUser);
 
-		User user = new User("pabloperez@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5", "VISA");
+		UserEntity user = new UserEntity("pabloperez@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5","SPAIN", "VISA");
 		String json = objectMapper.writeValueAsString(user);
 
 		mockMvc.perform(post("/users")
@@ -109,11 +85,11 @@ class UserServiceTest_IT {
 	void updateUserByIdWithRepeatedEmail_IT() throws Exception {
 
 		ObjectMapper objectMapper = new ObjectMapper();
-		User existingUser = new User("pablo@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5", "VISA");
+		UserEntity existingUser = new UserEntity("pablo@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5","SPAIN", "VISA");
 
 		userService.updateUserById(1, existingUser);
 
-		User user = new User("pablo@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5", "VISA");
+		UserEntity user = new UserEntity("pablo@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5","SPAIN", "VISA");
 		String json = objectMapper.writeValueAsString(user);
 
 		mockMvc.perform(put("/users/2")

@@ -1,4 +1,4 @@
-package com.gfttraining.user;
+package com.gfttraining.userEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -7,11 +7,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-
-import org.hibernate.annotations.Check;
-
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Data
 @Entity
 @Table(name="user")
-public class User {
+public class UserEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,29 +36,21 @@ public class User {
 
 	@NotNull(message = "address cannot be null")
 	private String address;
+	
+	@NotNull(message = "country cannot be null")
+	private String country;
 
 	private String paymentmethod;
 
-	/*
-	@Nullable
-	private int productId;*/
-
-
-
-	public User(String name, String lastname, String address, String paymentmethod) {
-		this.name = name;
-		this.lastname = lastname;
-		this.address = address;
-		this.paymentmethod = paymentmethod;
-	}
-
-	public User(String email, String name, String lastname, String address, String paymentmethod) {
+	public UserEntity(String email,String name,String lastname,String address, String country, String paymentmethod) {
 		this.email = email;
 		this.name = name;
 		this.lastname = lastname;
 		this.address = address;
+		this.country = country;
 		this.paymentmethod = paymentmethod;
 	}
+
 
 
 }
