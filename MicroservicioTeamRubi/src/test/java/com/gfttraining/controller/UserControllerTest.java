@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -34,11 +35,18 @@ class UserControllerTest {
 
 	@InjectMocks
 	UserController userController;
-
+	
+	UserEntity userModel;
+	
+	@BeforeEach
+	public void createUser() {
+		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
+	}
+	
 	@Test
 	void getAllUsers_test() throws Exception {
 
-		List<UserEntity> users = Arrays.asList(new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA"));
+		List<UserEntity> users = Arrays.asList(userModel);
 		when(userService.findAll()).thenReturn(users);
 
 		List<UserEntity> existingUsers = userController.getAllUsers();
@@ -90,11 +98,11 @@ class UserControllerTest {
 
 	@Test
 	void createUser_test() {
-		UserEntity user = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
-		when(userService.createUser(user)).thenReturn(user);
-		ResponseEntity<UserEntity> response = userController.createUser(user);
 
-		assertThat(user).isEqualTo(response.getBody());
+		when(userService.createUser(userModel)).thenReturn(userModel);
+		ResponseEntity<UserEntity> response = userController.createUser(userModel);
+
+		assertThat(userModel).isEqualTo(response.getBody());
 		assertThat(HttpStatus.CREATED).isEqualTo(response.getStatusCode());
 	}
 
@@ -102,29 +110,26 @@ class UserControllerTest {
 	@Test
 	void updateUserById_test() {
 
-		UserEntity user = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
+		when(userService.updateUserById(1, userModel)).thenReturn(userModel);
 
-		when(userService.updateUserById(1, user)).thenReturn(user);
-
-		ResponseEntity<UserEntity> response = userController.updateUserById(1, user);
+		ResponseEntity<UserEntity> response = userController.updateUserById(1, userModel);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-		assertThat(response.getBody()).isEqualTo(user);
+		assertThat(response.getBody()).isEqualTo(userModel);
 
 	}
 
 	@Test
 	void getUserByEmail_test() {
 
-		UserEntity user = new UserEntity("pedro@chapo.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
 		String email = "pedro@chapo.com"; 
 
-		when(userService.findUserByEmail(email)).thenReturn(user);
+		when(userService.findUserByEmail(email)).thenReturn(userModel);
 
 		ResponseEntity<UserEntity> response = userController.getUserByEmail(email);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(response.getBody()).isEqualTo(user);
+		assertThat(response.getBody()).isEqualTo(userModel);
 
 	}
 
