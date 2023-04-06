@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -26,14 +27,20 @@ class UserServiceTest_IT {
 
 	@Autowired
 	UserService userService;
+	
+	UserEntity userModel;
+	
+	@BeforeEach
+	public void createUser() {
+		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
+	}
 
 
 	@Test 
 	void createUserBasic_IT() throws Exception {
 
 		ObjectMapper objectMapper = new ObjectMapper();
-		UserEntity user = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
-		String json = objectMapper.writeValueAsString(user);
+		String json = objectMapper.writeValueAsString(userModel);
 
 		mockMvc.perform(post("/users")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -45,8 +52,10 @@ class UserServiceTest_IT {
 	void createUserWithoutRequiredFields_IT() throws Exception {
 
 		ObjectMapper objectMapper = new ObjectMapper();
-		UserEntity user = new UserEntity("pepe@pepe.com", null, "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
-		String json = objectMapper.writeValueAsString(user);
+		
+		userModel.setAddress(null);
+		
+		String json = objectMapper.writeValueAsString(userModel);
 
 		mockMvc.perform(post("/users")
 				.contentType(MediaType.APPLICATION_JSON)
