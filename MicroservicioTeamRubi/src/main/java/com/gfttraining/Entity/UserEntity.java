@@ -1,4 +1,4 @@
-package com.gfttraining.userEntity;
+package com.gfttraining.Entity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
