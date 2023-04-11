@@ -5,6 +5,7 @@ import java.util.List;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.info.ProjectInfoProperties.Git;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,7 @@ import com.gfttraining.Entity.CartEntity;
 import com.gfttraining.Entity.ProductEntity;
 import com.gfttraining.Entity.UserEntity;
 import com.gfttraining.Entity.UserFidelity;
+import com.gfttraining.Entity.UserSpendingInfo;
 import com.gfttraining.service.UserService;
 
 @RestController
@@ -41,7 +43,54 @@ public class UserController {
 	}
 
 	@GetMapping("/users/{id}")
-	public UserEntity GetUserById(@PathVariable int id){
+	public UserSpendingInfo getUserInfoWithAvgSpent(@PathVariable int id){
+		
+		List<CartEntity> carts = getAllCartsWithStatusSubmitted(id);
+				
+		BigDecimal avgSpent = calculateAvgSpent(carts);
+		
+		UserEntity user = getUserById(id);
+		
+		//merge UserEntity info with avgSpent attribute
+		return new UserSpendingInfo(user, avgSpent);
+	}
+	
+//	Retrieve cart microservice info given UserId
+	public List<CartEntity> getAllCartsWithStatusSubmitted(int Id){
+		
+		String path = "http://localhost:8081/carts/user/" + Id;
+		RestTemplate restTemplate = new RestTemplate();
+		
+		ResponseEntity<List<CartEntity>> responseEntity = restTemplate.exchange(
+				  path,
+				  HttpMethod.GET,
+				  null,
+				  new ParameterizedTypeReference<List<CartEntity>>() {}
+				);
+
+		List<CartEntity> carts = responseEntity.getBody();
+				
+		return carts;
+	}
+	
+	public BigDecimal calculateAvgSpent(List<CartEntity> carts) {
+		
+		BigDecimal totalSpent = BigDecimal.ZERO;
+		int itemsBought = 0;
+				
+		for (CartEntity cartEntity : carts) {
+			List<ProductEntity> products = cartEntity.getProducts();
+			for (ProductEntity productEntity : products) {
+				totalSpent = totalSpent.add(productEntity.getPrice().multiply(BigDecimal.valueOf(productEntity.getQuantity())));
+				itemsBought++;
+			}
+		}
+		
+		return totalSpent.divide(BigDecimal.valueOf(itemsBought));
+		
+	}
+	
+	public UserEntity getUserById(int id) {
 		return userService.findUserById(id);
 	}
 
