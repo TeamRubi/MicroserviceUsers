@@ -10,9 +10,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.gfttraining.Entity.UserEntity;
 import com.gfttraining.exception.DuplicateEmailException;
 import com.gfttraining.repository.UserRepository;
-import com.gfttraining.userEntity.UserEntity;
 
 import lombok.extern.slf4j.Slf4j;
 

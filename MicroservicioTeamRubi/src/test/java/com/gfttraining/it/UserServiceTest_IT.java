@@ -14,8 +14,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gfttraining.Entity.UserEntity;
 import com.gfttraining.service.UserService;
-import com.gfttraining.userEntity.UserEntity;
 
 @SpringBootTest
 @AutoConfigureMockMvc

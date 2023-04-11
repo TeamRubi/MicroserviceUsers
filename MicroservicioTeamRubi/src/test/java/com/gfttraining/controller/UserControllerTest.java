@@ -23,8 +23,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.gfttraining.Entity.UserEntity;
 import com.gfttraining.service.UserService;
-import com.gfttraining.userEntity.UserEntity;
 
 @ExtendWith(MockitoExtension.class)
 class UserControllerTest {

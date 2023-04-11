@@ -25,9 +25,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.gfttraining.Entity.UserEntity;
 import com.gfttraining.exception.DuplicateEmailException;
 import com.gfttraining.repository.UserRepository;
-import com.gfttraining.userEntity.UserEntity;
 
 
 @ExtendWith(MockitoExtension.class)

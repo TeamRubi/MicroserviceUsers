@@ -1,9 +1,12 @@
 package com.gfttraining.controller;
+import java.math.BigDecimal;
 import java.util.List;
 
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,12 +17,16 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gfttraining.Entity.CartEntity;
+import com.gfttraining.Entity.ProductEntity;
+import com.gfttraining.Entity.UserEntity;
+import com.gfttraining.Entity.UserSpendingInfo;
 import com.gfttraining.service.UserService;
-import com.gfttraining.userEntity.UserEntity;
 
 @RestController
 public class UserController {
@@ -84,6 +91,49 @@ public class UserController {
 	public ResponseEntity<UserEntity> getUserByEmail(@PathVariable String email){
 
 		return new ResponseEntity<UserEntity>(userService.findUserByEmail(email), HttpStatus.OK);
+	}
+	
+	@GetMapping("/users/spent/{Id}")
+	public UserSpendingInfo getUserInfoWithAvgSpent(@PathVariable int Id) {
+		
+		List<CartEntity> carts = getAllCartsWithStatusSubmitted(Id);
+				
+		BigDecimal totalSpent = BigDecimal.ZERO;
+		int itemsBought = 0;
+				
+		for (CartEntity cartEntity : carts) {
+			List<ProductEntity> products = cartEntity.getProducts();
+			for (ProductEntity productEntity : products) {
+				totalSpent = totalSpent.add(productEntity.getPrice().multiply(BigDecimal.valueOf(productEntity.getQuantity())));
+				itemsBought++;
+			}
+		}
+				
+		BigDecimal avgSpent = totalSpent.divide(BigDecimal.valueOf(itemsBought));
+				
+		System.out.println(avgSpent);
+		
+		UserEntity user = userService.findUserById(Id);
+				
+		return new UserSpendingInfo(user, avgSpent);
+		
+	}
+	
+	public List<CartEntity> getAllCartsWithStatusSubmitted(int Id){
+		
+		String path = "http://localhost:8081/carts/user/" + Id;
+		RestTemplate restTemplate = new RestTemplate();
+		
+		ResponseEntity<List<CartEntity>> responseEntity = restTemplate.exchange(
+				  path,
+				  HttpMethod.GET,
+				  null,
+				  new ParameterizedTypeReference<List<CartEntity>>() {}
+				);
+
+		List<CartEntity> carts = responseEntity.getBody();
+				
+		return carts;
 	}
 
 }

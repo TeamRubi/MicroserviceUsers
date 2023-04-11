@@ -15,9 +15,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
+import com.gfttraining.Entity.UserEntity;
 import com.gfttraining.controller.UserController;
 import com.gfttraining.service.UserService;
-import com.gfttraining.userEntity.UserEntity;
 
 @WebMvcTest(UserController.class) 
 class UserControllerTest {
