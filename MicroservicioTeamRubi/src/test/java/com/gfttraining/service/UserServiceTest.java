@@ -17,6 +17,8 @@ import java.util.Optional;
 
 import javax.persistence.EntityNotFoundException;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -38,21 +40,27 @@ class UserServiceTest {
 
 	@Mock
 	private UserRepository repository;
+	
+	UserEntity userModel;
+	
+	@BeforeEach
+	public void createUser() {
+		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
+	}
 
 
 	@Test
 	void getUserById_test(){
 
-		UserEntity userTest1= new UserEntity();
-		userTest1.setId(1);
-		userTest1.setName("Erna");
+		userModel.setId(1);
+		userModel.setName("Erna");
 
-		when(repository.findById(1)).thenReturn(Optional.of(userTest1));
+		when(repository.findById(1)).thenReturn(Optional.of(userModel));
 
 		UserEntity result = userService.findUserById(1);
 
 		assertNotNull(result);
-		assertEquals(userTest1.getName(), result.getName());
+		assertEquals(userModel.getName(), result.getName());
 
 		verify(repository, times(1)).findById(1);
 
@@ -112,8 +120,8 @@ class UserServiceTest {
 	@Test
 	void getAllUsers() {
         List<UserEntity> expectedUsers = new ArrayList<>();
-        expectedUsers.add(new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA"));
-        expectedUsers.add(new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA"));
+        expectedUsers.add(userModel);
+        expectedUsers.add(userModel);
         
         when(repository.findAll()).thenReturn(expectedUsers);
 
@@ -128,8 +136,8 @@ class UserServiceTest {
     void testSaveAllUsers() {
 
         List<UserEntity> usersList = new ArrayList<>();
-        usersList.add(new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA"));
-        usersList.add(new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA"));
+        usersList.add(userModel);
+        usersList.add(userModel);
 
         UserService userService = new UserService(repository);
 
@@ -175,28 +183,26 @@ class UserServiceTest {
 
 	@Test
 	void createUser_test() {
-		UserEntity user = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
-		when(repository.save(user)).thenReturn(user);
-		UserEntity createduser = userService.createUser(user);
-		assertThat(user).isEqualTo(createduser);
+		when(repository.save(userModel)).thenReturn(userModel);
+		UserEntity createduser = userService.createUser(userModel);
+		assertThat(userModel).isEqualTo(createduser);
 	}
 
 	@Test
 	void updateUserById_test() {
 
-		UserEntity existingUser = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
-		existingUser.setId(1);
+		userModel.setId(1);
 
 		UserEntity updatedUser = new UserEntity();
 		updatedUser.setName("Jose");
 
-		when(repository.findById(1)).thenReturn(Optional.of(existingUser));
-		when(repository.save(existingUser)).thenReturn(existingUser);
+		when(repository.findById(1)).thenReturn(Optional.of(userModel));
+		when(repository.save(userModel)).thenReturn(userModel);
 
 		UserEntity result = userService.updateUserById(1, updatedUser);
 
 		verify(repository, times(1)).findById(1);
-		verify(repository, times(1)).save(existingUser);
+		verify(repository, times(1)).save(userModel);
 		assertThat(updatedUser.getName()).isEqualTo(result.getName());
 
 	}
@@ -204,11 +210,9 @@ class UserServiceTest {
 	@Test
 	void updateUserByIdNoValidId_test() {
 
-		UserEntity existingUser = new UserEntity("pepe@pepe.com","Pepito", "Perez", "calle falsa","SPAIN", "TRANSFERENCIA");
-
 		when(repository.findById(anyInt())).thenReturn(Optional.empty());
 
-		assertThatThrownBy(()-> userService.updateUserById(anyInt(), existingUser))
+		assertThatThrownBy(()-> userService.updateUserById(anyInt(), userModel))
 		.isInstanceOf(ResponseStatusException.class)
 		.hasMessageContaining("User not found");
 
@@ -218,14 +222,13 @@ class UserServiceTest {
 	@Test
 	void updateUserByIdWithNullValues_test() {
 
-		UserEntity existingUser = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa","SPAIN", "TRANSFERENCIA");
-		existingUser.setId(1);
+		userModel.setId(1);
 
 		UserEntity updatedUser = new UserEntity();
 		updatedUser.setName("Jose");
 
-		when(repository.findById(1)).thenReturn(Optional.of(existingUser));
-		when(repository.save(existingUser)).thenReturn(existingUser);
+		when(repository.findById(1)).thenReturn(Optional.of(userModel));
+		when(repository.save(userModel)).thenReturn(userModel);
 
 		UserEntity result = userService.updateUserById(1, updatedUser);
 
@@ -238,22 +241,20 @@ class UserServiceTest {
 	@Test
 	void createUserWithEmailThatAlreadyExists_test() {
 
-		UserEntity newUser = new UserEntity("repeatedemail@gmail.com","Pepito", "Perez", "calle falsa","SPAIN", "TRANSFERENCIA");
+		when(repository.existsByEmail("pepe@pepe.com")).thenReturn(true);
 
-		when(repository.existsByEmail("repeatedemail@gmail.com")).thenReturn(true);
-
-		assertThatThrownBy(()-> userService.createUser(newUser))
+		assertThatThrownBy(()-> userService.createUser(userModel))
 		.isInstanceOf(DuplicateEmailException.class)
-		.hasMessageContaining("email " + newUser.getEmail() + " is already in use");
+		.hasMessageContaining("email " + userModel.getEmail() + " is already in use");
 
 	}
 
 	@Test
 	void updateUserByIdWithEmailThatAlreadyExists_test() {
 
-		Optional<UserEntity> newUser = Optional.of(new UserEntity("repeatedemail@gmail.com","Pepito", "Perez", "calle falsa","SPAIN", "TRANSFERENCIA"));
+		Optional<UserEntity> newUser = Optional.of(userModel);
 
-		when(repository.existsByEmail("repeatedemail@gmail.com")).thenReturn(true);
+		when(repository.existsByEmail("pepe@pepe.com")).thenReturn(true);
 		when(repository.findById(1)).thenReturn(newUser);
 
 		assertThatThrownBy(()-> userService.updateUserById(1, newUser.get()))
@@ -263,25 +264,25 @@ class UserServiceTest {
 	}
 
 	@Test
+	@DisplayName("Given a user email, Then returns a user, When the emails match")
 	void getUserByEmailBasic_test() {
 
-		UserEntity existingUser = new UserEntity("pedro@chapo.com", "Pedro", "Chapo", "calle falsa","SPAIN", "VISA");
+		userService.createUser(userModel);
+		when(repository.findByEmail("pepe@pepe.com")).thenReturn(userModel);
 
-		userService.createUser(existingUser);
-		when(repository.findByEmail("pedro@chapo.com")).thenReturn(existingUser);
-
-		UserEntity foundUser = userService.findUserByEmail("pedro@chapo.com");
-		assertThat(foundUser).isEqualTo(existingUser);
+		UserEntity foundUser = userService.findUserByEmail("pepe@pepe.com");
+		assertThat(foundUser).isEqualTo(userModel);
 	}
 
 	@Test
+	@DisplayName("Given a user email, Then throws exception, When the emails are repeated")
 	void getUserByEmailWithEmailNotFound_test() {
 
-		when(repository.findByEmail("pedro@chapo.com")).thenReturn(null);
+		when(repository.findByEmail("pepe@pepe.com")).thenReturn(null);
 
-		assertThatThrownBy(()-> userService.findUserByEmail("pedro@chapo.com"))
+		assertThatThrownBy(()-> userService.findUserByEmail("pepe@pepe.com"))
 		.isInstanceOf(ResponseStatusException.class)
-		.hasMessageContaining("User with email " + "pedro@chapo.com" + " not found");
+		.hasMessageContaining("User with email " + "pepe@pepe.com" + " not found");
 
 	}
 

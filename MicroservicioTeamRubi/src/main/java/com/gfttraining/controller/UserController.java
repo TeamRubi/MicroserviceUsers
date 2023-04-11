@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.Entity.CartEntity;
 import com.gfttraining.Entity.ProductEntity;
 import com.gfttraining.Entity.UserEntity;
+import com.gfttraining.Entity.UserFidelity;
 import com.gfttraining.Entity.UserSpendingInfo;
 import com.gfttraining.service.UserService;
 
@@ -34,7 +35,8 @@ public class UserController {
 
 	@Autowired
 	private UserService userService;
-
+	
+	
 	@GetMapping("/users")
 	public List<UserEntity> getAllUsers(){
 		return userService.findAll();
@@ -140,5 +142,62 @@ public class UserController {
 
 		return new ResponseEntity<UserEntity>(userService.findUserByEmail(email), HttpStatus.OK);
 	}
+	
+	
+	
+	@GetMapping("/users/points/{id}")
+	public UserFidelity getPointsFidelity(@PathVariable int id) {
+		
+		List<CartEntity> carts = getCartsForUser(id);
+		int points = 0;
+		points = getPoints(carts,0);
+		
+		UserEntity user = userService.findUserById(id);
+		
+		return new UserFidelity(user, points);
+
+	}
+	
+
+	public List<CartEntity> getCartsForUser(int id){
+		
+		RestTemplate restTemplate = new RestTemplate();
+		
+		
+	    ResponseEntity<List<CartEntity>> response = restTemplate.exchange(
+	        "http://localhost:8081/carts/user/"+id,
+	        HttpMethod.GET,
+	        null,
+	        new ParameterizedTypeReference<List<CartEntity>>() {});
+	     
+	    	List<CartEntity> cartEntity = response.getBody();
+	    	return cartEntity;
+		 }
+
+	public Integer getPoints(List<CartEntity> carts, int points) {
+		if (!carts.isEmpty()) {
+			for (CartEntity cartEntity : carts) {
+				List<ProductEntity> products = cartEntity.getProducts();
+				for (ProductEntity productEntity : products) {
+					BigDecimal sumSpent =productEntity.getPrice().multiply(BigDecimal.valueOf(productEntity.getQuantity()));
+					if (sumSpent.compareTo(new BigDecimal("20")) >= 0 && sumSpent.compareTo(new BigDecimal("29.99")) <= 0) {
+					    points +=1;
+					}
+					else if (sumSpent.compareTo(new BigDecimal("30")) >= 0 && sumSpent.compareTo(new BigDecimal("49.99")) <= 0) {
+						points +=3;
+					}
+					else if (sumSpent.compareTo(new BigDecimal("50")) >= 0 && sumSpent.compareTo(new BigDecimal("99.99")) <= 0) {
+						points +=5;    
+					}
+					else if (sumSpent.compareTo(new BigDecimal("100")) >= 0 ) {
+						points +=10;
+					}
+				}
+				
+			}
+		}
+		return points;
+	}
+	
 
 }
