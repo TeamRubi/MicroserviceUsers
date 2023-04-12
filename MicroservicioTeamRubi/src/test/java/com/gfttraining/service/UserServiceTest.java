@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -25,35 +26,47 @@ import java.util.Optional;
 
 import javax.persistence.EntityNotFoundException;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.gfttraining.controller.UserController;
+import com.gfttraining.entity.FavoriteProduct;
+import com.gfttraining.entity.User;
 import com.gfttraining.exception.DuplicateEmailException;
+import com.gfttraining.exception.DuplicateFavoriteException;
+import com.gfttraining.repository.FavoriteRepository;
 import com.gfttraining.repository.UserRepository;
-import com.gfttraining.user.User;
 
 
+@SpringBootTest
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
 	@InjectMocks
+	@Autowired
 	private UserService userService;
 
 	@Mock
 	private UserRepository repository;
 
+	@Mock
+	private FavoriteRepository favoriteRepository;
 
 	@Test
 	void getUserById_test(){
@@ -77,9 +90,9 @@ class UserServiceTest {
 	@Test
 	void getUserByIdNotFound_test(){
 		int id=1234;
-		
+
 		when(repository.findById(id)).thenReturn((Optional.empty()));
-		
+
 		EntityNotFoundException exception= 
 				assertThrows(
 						EntityNotFoundException.class, 
@@ -114,9 +127,9 @@ class UserServiceTest {
 	void getAllUsersByNameNotFound_test(){
 		String name="Ernaaa";
 		List <User> userListTest1 = new ArrayList<>();
-		
+
 		when(repository.findAllByName(name)).thenReturn((userListTest1));
-		
+
 		EntityNotFoundException exception= 
 				assertThrows(
 						EntityNotFoundException.class, 
@@ -215,7 +228,7 @@ class UserServiceTest {
 	@Test
 	void createUserWithEmailThatAlreadyExists_test() {
 
-		User newUser = new User("repeatedemail@gmail.com","Pepito", "Perez", "calle falsa", "TRANSFERENCIA");
+		User newUser = new User("repeatedemail@gmail.com","Pepito", "Perez", "calle falsa");
 
 		when(repository.existsByEmail("repeatedemail@gmail.com")).thenReturn(true);
 
@@ -228,7 +241,7 @@ class UserServiceTest {
 	@Test
 	void updateUserByIdWithEmailThatAlreadyExists_test() {
 
-		Optional<User> newUser = Optional.of(new User("repeatedemail@gmail.com","Pepito", "Perez", "calle falsa", "TRANSFERENCIA"));
+		Optional<User> newUser = Optional.of(new User("repeatedemail@gmail.com","Pepito", "Perez", "calle falsa"));
 
 		when(repository.existsByEmail("repeatedemail@gmail.com")).thenReturn(true);
 		when(repository.findById(1)).thenReturn(newUser);
@@ -242,7 +255,7 @@ class UserServiceTest {
 	@Test
 	void getUserByEmailBasic_test() {
 
-		User existingUser = new User("pedro@chapo.com", "Pedro", "Chapo", "calle falsa", "VISA");
+		User existingUser = new User("pedro@chapo.com", "Pedro", "Chapo", "calle falsa");
 		String email = "pedro@chapo.com"; 
 
 		userService.createUser(existingUser);
@@ -264,5 +277,56 @@ class UserServiceTest {
 		.hasMessageContaining("User with email " + email + " not found");
 
 	}
+
+	@Test
+	void addFavoriteProduct_test() {
+
+		FavoriteProduct favorite = new FavoriteProduct(1,5);
+		User existingUser = new User("pablo@chapo.com", "pablo","chapo","calle falsa");
+
+		existingUser.addFavorite(favorite);
+
+		when(repository.findById(anyInt())).thenReturn(Optional.of(existingUser));
+
+		when(favoriteRepository.save(any(FavoriteProduct.class))).thenReturn(favorite);
+
+		User user = userService.addFavoriteProduct(1, 5);
+
+		assertThat(user).isEqualTo(existingUser);
+		verify(favoriteRepository, atLeastOnce()).save(favorite);
+		verify(repository, atLeastOnce()).findById(1);
+
+	}
+
+	@Test
+	void addFavoriteProductWithNotExistingUser_test() {
+
+		int userId = 600;
+		when(repository.findById(anyInt())).thenReturn(Optional.empty());
+
+		assertThatThrownBy(()-> userService.addFavoriteProduct(userId,5))
+		.isInstanceOf(ResponseStatusException.class)
+		.hasMessageContaining("User with id " + userId + " not found");
+	}
+
+
+	@Test
+	void addFavoriteProductWithExistingFavorite_test() {
+
+		int userId = 60;
+		int productId = 50;
+		User existingUser = new User("pablo@chapo.com", "pablo","chapo","calle falsa");
+
+		when(repository.findById(anyInt())).thenReturn(Optional.of(existingUser));
+
+		when(favoriteRepository.save(any(FavoriteProduct.class)))
+		.thenThrow(new DataIntegrityViolationException("error"));
+
+		assertThatThrownBy(()-> userService.addFavoriteProduct(userId,productId))
+		.isInstanceOf(DuplicateFavoriteException.class)
+		.hasMessageContaining("Product with id " + productId + " is already favorite for user with id " + userId);
+
+	}
+
 
 }

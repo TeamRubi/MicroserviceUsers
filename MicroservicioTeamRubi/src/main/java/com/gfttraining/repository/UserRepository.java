@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.gfttraining.user.User;
+import com.gfttraining.entity.User;
 
 public interface UserRepository extends JpaRepository<User, Integer>{
 
