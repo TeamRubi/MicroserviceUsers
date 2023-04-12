@@ -10,6 +10,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,11 @@ import com.gfttraining.Entity.CartEntity;
 import com.gfttraining.Entity.ProductEntity;
 import com.gfttraining.Entity.UserEntity;
 import com.gfttraining.exception.DuplicateEmailException;
+import com.gfttraining.exception.DuplicateFavoriteException;
+import com.gfttraining.UserMicroserviceApplication;
+import com.gfttraining.entity.FavoriteProduct;
+import com.gfttraining.entity.User;
+import com.gfttraining.repository.FavoriteRepository;
 import com.gfttraining.repository.UserRepository;
 
 import lombok.extern.slf4j.Slf4j;
@@ -32,15 +38,18 @@ public class UserService {
 
 	private UserRepository userRepository;
 
+	private FavoriteRepository favoriteRepository;
+
 	private ModelMapper modelMapper;
 	
 	@Autowired
 	private Mapper mapper;
 
-	public UserService(UserRepository userRepository) {
+	@Autowired
+	public UserService(UserRepository userRepository, FavoriteRepository favoriteRepository, ModelMapper modelMapper) {
 		this.userRepository = userRepository;
-		this.modelMapper = new ModelMapper();
-		modelMapper.getConfiguration().setPropertyCondition(Conditions.isNotNull());
+		this.favoriteRepository = favoriteRepository;
+		this.modelMapper = modelMapper;
 	}
 
 	public List<UserEntity> findAll(){
@@ -113,8 +122,13 @@ public class UserService {
 		if(userRepository.existsByEmail(user.getEmail())) {
 			throw new DuplicateEmailException("The email " + user.getEmail() + " is already in use");
 		}
-
 		user.setId(existingUser.getId());
+
+		System.out.println(existingUser);
+		System.out.println(user);
+
+		System.out.println(modelMapper);
+
 		modelMapper.map(user, existingUser);
 
 		log.info("Updated user with id " + id);
@@ -207,5 +221,22 @@ public class UserService {
 		}
 		return points;
 	}
+	public User addFavoriteProduct(int userId, int productId) {
+
+		User existingUser = userRepository.findById(userId)
+				.orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User with id " + userId + " not found"));
+
+		FavoriteProduct favorite = new FavoriteProduct(userId, productId);
+
+		try {
+			favoriteRepository.save(favorite);
+		} catch(DataIntegrityViolationException ex) {
+			throw new DuplicateFavoriteException("Product with id " + productId + " is already favorite for user with id " + userId);
+		}
+
+		return existingUser;
+	}
+
+
 
 }

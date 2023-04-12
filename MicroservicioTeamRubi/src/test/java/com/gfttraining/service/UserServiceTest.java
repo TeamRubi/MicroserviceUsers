@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -28,14 +30,33 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.gfttraining.Entity.UserEntity;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.gfttraining.controller.UserController;
+import com.gfttraining.entity.FavoriteProduct;
+import com.gfttraining.entity.User;
 import com.gfttraining.exception.DuplicateEmailException;
+import com.gfttraining.exception.DuplicateFavoriteException;
+import com.gfttraining.repository.FavoriteRepository;
 import com.gfttraining.repository.UserRepository;
 
 
+@SpringBootTest
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
 	@InjectMocks
+	@Autowired
 	private UserService userService;
 
 	@Mock
@@ -48,6 +69,8 @@ class UserServiceTest {
 		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
 	}
 
+	@Mock
+	private FavoriteRepository favoriteRepository;
 
 	@Test
 	void getUserById_test(){
@@ -285,5 +308,56 @@ class UserServiceTest {
 		.hasMessageContaining("User with email " + "pepe@pepe.com" + " not found");
 
 	}
+
+	@Test
+	void addFavoriteProduct_test() {
+
+		FavoriteProduct favorite = new FavoriteProduct(1,5);
+		User existingUser = new User("pablo@chapo.com", "pablo","chapo","calle falsa");
+
+		existingUser.addFavorite(favorite);
+
+		when(repository.findById(anyInt())).thenReturn(Optional.of(existingUser));
+
+		when(favoriteRepository.save(any(FavoriteProduct.class))).thenReturn(favorite);
+
+		User user = userService.addFavoriteProduct(1, 5);
+
+		assertThat(user).isEqualTo(existingUser);
+		verify(favoriteRepository, atLeastOnce()).save(favorite);
+		verify(repository, atLeastOnce()).findById(1);
+
+	}
+
+	@Test
+	void addFavoriteProductWithNotExistingUser_test() {
+
+		int userId = 600;
+		when(repository.findById(anyInt())).thenReturn(Optional.empty());
+
+		assertThatThrownBy(()-> userService.addFavoriteProduct(userId,5))
+		.isInstanceOf(ResponseStatusException.class)
+		.hasMessageContaining("User with id " + userId + " not found");
+	}
+
+
+	@Test
+	void addFavoriteProductWithExistingFavorite_test() {
+
+		int userId = 60;
+		int productId = 50;
+		User existingUser = new User("pablo@chapo.com", "pablo","chapo","calle falsa");
+
+		when(repository.findById(anyInt())).thenReturn(Optional.of(existingUser));
+
+		when(favoriteRepository.save(any(FavoriteProduct.class)))
+		.thenThrow(new DataIntegrityViolationException("error"));
+
+		assertThatThrownBy(()-> userService.addFavoriteProduct(userId,productId))
+		.isInstanceOf(DuplicateFavoriteException.class)
+		.hasMessageContaining("Product with id " + productId + " is already favorite for user with id " + userId);
+
+	}
+
 
 }
