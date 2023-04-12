@@ -1,12 +1,9 @@
 package com.gfttraining.controller;
-import java.math.BigDecimal;
 import java.util.List;
 
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,15 +14,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gfttraining.DTO.Mapper;
 import com.gfttraining.DTO.UserEntityDTO;
-import com.gfttraining.Entity.CartEntity;
-import com.gfttraining.Entity.ProductEntity;
 import com.gfttraining.Entity.UserEntity;
 import com.gfttraining.service.UserService;
 
@@ -34,9 +27,6 @@ public class UserController {
 
 	@Autowired
 	private UserService userService;
-	
-	@Autowired
-	private Mapper mapper;
 	
 	@GetMapping("/users")
 	public List<UserEntity> getAllUsers(){
@@ -89,83 +79,10 @@ public class UserController {
 
 		return new ResponseEntity<UserEntity>(userService.findUserByEmail(email), HttpStatus.OK);
 	}
-
-	public Integer getPoints(List<CartEntity> carts, int points) {
-		if (!carts.isEmpty()) {
-			for (CartEntity cartEntity : carts) {
-				List<ProductEntity> products = cartEntity.getProducts();
-				for (ProductEntity productEntity : products) {
-					BigDecimal sumSpent =productEntity.getPrice().multiply(BigDecimal.valueOf(productEntity.getQuantity()));
-					if (sumSpent.compareTo(new BigDecimal("20")) >= 0 && sumSpent.compareTo(new BigDecimal("29.99")) <= 0) {
-					    points +=1;
-					}
-					else if (sumSpent.compareTo(new BigDecimal("30")) >= 0 && sumSpent.compareTo(new BigDecimal("49.99")) <= 0) {
-						points +=3;
-					}
-					else if (sumSpent.compareTo(new BigDecimal("50")) >= 0 && sumSpent.compareTo(new BigDecimal("99.99")) <= 0) {
-						points +=5;    
-					}
-					else if (sumSpent.compareTo(new BigDecimal("100")) >= 0 ) {
-						points +=10;
-					}
-				}
-				
-			}
-		}
-		return points;
-	}
 	
 	@GetMapping("/users/{id}")
-	public UserEntityDTO getUserInfoWithAvgSpent(@PathVariable int id){
-		
-		List<CartEntity> carts = getAllCartsWithStatusSubmitted(id);
-				
-		BigDecimal avgSpent = calculateAvgSpent(carts);
-		
-		UserEntity user = getUserById(id);
-		
-		int points = 0;
-		
-		points = getPoints(carts, 0);
-		
-		//merge UserEntity info with avgSpent attribute
-		return mapper.toUserWithAvgSpent(user, avgSpent, points);
-	}
-	
-//	Retrieve cart microservice info given UserId
-	public List<CartEntity> getAllCartsWithStatusSubmitted(int Id){
-		
-		String path = "http://localhost:8081/carts/user/" + Id;
-		RestTemplate restTemplate = new RestTemplate();
-		
-		ResponseEntity<List<CartEntity>> responseEntity = restTemplate.exchange(
-				  path,
-				  HttpMethod.GET,
-				  null,
-				  new ParameterizedTypeReference<List<CartEntity>>() {}
-				);
-
-		List<CartEntity> carts = responseEntity.getBody();
-				
-		return carts;
-	}
-	
-	public BigDecimal calculateAvgSpent(List<CartEntity> carts) {
-		
-		BigDecimal totalSpent = BigDecimal.ZERO;
-		int itemsBought = 0;
-				
-		for (CartEntity cartEntity : carts) {
-			List<ProductEntity> products = cartEntity.getProducts();
-			for (ProductEntity productEntity : products) {
-				totalSpent = totalSpent.add(productEntity.getPrice().multiply(BigDecimal.valueOf(productEntity.getQuantity())));
-				itemsBought++;
-			}
-		}
-		if (totalSpent != BigDecimal.valueOf(0)) {
-			return totalSpent.divide(BigDecimal.valueOf(itemsBought));
-		}
-		return BigDecimal.valueOf(0);
+	public UserEntityDTO getUserWithAvgSpentAndFidelityPoints(@PathVariable int id) {
+		return userService.getUserWithAvgSpentAndFidelityPoints(id);
 	}
 	
 	public UserEntity getUserById(int id) {

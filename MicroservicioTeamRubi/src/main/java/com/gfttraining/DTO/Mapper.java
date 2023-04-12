@@ -16,7 +16,7 @@ public class Mapper {
 		this.mapper = new ModelMapper();
 	}
 	
-	public UserEntityDTO toUserWithAvgSpent(UserEntity user, BigDecimal spent, int points) {
+	public UserEntityDTO toUserWithAvgSpentAndFidelityPoints(UserEntity user, BigDecimal spent, int points) {
 		UserEntityDTO userDTO = mapper.map(user, UserEntityDTO.class);
 		userDTO.setAverageSpent(spent);
 		userDTO.setPoints(points);

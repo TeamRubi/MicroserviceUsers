@@ -1,14 +1,8 @@
 package com.gfttraining.exception;
 
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.List;
 
-import org.slf4j.LoggerFactory;
-
-import com.gfttraining.UserMicroserviceApplication;
-
-import ch.qos.logback.classic.Logger;
 import lombok.Data;
 
 

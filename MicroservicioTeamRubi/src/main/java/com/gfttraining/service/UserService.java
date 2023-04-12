@@ -1,4 +1,5 @@
 package com.gfttraining.service;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -6,10 +7,19 @@ import javax.persistence.EntityNotFoundException;
 
 import org.modelmapper.Conditions;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.gfttraining.DTO.Mapper;
+import com.gfttraining.DTO.UserEntityDTO;
+import com.gfttraining.Entity.CartEntity;
+import com.gfttraining.Entity.ProductEntity;
 import com.gfttraining.Entity.UserEntity;
 import com.gfttraining.exception.DuplicateEmailException;
 import com.gfttraining.repository.UserRepository;
@@ -23,6 +33,9 @@ public class UserService {
 	private UserRepository userRepository;
 
 	private ModelMapper modelMapper;
+	
+	@Autowired
+	private Mapper mapper;
 
 	public UserService(UserRepository userRepository) {
 		this.userRepository = userRepository;
@@ -123,7 +136,76 @@ public class UserService {
 		return user.get();
 
 	}
+	
+	public UserEntityDTO getUserWithAvgSpentAndFidelityPoints(int id){
+		
+		List<CartEntity> carts = getAllCartsWithStatusSubmitted(id);
 
-
+		return mapper.toUserWithAvgSpentAndFidelityPoints(findUserById(id), calculateAvgSpent(carts), getPoints(carts));
+	}
+	
+	public List<CartEntity> getAllCartsWithStatusSubmitted(int Id){
+		
+		String path = "http://localhost:8081/carts/user/" + Id;
+		RestTemplate restTemplate = new RestTemplate();
+		try {
+			ResponseEntity<List<CartEntity>> responseEntity = restTemplate.exchange(
+				  path,
+				  HttpMethod.GET,
+				  null,
+				  new ParameterizedTypeReference<List<CartEntity>>() {}
+				);
+			List<CartEntity> carts = responseEntity.getBody();
+			log.info("Carts retrieved from the Cart microservice");
+			return carts;
+		} catch (Exception e) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Couldn't connect with the Cart microservice");
+		}
+			
+	}
+	
+	public BigDecimal calculateAvgSpent(List<CartEntity> carts) {
+		
+		BigDecimal totalSpent = BigDecimal.ZERO;
+		int itemsBought = 0;
+				
+		for (CartEntity cartEntity : carts) {
+			List<ProductEntity> products = cartEntity.getProducts();
+			for (ProductEntity productEntity : products) {
+				totalSpent = totalSpent.add(productEntity.getTotalPrize());
+				itemsBought++;
+			}
+		}
+		if (totalSpent != BigDecimal.valueOf(0)) {
+			return totalSpent.divide(BigDecimal.valueOf(itemsBought));
+		}
+		return BigDecimal.valueOf(0);
+	}
+	
+	public Integer getPoints(List<CartEntity> carts) {
+		int points = 0;
+		if (!carts.isEmpty()) {
+			for (CartEntity cartEntity : carts) {
+				List<ProductEntity> products = cartEntity.getProducts();
+				for (ProductEntity productEntity : products) {
+					BigDecimal sumSpent = productEntity.getTotalPrize();
+					if (sumSpent.compareTo(new BigDecimal("20")) >= 0 && sumSpent.compareTo(new BigDecimal("29.99")) <= 0) {
+					    points +=1;
+					}
+					else if (sumSpent.compareTo(new BigDecimal("30")) >= 0 && sumSpent.compareTo(new BigDecimal("49.99")) <= 0) {
+						points +=3;
+					}
+					else if (sumSpent.compareTo(new BigDecimal("50")) >= 0 && sumSpent.compareTo(new BigDecimal("99.99")) <= 0) {
+						points +=5;    
+					}
+					else if (sumSpent.compareTo(new BigDecimal("100")) >= 0 ) {
+						points +=10;
+					}
+				}
+				
+			}
+		}
+		return points;
+	}
 
 }

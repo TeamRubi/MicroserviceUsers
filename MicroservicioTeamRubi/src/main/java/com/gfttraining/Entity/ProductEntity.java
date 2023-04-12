@@ -20,5 +20,6 @@ public class ProductEntity {
 	private String description;
 	private BigDecimal price;
 	private int quantity;
+	private BigDecimal totalPrize;
 
 }
