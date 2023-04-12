@@ -18,30 +18,25 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gfttraining.DTO.UserEntityDTO;
+import com.gfttraining.Entity.UserEntity;
 import com.gfttraining.service.UserService;
-import com.gfttraining.userEntity.UserEntity;
 
 @RestController
 public class UserController {
 
 	@Autowired
 	private UserService userService;
-
+	
 	@GetMapping("/users")
 	public List<UserEntity> getAllUsers(){
 		return userService.findAll();
-	}
-
-	@GetMapping("/users/{id}")
-	public UserEntity GetUserById(@PathVariable int id){
-		return userService.findUserById(id);
 	}
 
 	@GetMapping("/users/name/{name}")
 	public List<UserEntity> GetUserById(@PathVariable String name){
 		return userService.findAllByName(name);
 	}
-
 
 	@DeleteMapping("/users/{id}")
 	public ResponseEntity<Void> deleteUserById(@PathVariable int id){
@@ -72,7 +67,6 @@ public class UserController {
 		userService.deleteAllUsers();
 	}
 
-
 	@PutMapping("/users/{id}")
 	public ResponseEntity<UserEntity> updateUserById(@PathVariable int id, @RequestBody UserEntity user) {
 
@@ -85,5 +79,14 @@ public class UserController {
 
 		return new ResponseEntity<UserEntity>(userService.findUserByEmail(email), HttpStatus.OK);
 	}
-
+	
+	@GetMapping("/users/{id}")
+	public UserEntityDTO getUserWithAvgSpentAndFidelityPoints(@PathVariable int id) {
+		return userService.getUserWithAvgSpentAndFidelityPoints(id);
+	}
+	
+	public UserEntity getUserById(int id) {
+		return userService.findUserById(id);
+	}
+	
 }
