@@ -101,6 +101,16 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.CONFLICT);
 	}
 
+	@ExceptionHandler(DuplicateFavoriteException.class)
+	public ResponseEntity<ExceptionResponse> handleDataIntegrityViolationException(DuplicateFavoriteException ex) {
+
+		ExceptionResponse res = new ExceptionResponse(ex.getMessage(), new Date());
+
+		LOGGER.error("favorite duplicated");
+
+		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.CONFLICT);
+	}
+
 
 
 }
