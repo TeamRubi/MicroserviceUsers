@@ -328,7 +328,6 @@ class UserServiceTest {
 		when(repository.findById(4)).thenReturn(userModel2);
 
 
-
 		when(retrieveCartInformation.getCarts(anyInt())).thenReturn(carts);
 		when(userService.getUserWithAvgSpentAndFidelityPoints(4)).thenReturn(userEntityDTO);
 
@@ -336,7 +335,6 @@ class UserServiceTest {
 		assertEquals(0, userEntityDTO.getPoints());
 
 	}
-
 
 
 	@Test
