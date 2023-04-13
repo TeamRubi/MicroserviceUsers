@@ -5,11 +5,11 @@ import java.util.Optional;
 
 import javax.persistence.EntityNotFoundException;
 
-import org.modelmapper.Conditions;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -18,10 +18,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.gfttraining.DTO.Mapper;
 import com.gfttraining.DTO.UserEntityDTO;
-import com.gfttraining.Entity.CartEntity;
-import com.gfttraining.Entity.ProductEntity;
-import com.gfttraining.Entity.UserEntity;
+import com.gfttraining.entity.CartEntity;
+import com.gfttraining.entity.ProductEntity;
+import com.gfttraining.entity.UserEntity;
 import com.gfttraining.exception.DuplicateEmailException;
+import com.gfttraining.exception.DuplicateFavoriteException;
+import com.gfttraining.entity.FavoriteProduct;
+import com.gfttraining.repository.FavoriteRepository;
 import com.gfttraining.repository.UserRepository;
 
 import lombok.extern.slf4j.Slf4j;
@@ -32,15 +35,18 @@ public class UserService {
 
 	private UserRepository userRepository;
 
+	private FavoriteRepository favoriteRepository;
+
 	private ModelMapper modelMapper;
-	
+
 	@Autowired
 	private Mapper mapper;
 
-	public UserService(UserRepository userRepository) {
+	@Autowired
+	public UserService(UserRepository userRepository, FavoriteRepository favoriteRepository, ModelMapper modelMapper) {
 		this.userRepository = userRepository;
-		this.modelMapper = new ModelMapper();
-		modelMapper.getConfiguration().setPropertyCondition(Conditions.isNotNull());
+		this.favoriteRepository = favoriteRepository;
+		this.modelMapper = modelMapper;
 	}
 
 	public List<UserEntity> findAll(){
@@ -113,8 +119,13 @@ public class UserService {
 		if(userRepository.existsByEmail(user.getEmail())) {
 			throw new DuplicateEmailException("The email " + user.getEmail() + " is already in use");
 		}
-
 		user.setId(existingUser.getId());
+
+		System.out.println(existingUser);
+		System.out.println(user);
+
+		System.out.println(modelMapper);
+
 		modelMapper.map(user, existingUser);
 
 		log.info("Updated user with id " + id);
@@ -136,39 +147,39 @@ public class UserService {
 		return user.get();
 
 	}
-	
+
 	public UserEntityDTO getUserWithAvgSpentAndFidelityPoints(int id){
-		
+
 		List<CartEntity> carts = getAllCartsWithStatusSubmitted(id);
 
 		return mapper.toUserWithAvgSpentAndFidelityPoints(findUserById(id), calculateAvgSpent(carts), getPoints(carts));
 	}
-	
+
 	public List<CartEntity> getAllCartsWithStatusSubmitted(int Id){
-		
+
 		String path = "http://localhost:8081/carts/user/" + Id;
 		RestTemplate restTemplate = new RestTemplate();
 		try {
 			ResponseEntity<List<CartEntity>> responseEntity = restTemplate.exchange(
-				  path,
-				  HttpMethod.GET,
-				  null,
-				  new ParameterizedTypeReference<List<CartEntity>>() {}
-				);
+					path,
+					HttpMethod.GET,
+					null,
+					new ParameterizedTypeReference<List<CartEntity>>() {}
+					);
 			List<CartEntity> carts = responseEntity.getBody();
 			log.info("Carts retrieved from the Cart microservice");
 			return carts;
 		} catch (Exception e) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Couldn't connect with the Cart microservice");
 		}
-			
+
 	}
-	
+
 	public BigDecimal calculateAvgSpent(List<CartEntity> carts) {
-		
+
 		BigDecimal totalSpent = BigDecimal.ZERO;
 		int itemsBought = 0;
-				
+
 		for (CartEntity cartEntity : carts) {
 			List<ProductEntity> products = cartEntity.getProducts();
 			for (ProductEntity productEntity : products) {
@@ -181,7 +192,7 @@ public class UserService {
 		}
 		return BigDecimal.valueOf(0);
 	}
-	
+
 	public Integer getPoints(List<CartEntity> carts) {
 		int points = 0;
 		if (!carts.isEmpty()) {
@@ -190,7 +201,7 @@ public class UserService {
 				for (ProductEntity productEntity : products) {
 					BigDecimal sumSpent = productEntity.getTotalPrize();
 					if (sumSpent.compareTo(new BigDecimal("20")) >= 0 && sumSpent.compareTo(new BigDecimal("29.99")) <= 0) {
-					    points +=1;
+						points +=1;
 					}
 					else if (sumSpent.compareTo(new BigDecimal("30")) >= 0 && sumSpent.compareTo(new BigDecimal("49.99")) <= 0) {
 						points +=3;
@@ -202,10 +213,30 @@ public class UserService {
 						points +=10;
 					}
 				}
-				
+
 			}
 		}
 		return points;
 	}
+
+
+
+	public UserEntity addFavoriteProduct(int userId, int productId) {
+
+		UserEntity existingUser = userRepository.findById(userId)
+				.orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User with id " + userId + " not found"));
+
+		FavoriteProduct favorite = new FavoriteProduct(userId, productId);
+
+		try {
+			favoriteRepository.save(favorite);
+		} catch(DataIntegrityViolationException ex) {
+			throw new DuplicateFavoriteException("Product with id " + productId + " is already favorite for user with id " + userId);
+		}
+
+		return existingUser;
+	}
+
+
 
 }

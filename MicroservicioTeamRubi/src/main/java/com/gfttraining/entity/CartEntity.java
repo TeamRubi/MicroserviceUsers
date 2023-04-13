@@ -1,4 +1,4 @@
-package com.gfttraining.Entity;
+package com.gfttraining.entity;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 public class CartEntity {
-	
+
 	private UUID id;
 	private int userId;
 	private LocalDateTime createdAt;

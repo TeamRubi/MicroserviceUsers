@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -28,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -41,16 +44,35 @@ import com.gfttraining.Entity.CartEntity;
 import com.gfttraining.Entity.ProductEntity;
 import com.gfttraining.Entity.UserEntity;
 import com.gfttraining.connection.RetrieveCartInformation;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.gfttraining.controller.UserController;
+import com.gfttraining.entity.FavoriteProduct;
+import com.gfttraining.entity.UserEntity;
 import com.gfttraining.exception.DuplicateEmailException;
+import com.gfttraining.exception.DuplicateFavoriteException;
+import com.gfttraining.repository.FavoriteRepository;
 import com.gfttraining.repository.UserRepository;
 
 import io.swagger.io.HttpClient;
 
 
+@SpringBootTest
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
 	@InjectMocks
+	@Autowired
 	private UserService userService;
 
 	@Mock
@@ -78,6 +100,9 @@ class UserServiceTest {
 				"TRANSFERENCIA", BigDecimal.valueOf(100), 0);
 	}
 
+	@Mock
+	private FavoriteRepository favoriteRepository;
+
 	@Test
 	void getUserById_test() {
 
@@ -96,7 +121,14 @@ class UserServiceTest {
 	}
 
 	@Test
-	void getUserByIdNotFound_test() {
+	void getUserByIdNotFound_test(){
+
+		when(repository.findById(1234)).thenReturn((Optional.empty()));
+
+		EntityNotFoundException exception= 
+				assertThrows(
+						EntityNotFoundException.class, 
+						() -> {userService.findUserById(1234);});
 
 		when(repository.findById(1234)).thenReturn((Optional.empty()));
 
@@ -109,9 +141,9 @@ class UserServiceTest {
 	}
 
 	@Test
-	void getAllUsersByName_test() {
+	void getAllUsersByName_test(){
 
-		List<UserEntity> userListTest1 = new ArrayList<>();
+		List <UserEntity> userListTest1 = new ArrayList<>();
 		UserEntity userTest1 = new UserEntity();
 		userTest1.setId(1);
 		userTest1.setName("Erna");
@@ -129,8 +161,15 @@ class UserServiceTest {
 	}
 
 	@Test
-	void getAllUsersByNameNotFound_test() {
-		List<UserEntity> userListTest1 = new ArrayList<>();
+	void getAllUsersByNameNotFound_test(){
+		List <UserEntity> userListTest1 = new ArrayList<>();
+
+		when(repository.findAllByName("Ernaaa")).thenReturn((userListTest1));
+
+		EntityNotFoundException exception= 
+				assertThrows(
+						EntityNotFoundException.class, 
+						() -> {userService.findAllByName("Ernaaa");});
 
 		when(repository.findAllByName("Ernaaa")).thenReturn((userListTest1));
 
@@ -150,11 +189,31 @@ class UserServiceTest {
 
 		when(repository.findAll()).thenReturn(expectedUsers);
 
-		UserService userService = new UserService(repository);
-
 		List<UserEntity> actualUsers = userService.findAll();
 
 		assertEquals(expectedUsers, actualUsers);
+	}
+
+	@Test
+	void testSaveAllUsers() {
+
+		List<UserEntity> usersList = new ArrayList<>();
+		usersList.add(userModel);
+		usersList.add(userModel);
+
+		userService.saveAllUsers(usersList);
+
+		verify(repository).saveAll(usersList);
+
+	}
+
+	@Test
+	void testDeleteAllUsers() {
+
+		userService.deleteAllUsers();
+
+		verify(repository).deleteAll();
+
 	}
 
 	@Test
@@ -335,5 +394,55 @@ class UserServiceTest {
 		assertEquals(0, userEntityDTO.getPoints());
 		
 	}
+
+}
+	@Test
+	void addFavoriteProduct_test() {
+
+		FavoriteProduct favorite = new FavoriteProduct(1,5);
+
+		userModel.addFavorite(favorite);
+
+		when(repository.findById(anyInt())).thenReturn(Optional.of(userModel));
+
+		when(favoriteRepository.save(any(FavoriteProduct.class))).thenReturn(favorite);
+
+		UserEntity user = userService.addFavoriteProduct(1, 5);
+
+		assertThat(user).isEqualTo(userModel);
+		verify(favoriteRepository, atLeastOnce()).save(favorite);
+		verify(repository, atLeastOnce()).findById(1);
+
+	}
+
+	@Test
+	void addFavoriteProductWithNotExistingUser_test() {
+
+		int userId = 600;
+		when(repository.findById(anyInt())).thenReturn(Optional.empty());
+
+		assertThatThrownBy(()-> userService.addFavoriteProduct(userId,5))
+		.isInstanceOf(ResponseStatusException.class)
+		.hasMessageContaining("User with id " + userId + " not found");
+	}
+
+
+	@Test
+	void addFavoriteProductWithExistingFavorite_test() {
+
+		int userId = 60;
+		int productId = 50;
+
+		when(repository.findById(anyInt())).thenReturn(Optional.of(userModel));
+
+		when(favoriteRepository.save(any(FavoriteProduct.class)))
+		.thenThrow(new DataIntegrityViolationException("error"));
+
+		assertThatThrownBy(()-> userService.addFavoriteProduct(userId,productId))
+		.isInstanceOf(DuplicateFavoriteException.class)
+		.hasMessageContaining("Product with id " + productId + " is already favorite for user with id " + userId);
+
+	}
+
 
 }
