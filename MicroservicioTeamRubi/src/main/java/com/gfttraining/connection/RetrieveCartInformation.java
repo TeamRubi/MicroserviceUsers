@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.gfttraining.Entity.CartEntity;
+import com.gfttraining.entity.CartEntity;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,7 +25,7 @@ public class RetrieveCartInformation {
 		try {
 			ResponseEntity<List<CartEntity>> responseEntity = restTemplate.exchange(path, HttpMethod.GET, null,
 					new ParameterizedTypeReference<List<CartEntity>>() {
-					});
+			});
 			List<CartEntity> carts = responseEntity.getBody();
 			log.info("Carts retrieved from the Cart microservice");
 			return carts;
