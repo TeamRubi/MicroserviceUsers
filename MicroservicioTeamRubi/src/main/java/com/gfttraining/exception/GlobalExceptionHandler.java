@@ -86,7 +86,7 @@ public class GlobalExceptionHandler {
 
 		ExceptionResponse res = new ExceptionResponse(ex.getMessage(), LocalDate.now());
 
-		log.error("email duplicated");
+		log.error("Trying to insert an existing email to a user");
 
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.CONFLICT);
 	}
@@ -96,7 +96,7 @@ public class GlobalExceptionHandler {
 
 		ExceptionResponse res = new ExceptionResponse(ex.getMessage(), LocalDate.now());
 
-		log.error("favorite duplicated");
+		log.error("Trying to insert an existing favorite product to a user");
 
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.CONFLICT);
 	}

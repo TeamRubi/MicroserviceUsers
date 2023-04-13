@@ -23,7 +23,7 @@ public class ExceptionResponse {
 
 	public ExceptionResponse(String message, LocalDate timestamp) {
 		super();
-		this.localdate = localdate;
+		this.localdate = timestamp;
 		this.message = message;
 
 	}
