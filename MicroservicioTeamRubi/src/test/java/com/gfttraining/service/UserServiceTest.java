@@ -13,6 +13,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,14 +29,20 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.gfttraining.DTO.Mapper;
 import com.gfttraining.DTO.UserEntityDTO;
 import com.gfttraining.connection.RetrieveCartInformation;
 import com.gfttraining.entity.CartEntity;
@@ -48,8 +55,6 @@ import com.gfttraining.repository.FavoriteRepository;
 import com.gfttraining.repository.UserRepository;
 
 
-
-@SpringBootTest
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
@@ -65,16 +70,22 @@ class UserServiceTest {
 
 	@Mock
 	private RetrieveCartInformation retrieveCartInformation;
+	
+	@Mock
+	private Mapper mapper;
+	
+	@Mock
+	RestTemplate restTemplate;
 
 	UserEntity userModel;
 	Optional<UserEntity> userModel2;
 
 	@BeforeEach
 	public void createUser() {
-		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
+		userModel = new UserEntity(12, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", null, null);
 		userModel2 = Optional
-				.of(new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN"));
-		userEntityDTO = new UserEntityDTO("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
+				.of(new UserEntity(12, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", null, null));
+		userEntityDTO = new UserEntityDTO(12, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA", BigDecimal.valueOf(0), 0, null);
 	}
 
 	@Mock
@@ -302,9 +313,10 @@ class UserServiceTest {
 
 	}
 
-	@SuppressWarnings("static-access")
 	@Test
 	void getUserPointsis0_test() throws Exception{
+		
+		String path = "http://localhost:8082/carts/user/" + 12;
 
 		List<ProductEntity> products =  Arrays.asList(new ProductEntity());
 
@@ -312,23 +324,29 @@ class UserServiceTest {
 
 		CartEntity cartEntity = new CartEntity();
 		cartEntity.setId(UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"));
-		cartEntity.setUserId(4);
+		cartEntity.setUserId(12);
 		cartEntity.setCreatedAt(LocalDateTime.of(2022, 4, 11, 10, 30, 0));
 		cartEntity.setUpdatedAt(LocalDateTime.of(2022, 4, 12, 10, 30, 0));
 		cartEntity.setStatus("SUBMITTED");
 		cartEntity.setProducts(products);
 
 		carts.add(cartEntity);
-
-
-		when(repository.findById(4)).thenReturn(userModel2);
-
-
+		
+//		when(restTemplate.exchange(
+//			    Mockito.eq(path),
+//			    Mockito.eq(HttpMethod.GET),
+//			    Mockito.any(),
+//			    Mockito.<ParameterizedTypeReference<List<CartEntity>>>any())
+//			).thenReturn(new ResponseEntity<>(carts, HttpStatus.OK));
+		
 		when(retrieveCartInformation.getCarts(anyInt())).thenReturn(carts);
-		when(userService.getUserWithAvgSpentAndFidelityPoints(4)).thenReturn(userEntityDTO);
+		
+		when(repository.findById(anyInt())).thenReturn(userModel2);
+		
+		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(0), 0)).thenReturn(userEntityDTO);
+		
+		assertEquals(0, userService.getUserWithAvgSpentAndFidelityPoints(anyInt()).getPoints());
 
-
-		assertEquals(0, userEntityDTO.getPoints());
 
 	}
 

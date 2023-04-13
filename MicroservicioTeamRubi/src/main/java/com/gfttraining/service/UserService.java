@@ -35,15 +35,18 @@ public class UserService {
 	private FavoriteRepository favoriteRepository;
 
 	private ModelMapper modelMapper;
+	
+	private RetrieveCartInformation retrieveCartInformation;
 
 	@Autowired
 	private Mapper mapper;
 
 	@Autowired
-	public UserService(UserRepository userRepository, FavoriteRepository favoriteRepository, ModelMapper modelMapper) {
+	public UserService(UserRepository userRepository, FavoriteRepository favoriteRepository, ModelMapper modelMapper, RetrieveCartInformation retrieveCartInformation) {
 		this.userRepository = userRepository;
 		this.favoriteRepository = favoriteRepository;
 		this.modelMapper = modelMapper;
+		this.retrieveCartInformation = retrieveCartInformation;
 	}
 
 	public List<UserEntity> findAll(){
@@ -141,8 +144,8 @@ public class UserService {
 	}
 
 	public UserEntityDTO getUserWithAvgSpentAndFidelityPoints(int id){
-
-		List<CartEntity> carts = RetrieveCartInformation.getCarts(id);
+		
+		List<CartEntity> carts = retrieveCartInformation.getCarts(id);
 
 		return mapper.toUserWithAvgSpentAndFidelityPoints(findUserById(id), calculateAvgSpent(carts), getPoints(carts));
 	}

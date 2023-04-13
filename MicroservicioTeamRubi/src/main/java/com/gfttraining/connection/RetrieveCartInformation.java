@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class RetrieveCartInformation {
 
-	public static List<CartEntity> getCarts(int Id) {
+	public List<CartEntity> getCarts(int Id) {
 
 		String path = "http://localhost:8082/carts/user/" + Id;
 		RestTemplate restTemplate = new RestTemplate();
