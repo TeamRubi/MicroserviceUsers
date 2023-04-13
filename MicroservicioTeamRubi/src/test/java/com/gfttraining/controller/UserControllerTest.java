@@ -38,10 +38,9 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.gfttraining.Entity.UserEntity;
+import com.gfttraining.entity.UserEntity;
 import com.gfttraining.service.UserService;
 import com.gfttraining.entity.FavoriteProduct;
-import com.gfttraining.entity.User;
 import com.gfttraining.service.UserService;
 
 
@@ -56,14 +55,14 @@ class UserControllerTest {
 
 	@InjectMocks
 	UserController userController;
-	
+
 	UserEntity userModel;
-	
+
 	@BeforeEach
 	public void createUser() {
-		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
+		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
 	}
-	
+
 	@Test
 	void getAllUsers_test() throws Exception {
 
@@ -154,14 +153,13 @@ class UserControllerTest {
 	}
 
 	@Test
-	void updateFavoriteProduct_test() throws Exception {
+	void addFavoriteProduct_test() throws Exception {
 
 		//mocking service
 		int productId = 2;
-		User expectedUser = new User("pedro@chapo.com", "pedro", "chapo", "calle falsa");
-		expectedUser.addFavorite(new FavoriteProduct(1,1,productId));
+		userModel.addFavorite(new FavoriteProduct(1,1,productId));
 
-		when(userService.addFavoriteProduct(anyInt(), anyInt())).thenReturn(expectedUser);
+		when(userService.addFavoriteProduct(anyInt(), anyInt())).thenReturn(userModel);
 
 		//mocking http request
 		ResponseEntity<String> responseEntity = new ResponseEntity<String>("Datos de prueba", HttpStatus.OK);
@@ -169,16 +167,16 @@ class UserControllerTest {
 		when(restTemplate.getForEntity(anyString(), eq(String.class)))
 		.thenReturn(responseEntity);
 
-		ResponseEntity<User> response = userController.addFavoriteProduct(1, productId);
+		ResponseEntity<UserEntity> response = userController.addFavoriteProduct(1, productId);
 
 		verify(userService, atLeastOnce()).addFavoriteProduct(1, productId);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-		assertThat(response.getBody()).isEqualTo(expectedUser);
+		assertThat(response.getBody()).isEqualTo(userModel);
 
 	}
 
 	@Test
-	void updateFavoriteProductWithNotExistingProduct_test() throws Exception {
+	void addFavoriteProductWithNotExistingProduct_test() throws Exception {
 
 		int productId = 200;
 

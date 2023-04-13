@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
@@ -29,7 +30,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.gfttraining.Entity.UserEntity;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -44,7 +44,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.gfttraining.controller.UserController;
 import com.gfttraining.entity.FavoriteProduct;
-import com.gfttraining.entity.User;
+import com.gfttraining.entity.UserEntity;
 import com.gfttraining.exception.DuplicateEmailException;
 import com.gfttraining.exception.DuplicateFavoriteException;
 import com.gfttraining.repository.FavoriteRepository;
@@ -61,12 +61,12 @@ class UserServiceTest {
 
 	@Mock
 	private UserRepository repository;
-	
+
 	UserEntity userModel;
-	
+
 	@BeforeEach
 	public void createUser() {
-		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
+		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
 	}
 
 	@Mock
@@ -92,9 +92,9 @@ class UserServiceTest {
 
 	@Test
 	void getUserByIdNotFound_test(){
-		
+
 		when(repository.findById(1234)).thenReturn((Optional.empty()));
-		
+
 		EntityNotFoundException exception= 
 				assertThrows(
 						EntityNotFoundException.class, 
@@ -107,7 +107,7 @@ class UserServiceTest {
 
 	@Test
 	void getAllUsersByName_test(){
-		
+
 		List <UserEntity> userListTest1 = new ArrayList<>();
 		UserEntity userTest1 = new UserEntity();
 		userTest1.setId(1);
@@ -128,9 +128,9 @@ class UserServiceTest {
 	@Test
 	void getAllUsersByNameNotFound_test(){
 		List <UserEntity> userListTest1 = new ArrayList<>();
-		
+
 		when(repository.findAllByName("Ernaaa")).thenReturn((userListTest1));
-		
+
 		EntityNotFoundException exception= 
 				assertThrows(
 						EntityNotFoundException.class, 
@@ -139,47 +139,41 @@ class UserServiceTest {
 		assertEquals("Usuario con el nombre: "+"Ernaaa"+" no encontrado", exception.getMessage());
 
 	}
-	
+
 	@Test
 	void getAllUsers() {
-        List<UserEntity> expectedUsers = new ArrayList<>();
-        expectedUsers.add(userModel);
-        expectedUsers.add(userModel);
-        
-        when(repository.findAll()).thenReturn(expectedUsers);
+		List<UserEntity> expectedUsers = new ArrayList<>();
+		expectedUsers.add(userModel);
+		expectedUsers.add(userModel);
 
-        UserService userService = new UserService(repository);
+		when(repository.findAll()).thenReturn(expectedUsers);
 
-        List<UserEntity> actualUsers = userService.findAll();
+		List<UserEntity> actualUsers = userService.findAll();
 
-        assertEquals(expectedUsers, actualUsers);
+		assertEquals(expectedUsers, actualUsers);
 	}
-	
-    @Test
-    void testSaveAllUsers() {
 
-        List<UserEntity> usersList = new ArrayList<>();
-        usersList.add(userModel);
-        usersList.add(userModel);
+	@Test
+	void testSaveAllUsers() {
 
-        UserService userService = new UserService(repository);
+		List<UserEntity> usersList = new ArrayList<>();
+		usersList.add(userModel);
+		usersList.add(userModel);
 
-        userService.saveAllUsers(usersList);
+		userService.saveAllUsers(usersList);
 
-        verify(repository).saveAll(usersList);
-        
-    }
-    
-    @Test
-    void testDeleteAllUsers() {
-    	
-        UserService userService = new UserService(repository);
+		verify(repository).saveAll(usersList);
 
-        userService.deleteAllUsers();
+	}
 
-        verify(repository).deleteAll();
-        
-    }
+	@Test
+	void testDeleteAllUsers() {
+
+		userService.deleteAllUsers();
+
+		verify(repository).deleteAll();
+
+	}
 
 	@Test
 	void deleteUserById_test(){
@@ -313,17 +307,16 @@ class UserServiceTest {
 	void addFavoriteProduct_test() {
 
 		FavoriteProduct favorite = new FavoriteProduct(1,5);
-		User existingUser = new User("pablo@chapo.com", "pablo","chapo","calle falsa");
 
-		existingUser.addFavorite(favorite);
+		userModel.addFavorite(favorite);
 
-		when(repository.findById(anyInt())).thenReturn(Optional.of(existingUser));
+		when(repository.findById(anyInt())).thenReturn(Optional.of(userModel));
 
 		when(favoriteRepository.save(any(FavoriteProduct.class))).thenReturn(favorite);
 
-		User user = userService.addFavoriteProduct(1, 5);
+		UserEntity user = userService.addFavoriteProduct(1, 5);
 
-		assertThat(user).isEqualTo(existingUser);
+		assertThat(user).isEqualTo(userModel);
 		verify(favoriteRepository, atLeastOnce()).save(favorite);
 		verify(repository, atLeastOnce()).findById(1);
 
@@ -346,9 +339,8 @@ class UserServiceTest {
 
 		int userId = 60;
 		int productId = 50;
-		User existingUser = new User("pablo@chapo.com", "pablo","chapo","calle falsa");
 
-		when(repository.findById(anyInt())).thenReturn(Optional.of(existingUser));
+		when(repository.findById(anyInt())).thenReturn(Optional.of(userModel));
 
 		when(favoriteRepository.save(any(FavoriteProduct.class)))
 		.thenThrow(new DataIntegrityViolationException("error"));

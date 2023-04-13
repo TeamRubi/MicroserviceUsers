@@ -4,6 +4,7 @@ CREATE TABLE user (
     name VARCHAR(255) NOT NULL,
     lastname VARCHAR(255) NOT NULL,
     address VARCHAR(255) NOT NULL,
+    country VARCHAR(255) NOT NULL,
     paymentmethod VARCHAR(255),
     PRIMARY KEY (id),
     UNIQUE KEY (email)

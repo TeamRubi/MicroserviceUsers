@@ -26,21 +26,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.DTO.UserEntityDTO;
-import com.gfttraining.Entity.UserEntity;
-import com.gfttraining.entity.User;
+import com.gfttraining.entity.UserEntity;
 import com.gfttraining.exception.ExceptionResponse;
 import com.gfttraining.repository.FavoriteRepository;
 import com.gfttraining.repository.UserRepository;
 import com.gfttraining.service.UserService;
 
 @RestController
-@Validated
 public class UserController {
 
 	private UserService userService;
@@ -91,7 +91,7 @@ public class UserController {
 		userService.deleteAllUsers();
 	}
 
-	
+
 	@PatchMapping("/users/{id}")
 	public ResponseEntity<UserEntity> updateUserById(@PathVariable int id, @RequestBody UserEntity user) {
 
@@ -104,23 +104,23 @@ public class UserController {
 
 		return new ResponseEntity<UserEntity>(userService.findUserByEmail(email), HttpStatus.OK);
 	}
-	
+
 	@GetMapping("/users/{id}")
 	public UserEntityDTO getUserWithAvgSpentAndFidelityPoints(@PathVariable int id) {
 		return userService.getUserWithAvgSpentAndFidelityPoints(id);
 	}
-	
+
 	public UserEntity getUserById(int id) {
 		return userService.findUserById(id);
 	}
-	
+
 
 	@PostMapping("/users/{userId}/{productId}")
-	public ResponseEntity<User> addFavoriteProduct(@PathVariable int userId, @PathVariable int productId) throws Exception  {
+	public ResponseEntity<UserEntity> addFavoriteProduct(@PathVariable int userId, @PathVariable int productId) throws Exception  {
 
 		if(productExists(productId)) {
-			User updatedUser = userService.addFavoriteProduct(userId, productId);
-			return new ResponseEntity<User>(updatedUser, HttpStatus.CREATED);
+			UserEntity updatedUser = userService.addFavoriteProduct(userId, productId);
+			return new ResponseEntity<UserEntity>(updatedUser, HttpStatus.CREATED);
 		}
 		else {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "product with id " + productId + " not found");
@@ -135,7 +135,7 @@ public class UserController {
 					"http://localhost:8081/products/id/" + productId, String.class);
 			return responseEntity.getStatusCode() == HttpStatus.OK;
 		}
-		catch(HttpClientErrorException.NotFound ex) {
+		catch(HttpClientErrorException.NotFound | ResourceAccessException ex) {
 			return false;
 		}
 

@@ -37,7 +37,7 @@ import lombok.RequiredArgsConstructor;
 @Data
 @Entity
 @Table(name="user")
-public class User {
+public class UserEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -60,6 +60,10 @@ public class User {
 	@NotNull(message = "address cannot be null")
 	@NonNull
 	private String address;
+
+	@NotNull(message = "country cannot be null")
+	@NonNull
+	private String country;
 
 	@Nullable
 	private String paymentmethod;

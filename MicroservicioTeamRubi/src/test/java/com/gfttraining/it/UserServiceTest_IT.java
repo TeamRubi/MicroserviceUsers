@@ -26,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -37,9 +38,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gfttraining.Entity.UserEntity;
+import com.gfttraining.entity.UserEntity;
 import com.gfttraining.controller.UserController;
-import com.gfttraining.entity.User;
 import com.gfttraining.service.UserService;
 
 @SpringBootTest
@@ -51,12 +51,12 @@ class UserServiceTest_IT {
 
 	@Autowired
 	UserService userService;
-	
+
 	UserEntity userModel;
-	
+
 	@BeforeEach
 	public void createUser() {
-		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
+		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
 	}
 
 	@Mock
@@ -108,11 +108,11 @@ class UserServiceTest_IT {
 	void createUserWithRepeatedEmail_IT() throws Exception {
 
 		ObjectMapper objectMapper = new ObjectMapper();
-		UserEntity existingUser = new UserEntity("pabloperez@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5","SPAIN", "VISA");
+		UserEntity existingUser = new UserEntity("pabloperez@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5","SPAIN");
 
 		userService.createUser(existingUser);
 
-		UserEntity user = new UserEntity("pabloperez@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5","SPAIN", "VISA");
+		UserEntity user = new UserEntity("pabloperez@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5","SPAIN");
 		String json = objectMapper.writeValueAsString(user);
 
 		mockMvc.perform(post("/users")
@@ -126,11 +126,11 @@ class UserServiceTest_IT {
 	void updateUserByIdWithRepeatedEmail_IT() throws Exception {
 
 		ObjectMapper objectMapper = new ObjectMapper();
-		UserEntity existingUser = new UserEntity("pablo@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5","SPAIN", "VISA");
+		UserEntity existingUser = new UserEntity("pablo@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5","SPAIN");
 
 		userService.updateUserById(1, existingUser);
 
-		UserEntity user = new UserEntity("pablo@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5","SPAIN", "VISA");
+		UserEntity user = new UserEntity("pablo@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5","SPAIN");
 		String json = objectMapper.writeValueAsString(user);
 
 		mockMvc.perform(put("/users/2")
