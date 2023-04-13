@@ -65,7 +65,7 @@ class UserServiceTest {
 	private RetrieveCartInformation retrieveCartInformation;
 
 	UserEntity userModel;
-	
+
 	Optional<UserEntity> userModel2;
 
 	@BeforeEach
@@ -131,6 +131,7 @@ class UserServiceTest {
 
 	@Test
 	void getAllUsersByNameNotFound_test(){
+
 		List <UserEntity> userListTest1 = new ArrayList<>();
 
 		when(repository.findAllByName("Ernaaa")).thenReturn((userListTest1));

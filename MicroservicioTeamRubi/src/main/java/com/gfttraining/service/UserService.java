@@ -205,10 +205,11 @@ public class UserService {
 
 		FavoriteProduct favorite = new FavoriteProduct(userId, productId);
 
-		try {
+		if(!favoriteRepository.existsByUserIdAndProductId(userId, productId)) {
 			favoriteRepository.save(favorite);
 			log.info("Favorite product saved on database");
-		} catch(DataIntegrityViolationException ex) {
+		}
+		else {
 			throw new DuplicateFavoriteException("Product with id " + productId + " is already favorite for user with id " + userId);
 		}
 
@@ -228,7 +229,7 @@ public class UserService {
 			log.error("Error saving users to database by file");
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		
+
 	}
 
 
