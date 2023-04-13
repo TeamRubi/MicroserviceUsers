@@ -118,11 +118,6 @@ public class UserService {
 		}
 		user.setId(existingUser.getId());
 
-		System.out.println(existingUser);
-		System.out.println(user);
-
-		System.out.println(modelMapper);
-
 		modelMapper.map(user, existingUser);
 
 		log.info("Updated user with id " + id);

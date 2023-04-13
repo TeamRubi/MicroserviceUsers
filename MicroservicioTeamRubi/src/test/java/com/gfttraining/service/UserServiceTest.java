@@ -66,10 +66,6 @@ class UserServiceTest {
 	@Mock
 	private RetrieveCartInformation retrieveCartInformation;
 
-	@Value("${server.url}")
-	private String serverUrl;
-
-
 	UserEntity userModel;
 	Optional<UserEntity> userModel2;
 
