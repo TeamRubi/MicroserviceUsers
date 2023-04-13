@@ -9,9 +9,13 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.DTO.Mapper;
 import com.gfttraining.DTO.UserEntityDTO;
 import com.gfttraining.connection.RetrieveCartInformation;
@@ -203,11 +207,28 @@ public class UserService {
 
 		try {
 			favoriteRepository.save(favorite);
+			log.info("Favorite product saved on database");
 		} catch(DataIntegrityViolationException ex) {
 			throw new DuplicateFavoriteException("Product with id " + productId + " is already favorite for user with id " + userId);
 		}
 
 		return existingUser;
+	}
+
+	public ResponseEntity<Void> saveAllImportedUsers(MultipartFile file) {
+		try {
+			deleteAllUsers();
+			ObjectMapper objectMapper = new ObjectMapper();
+			List<UserEntity> users = objectMapper.readValue(file.getBytes(), new TypeReference<List<UserEntity>>(){});
+			saveAllUsers(users);
+			log.info("Users saved on database by file");
+			return new ResponseEntity<>(HttpStatus.CREATED);
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("Error saving users to database by file");
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
 	}
 
 

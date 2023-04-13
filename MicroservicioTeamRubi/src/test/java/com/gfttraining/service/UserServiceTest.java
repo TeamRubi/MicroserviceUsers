@@ -30,7 +30,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -46,7 +45,6 @@ import com.gfttraining.exception.DuplicateEmailException;
 import com.gfttraining.exception.DuplicateFavoriteException;
 import com.gfttraining.repository.FavoriteRepository;
 import com.gfttraining.repository.UserRepository;
-
 
 
 @SpringBootTest
@@ -67,6 +65,7 @@ class UserServiceTest {
 	private RetrieveCartInformation retrieveCartInformation;
 
 	UserEntity userModel;
+	
 	Optional<UserEntity> userModel2;
 
 	@BeforeEach
