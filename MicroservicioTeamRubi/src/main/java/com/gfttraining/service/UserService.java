@@ -7,23 +7,20 @@ import javax.persistence.EntityNotFoundException;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.gfttraining.DTO.Mapper;
 import com.gfttraining.DTO.UserEntityDTO;
+import com.gfttraining.connection.RetrieveCartInformation;
 import com.gfttraining.entity.CartEntity;
+import com.gfttraining.entity.FavoriteProduct;
 import com.gfttraining.entity.ProductEntity;
 import com.gfttraining.entity.UserEntity;
 import com.gfttraining.exception.DuplicateEmailException;
 import com.gfttraining.exception.DuplicateFavoriteException;
-import com.gfttraining.entity.FavoriteProduct;
 import com.gfttraining.repository.FavoriteRepository;
 import com.gfttraining.repository.UserRepository;
 
@@ -150,30 +147,11 @@ public class UserService {
 
 	public UserEntityDTO getUserWithAvgSpentAndFidelityPoints(int id){
 
-		List<CartEntity> carts = getAllCartsWithStatusSubmitted(id);
+		List<CartEntity> carts = RetrieveCartInformation.getCarts(id);
 
 		return mapper.toUserWithAvgSpentAndFidelityPoints(findUserById(id), calculateAvgSpent(carts), getPoints(carts));
 	}
 
-	public List<CartEntity> getAllCartsWithStatusSubmitted(int Id){
-
-		String path = "http://localhost:8081/carts/user/" + Id;
-		RestTemplate restTemplate = new RestTemplate();
-		try {
-			ResponseEntity<List<CartEntity>> responseEntity = restTemplate.exchange(
-					path,
-					HttpMethod.GET,
-					null,
-					new ParameterizedTypeReference<List<CartEntity>>() {}
-					);
-			List<CartEntity> carts = responseEntity.getBody();
-			log.info("Carts retrieved from the Cart microservice");
-			return carts;
-		} catch (Exception e) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Couldn't connect with the Cart microservice");
-		}
-
-	}
 
 	public BigDecimal calculateAvgSpent(List<CartEntity> carts) {
 

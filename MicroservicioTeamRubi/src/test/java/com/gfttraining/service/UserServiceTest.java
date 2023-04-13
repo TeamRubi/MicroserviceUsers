@@ -5,21 +5,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
-import java.lang.annotation.Annotation;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,33 +26,21 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.gfttraining.DTO.UserEntityDTO;
-import com.gfttraining.entity.CartEntity;
-import com.gfttraining.entity.ProductEntity;
-import com.gfttraining.entity.UserEntity;
 import com.gfttraining.connection.RetrieveCartInformation;
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.web.server.ResponseStatusException;
-
-import com.gfttraining.controller.UserController;
+import com.gfttraining.entity.CartEntity;
 import com.gfttraining.entity.FavoriteProduct;
+import com.gfttraining.entity.ProductEntity;
 import com.gfttraining.entity.UserEntity;
 import com.gfttraining.exception.DuplicateEmailException;
 import com.gfttraining.exception.DuplicateFavoriteException;
@@ -94,8 +78,7 @@ class UserServiceTest {
 		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
 		userModel2 = Optional
 				.of(new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN"));
-		userEntityDTO = new UserEntityDTO(4, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN",
-				"TRANSFERENCIA", BigDecimal.valueOf(100), 0);
+		userEntityDTO = new UserEntityDTO("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
 	}
 
 	@Mock
