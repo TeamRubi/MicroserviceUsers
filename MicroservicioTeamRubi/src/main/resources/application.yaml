@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    driverClassName: org.h2.Driver
+    url: jdbc:h2:mem:user;MODE=PostgreSQL
+    username: jpa
+    password:
+    
+  jpa:
+    hibernate:
+      ddl-auto: none
+    defer-datasource-initialization: true
+    
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:0_schema.sql
+      data-locations: classpath:1_user.sql,classpath:2_favorite.sql
+    
+  mvc:
+    throw-exception-if-no-handler-found: true
+    
+logging:
+  level:
+    '[com.gfttraining.service]': INFO
+    '[org.springframework]': OFF
+    
+  file:
+    name: ../MicroservicioTeamRubi/src/main/resources/UserMicroservice_Log.log
+    
+server:
+  port: 8080
+  
+debug: false
