@@ -15,7 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import com.gfttraining.Entity.UserEntity;
+import com.gfttraining.entity.UserEntity;
 import com.gfttraining.controller.UserController;
 import com.gfttraining.service.UserService;
 
@@ -33,7 +33,7 @@ class UserControllerTest {
 
 	@Test
 	void getUserById_test() throws Exception {
-		UserEntity userTest1= new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA");
+		UserEntity userTest1= new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
 
 		Mockito
 		.when(userService.findUserById(1))
@@ -53,7 +53,7 @@ class UserControllerTest {
 		userTest1.setId(1);
 		userTest1.setName("Erna");
 		userListTest1.add(userTest1);
-		
+
 		Mockito
 		.when(userService.findAllByName("Erna"))
 		.thenReturn(userListTest1);

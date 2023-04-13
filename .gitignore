@@ -34,3 +34,4 @@ build/
 
 ### LOGS ###
 /MicroservicioTeamRubi/src/main/resources/*.log
+/MicroservicioTeamRubi/src/main/resources/*.gz

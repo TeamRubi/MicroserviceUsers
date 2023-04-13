@@ -1,4 +1,4 @@
-package com.gfttraining.Entity;
+package com.gfttraining.entity;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class ProductEntity {
-	
+
 	private int id;
 	private int catalogId;
 	private String name;
