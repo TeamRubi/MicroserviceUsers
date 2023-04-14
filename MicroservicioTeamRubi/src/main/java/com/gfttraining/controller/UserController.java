@@ -85,7 +85,7 @@ public class UserController {
 		return userService.findUserById(id);
 	}
 
-	@PostMapping("/users/{userId}/{productId}")
+	@PostMapping("/favorite/{userId}/{productId}")
 	public ResponseEntity<UserEntity> addFavoriteProduct(@PathVariable int userId, @PathVariable int productId) throws Exception  {
 
 		if(productExists(productId)) {
@@ -96,10 +96,19 @@ public class UserController {
 		}
 	}
 
-	@DeleteMapping("/users/{userId}/{productId}")
+	@DeleteMapping("/favorite/{userId}/{productId}")
 	public ResponseEntity<Void> deleteFavoriteProduct(@PathVariable int userId, @PathVariable int productId) throws Exception  {
 
 		userService.deleteFavoriteProduct(userId, productId);
+
+		return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+
+	}
+
+	@DeleteMapping("/favorite/product/{productId}")
+	public ResponseEntity<Void> deleteFavoriteProductFromAllUsers(@PathVariable int productId) throws Exception  {
+
+		userService.deleteFavoriteProductFromAllUsers(productId);
 
 		return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
 

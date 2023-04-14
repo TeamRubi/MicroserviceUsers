@@ -10,6 +10,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -100,6 +101,17 @@ public class GlobalExceptionHandler {
 
 		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.CONFLICT);
 	}
+
+	@ExceptionHandler(EmptyResultDataAccessException.class)
+	public ResponseEntity<ExceptionResponse> handleDataIntegrityViolationException(EmptyResultDataAccessException ex) {
+
+		ExceptionResponse res = new ExceptionResponse(ex.getMessage(), LocalDate.now());
+
+		log.error("Trying to delete a favorite product to a user");
+
+		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.NOT_FOUND);
+	}
+
 
 
 
