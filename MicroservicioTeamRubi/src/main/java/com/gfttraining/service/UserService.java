@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import javax.persistence.EntityNotFoundException;
+import javax.transaction.Transactional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -200,7 +201,6 @@ public class UserService {
 	}
 
 
-
 	public UserEntity addFavoriteProduct(int userId, int productId) {
 
 		UserEntity existingUser = userRepository.findById(userId)
@@ -208,14 +208,28 @@ public class UserService {
 
 		FavoriteProduct favorite = new FavoriteProduct(userId, productId);
 
-		try {
+		if(!favoriteRepository.existsByUserIdAndProductId(userId, productId)) {
 			favoriteRepository.save(favorite);
 			log.info("Favorite product saved on database");
-		} catch(DataIntegrityViolationException ex) {
+		}
+		else {
 			throw new DuplicateFavoriteException("Product with id " + productId + " is already favorite for user with id " + userId);
 		}
 
 		return existingUser;
+	}
+
+	@Transactional
+	public void deleteFavoriteProduct(int userId, int productId) {
+
+		if(favoriteRepository.existsByUserIdAndProductId(userId, productId)) {
+			favoriteRepository.deleteByUserIdAndProductId(userId, productId);
+			log.info("Favorite product deleted on database");
+		}
+		else {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, 
+					"User with id " + userId + " does not have product with id " + productId + " as favorite");
+		}
 	}
 
 	public ResponseEntity<Void> saveAllImportedUsers(MultipartFile file) {
@@ -231,7 +245,7 @@ public class UserService {
 			log.error("Error saving users to database by file");
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		
+
 	}
 
 

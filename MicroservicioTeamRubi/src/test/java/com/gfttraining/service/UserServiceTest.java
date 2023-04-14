@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
@@ -23,6 +24,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import javax.persistence.EntityNotFoundException;
+import javax.transaction.Transactional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -56,7 +58,6 @@ import com.gfttraining.repository.FavoriteRepository;
 import com.gfttraining.repository.UserRepository;
 
 
-@SpringBootTest
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
@@ -81,7 +82,7 @@ class UserServiceTest {
 	RestTemplate restTemplate;
 
 	UserEntity userModel;
-	
+
 	Optional<UserEntity> userModel2;
 
 	@BeforeEach
@@ -147,6 +148,7 @@ class UserServiceTest {
 
 	@Test
 	void getAllUsersByNameNotFound_test(){
+
 		List <UserEntity> userListTest1 = new ArrayList<>();
 
 		when(repository.findAllByName("Ernaaa")).thenReturn((userListTest1));
@@ -262,6 +264,7 @@ class UserServiceTest {
 		updatedUser.setName("Jose");
 
 		when(repository.findById(1)).thenReturn(Optional.of(userModel));
+		//when(repository.existsByEmail(anyString())).thenReturn(true);
 		when(repository.save(userModel)).thenReturn(userModel);
 
 		UserEntity result = userService.updateUserById(1, updatedUser);
@@ -357,6 +360,8 @@ class UserServiceTest {
 
 		when(repository.findById(anyInt())).thenReturn(Optional.of(userModel));
 
+		when(favoriteRepository.existsByUserIdAndProductId(anyInt(), anyInt())).thenReturn(false);
+
 		when(favoriteRepository.save(any(FavoriteProduct.class))).thenReturn(favorite);
 
 		UserEntity user = userService.addFavoriteProduct(1, 5);
@@ -387,13 +392,36 @@ class UserServiceTest {
 
 		when(repository.findById(anyInt())).thenReturn(Optional.of(userModel));
 
-		when(favoriteRepository.save(any(FavoriteProduct.class)))
-		.thenThrow(new DataIntegrityViolationException("error"));
+		when(favoriteRepository.existsByUserIdAndProductId(anyInt(), anyInt())).thenReturn(true);
 
 		assertThatThrownBy(()-> userService.addFavoriteProduct(userId,productId))
 		.isInstanceOf(DuplicateFavoriteException.class)
 		.hasMessageContaining("Product with id " + productId + " is already favorite for user with id " + userId);
 
+	}
+
+	@Test
+	void deleteFavoriteProduct_test() {
+
+		when(favoriteRepository.existsByUserIdAndProductId(anyInt(), anyInt())).thenReturn(true);
+
+		userService.deleteFavoriteProduct(1, 5);
+
+		verify(favoriteRepository, atLeastOnce()).existsByUserIdAndProductId(1, 5);
+		verify(favoriteRepository, atLeastOnce()).deleteByUserIdAndProductId(1, 5);
+	}
+
+	@Test
+	void deleteFavoriteProductWithNotExistingFavorite_test() {
+
+		int userId = 1;
+		int productId = 5;
+
+		when(favoriteRepository.existsByUserIdAndProductId(anyInt(), anyInt())).thenReturn(false);
+
+		assertThatThrownBy(()-> userService.deleteFavoriteProduct(userId,productId))
+		.isInstanceOf(ResponseStatusException.class)
+		.hasMessageContaining("User with id " + userId + " does not have product with id " + productId + " as favorite");
 	}
 
 

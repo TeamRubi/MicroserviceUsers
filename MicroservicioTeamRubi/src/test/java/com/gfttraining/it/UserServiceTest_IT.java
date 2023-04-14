@@ -4,12 +4,15 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import javax.transaction.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -30,6 +33,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
@@ -44,6 +48,8 @@ import com.gfttraining.service.UserService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Transactional
+@Rollback
 class UserServiceTest_IT {
 
 	@Autowired
@@ -121,7 +127,6 @@ class UserServiceTest_IT {
 
 	}
 
-	//TODO test is not working due to the new table FavoriteProduct
 	@Test 
 	void updateUserByIdWithRepeatedEmail_IT() throws Exception {
 
@@ -133,7 +138,7 @@ class UserServiceTest_IT {
 		UserEntity user = new UserEntity("pablo@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5","SPAIN");
 		String json = objectMapper.writeValueAsString(user);
 
-		mockMvc.perform(put("/users/2")
+		mockMvc.perform(patch("/users/2")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(json)).andExpect(status().isConflict());
 
@@ -167,7 +172,7 @@ class UserServiceTest_IT {
 	}
 
 	@Test
-	void addFavoriteProductWithExistingFavorite() throws Exception {
+	void addFavoriteProductWithExistingFavorite_IT() throws Exception {
 
 		int userId = 1;
 		int productId = 25;
@@ -182,6 +187,28 @@ class UserServiceTest_IT {
 		.andExpect(status().isConflict())
 		.andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
+	}
+
+	@Test
+	void deleteFavoriteProduct_IT() throws Exception {
+
+		int userId = 1;
+		int productId = 25;
+
+		userService.addFavoriteProduct(userId, productId);
+
+		mockMvc.perform(delete("/users/" + userId + "/" + productId))
+		.andExpect(status().isNoContent());
+	}
+
+	@Test
+	void deleteFavoriteProductWithNotExistingFavorite_IT() throws Exception {
+
+		int userId = 1;
+		int productId = 29;
+
+		mockMvc.perform(delete("/users/" + userId + "/" + productId))
+		.andExpect(status().isNotFound());
 	}
 
 
