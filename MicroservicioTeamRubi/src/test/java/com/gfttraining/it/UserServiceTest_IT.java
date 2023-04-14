@@ -219,7 +219,7 @@ class UserServiceTest_IT {
 
 		userService.addFavoriteProduct(userId, productId);
 
-		mockMvc.perform(delete("/favorite/" + productId))
+		mockMvc.perform(delete("/favorite/product/" + productId))
 		.andExpect(status().isNoContent());
 	}
 
@@ -230,7 +230,7 @@ class UserServiceTest_IT {
 
 		userService.deleteFavoriteProductFromAllUsers(99);
 
-		mockMvc.perform(delete("/favorite/" + productId))
+		mockMvc.perform(delete("/favorite/product/" + productId))
 		.andExpect(status().isNotFound());
 	}
 
