@@ -33,6 +33,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -68,7 +72,7 @@ class UserServiceTest {
 	@Autowired
 	@Mock
 	private Mapper mapper;
-	
+
 	@Mock
 	RestTemplate restTemplate;
 
@@ -78,10 +82,10 @@ class UserServiceTest {
 
 	@BeforeEach
 	public void createUser() {
-		userModel = new UserEntity(12, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", null, null);
+		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
 		userModel2 = Optional
-				.of(new UserEntity(12, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", null, null));
-		userEntityDTO = new UserEntityDTO(12, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA", BigDecimal.valueOf(20), 0, null);
+				.of(new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN"));
+		userEntityDTO = new UserEntityDTO(12, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA", BigDecimal.valueOf(0), 0, null);
 	}
 
 	@Mock
@@ -332,7 +336,7 @@ class UserServiceTest {
 		})).thenReturn(carts);
 		
 		when(repository.findById(anyInt())).thenReturn(userModel2);
-		
+
 		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(20), 1)).thenReturn(userEntityDTO);
 		
 		assertThat(0).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getPoints());
@@ -439,8 +443,35 @@ class UserServiceTest {
 		when(favoriteRepository.existsByUserIdAndProductId(anyInt(), anyInt())).thenReturn(false);
 
 		assertThatThrownBy(()-> userService.deleteFavoriteProduct(userId,productId))
-		.isInstanceOf(ResponseStatusException.class)
+		.isInstanceOf(EmptyResultDataAccessException.class)
 		.hasMessageContaining("User with id " + userId + " does not have product with id " + productId + " as favorite");
+	}
+
+
+	@Test
+	void deleteFavoriteProductFromAllUsers_test() {
+
+		int productId = 5;
+
+		when(favoriteRepository.existsByProductId(anyInt())).thenReturn(true);
+
+		userService.deleteFavoriteProductFromAllUsers(productId);
+
+		verify(favoriteRepository, atLeastOnce()).existsByProductId(productId);
+		verify(favoriteRepository, atLeastOnce()).deleteByProductId(productId);
+	}
+
+	@Test
+	void deleteFavoriteProductFromAllUsersWithNoProductInFavorites_test() {
+
+		int productId = 5;
+
+		when(favoriteRepository.existsByProductId(anyInt())).thenReturn(false);
+
+		assertThatThrownBy(()-> userService.deleteFavoriteProductFromAllUsers(productId))
+		.isInstanceOf(EmptyResultDataAccessException.class)
+		.hasMessageContaining("Product " + productId + " is not in the favorites of any user");
+
 	}
 
 

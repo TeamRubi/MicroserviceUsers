@@ -1,5 +1,6 @@
 package com.gfttraining.it;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,6 +22,9 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,6 +50,27 @@ import com.gfttraining.entity.UserEntity;
 import com.gfttraining.controller.UserController;
 import com.gfttraining.service.UserService;
 
+
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.io.IOException;
+import java.net.URI;
+
+
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
@@ -59,6 +84,10 @@ class UserServiceTest_IT {
 	UserService userService;
 
 	UserEntity userModel;
+	
+	
+	WireMockServer wireMockServer;
+	
 
 	@BeforeEach
 	public void createUser() {
@@ -67,7 +96,22 @@ class UserServiceTest_IT {
 
 	@Mock
 	RestTemplate restTemplate;
-
+	
+	
+	@BeforeEach
+	public void setUpCarrito() {
+		wireMockServer = new WireMockServer();
+		wireMockServer.start();
+	
+    }
+	
+	@AfterClass
+	public void tearDownCarrito() {
+		wireMockServer.stop();
+	}
+	
+	
+	
 
 	@Test 
 	void createUserBasic_IT() throws Exception {
@@ -163,7 +207,7 @@ class UserServiceTest_IT {
 
 		when(restTemplate.getForEntity(anyString(), eq(String.class))).thenReturn(responseEntity);
 
-		mockMvc.perform(post("/users/" + userId + "/" + productId))
+		mockMvc.perform(post("/favorite/" + userId + "/" + productId))
 		.andExpect(status().isCreated())
 		.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 		.andExpect(jsonPath("$.id").value(userId))
@@ -183,7 +227,7 @@ class UserServiceTest_IT {
 
 		userService.addFavoriteProduct(userId, productId);
 
-		mockMvc.perform(post("/users/" + userId + "/" + productId))
+		mockMvc.perform(post("/favorite/" + userId + "/" + productId))
 		.andExpect(status().isConflict())
 		.andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
@@ -197,7 +241,7 @@ class UserServiceTest_IT {
 
 		userService.addFavoriteProduct(userId, productId);
 
-		mockMvc.perform(delete("/users/" + userId + "/" + productId))
+		mockMvc.perform(delete("/favorite/" + userId + "/" + productId))
 		.andExpect(status().isNoContent());
 	}
 
@@ -207,9 +251,57 @@ class UserServiceTest_IT {
 		int userId = 1;
 		int productId = 29;
 
-		mockMvc.perform(delete("/users/" + userId + "/" + productId))
+		mockMvc.perform(delete("/favorite/" + userId + "/" + productId))
 		.andExpect(status().isNotFound());
 	}
+
+	@Test
+	void deleteFavoriteProductFromAllUsers_IT() throws Exception {
+
+		int userId = 1;
+		int productId = 25;
+
+		userService.addFavoriteProduct(userId, productId);
+
+		mockMvc.perform(delete("/favorite/product/" + productId))
+		.andExpect(status().isNoContent());
+	}
+
+	@Test
+	void deleteFavoriteProductFromAllUsers_WithNotExistingFavorites_IT() throws Exception {
+
+		int productId = 99;
+
+		userService.deleteFavoriteProductFromAllUsers(99);
+
+		mockMvc.perform(delete("/favorite/product/" + productId))
+		.andExpect(status().isNotFound());
+	}
+	
+	
+	
+	 @Test
+	 public void getUserPointsAndAvg () throws IOException, InterruptedException {
+			
+			stubFor(get(urlPathEqualTo("/carts/user/" + 12))
+	                .willReturn(aResponse()
+	                    .withStatus(200)
+	                    .withHeader("Content-Type", "application/json")
+	                    .withBody("{\"points\":100, \"averageSpent\":1260.0}")));
+			
+			HttpClient httpClient = HttpClient.newHttpClient();
+			
+			HttpRequest request = HttpRequest.newBuilder()
+			        .uri(URI.create("http://localhost:" + wireMockServer.port() + "/carts/user/" + 12))
+			        .GET()
+			        .build();
+			 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+			 assertThat(200).isEqualTo(response.statusCode());
+			 assertThat("{\"points\":100, \"averageSpent\":1260.0}").isEqualTo(response.body());
+	 }
+	
+	
 
 
 }
