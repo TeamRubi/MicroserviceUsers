@@ -8,7 +8,7 @@ import javax.transaction.Transactional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.DTO.Mapper;
 import com.gfttraining.DTO.UserEntityDTO;
-import com.gfttraining.connection.RetrieveCartInformation;
+import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.entity.CartEntity;
 import com.gfttraining.entity.FavoriteProduct;
 import com.gfttraining.entity.ProductEntity;
@@ -41,16 +41,16 @@ public class UserService {
 
 	private ModelMapper modelMapper;
 	
-	private RetrieveCartInformation retrieveCartInformation;
+	private RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice;;
 
 	private Mapper mapper;
 
 	@Autowired
-	public UserService(UserRepository userRepository, FavoriteRepository favoriteRepository, ModelMapper modelMapper, RetrieveCartInformation retrieveCartInformation, Mapper mapper) {
+	public UserService(UserRepository userRepository, FavoriteRepository favoriteRepository, ModelMapper modelMapper, RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice, Mapper mapper) {
 		this.userRepository = userRepository;
 		this.favoriteRepository = favoriteRepository;
 		this.modelMapper = modelMapper;
-		this.retrieveCartInformation = retrieveCartInformation;
+		this.retrieveInformationFromExternalMicroservice = retrieveInformationFromExternalMicroservice;
 		this.mapper = mapper;
 	}
 
@@ -150,7 +150,8 @@ public class UserService {
 
 	public UserEntityDTO getUserWithAvgSpentAndFidelityPoints(int id){
 		
-		List<CartEntity> carts = retrieveCartInformation.getCarts(id);
+		List<CartEntity> carts = retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:8082/carts/user/" + id,
+				new ParameterizedTypeReference<List<CartEntity>>() {});
 
 		return mapper.toUserWithAvgSpentAndFidelityPoints(findUserById(id), calculateAvgSpent(carts), getPoints(carts));
 	}

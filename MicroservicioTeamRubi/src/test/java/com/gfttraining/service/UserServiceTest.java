@@ -365,7 +365,8 @@ class UserServiceTest {
 
 		carts.add(cartEntity);
 	
-		when(retrieveCartInformation.getCarts(anyInt())).thenReturn(carts);
+		when(retrieveCartInformation.getCarts("localhost:anything",anyInt(), new ParameterizedTypeReference<List<CartEntity>>() {
+		})).thenReturn(carts);
 		
 		when(repository.findById(anyInt())).thenReturn(userModel2);
 		
