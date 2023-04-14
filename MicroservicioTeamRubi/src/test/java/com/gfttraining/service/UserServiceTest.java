@@ -56,6 +56,7 @@ import com.gfttraining.repository.FavoriteRepository;
 import com.gfttraining.repository.UserRepository;
 
 
+@SpringBootTest
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
@@ -80,6 +81,7 @@ class UserServiceTest {
 	RestTemplate restTemplate;
 
 	UserEntity userModel;
+	
 	Optional<UserEntity> userModel2;
 
 	@BeforeEach
