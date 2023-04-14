@@ -6,6 +6,4 @@ public class DuplicateFavoriteException extends RuntimeException {
 		super(message);
 	}
 
-
-
 }

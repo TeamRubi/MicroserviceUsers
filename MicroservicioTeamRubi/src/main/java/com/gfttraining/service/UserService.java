@@ -4,17 +4,22 @@ import java.util.List;
 import java.util.Optional;
 
 import javax.persistence.EntityNotFoundException;
+import javax.transaction.Transactional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.DTO.Mapper;
 import com.gfttraining.DTO.UserEntityDTO;
-import com.gfttraining.connection.RetrieveCartInformation;
+import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.entity.CartEntity;
 import com.gfttraining.entity.FavoriteProduct;
 import com.gfttraining.entity.ProductEntity;
@@ -35,15 +40,18 @@ public class UserService {
 	private FavoriteRepository favoriteRepository;
 
 	private ModelMapper modelMapper;
+	
+	private RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice;;
 
-	@Autowired
 	private Mapper mapper;
 
 	@Autowired
-	public UserService(UserRepository userRepository, FavoriteRepository favoriteRepository, ModelMapper modelMapper) {
+	public UserService(UserRepository userRepository, FavoriteRepository favoriteRepository, ModelMapper modelMapper, RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice, Mapper mapper) {
 		this.userRepository = userRepository;
 		this.favoriteRepository = favoriteRepository;
 		this.modelMapper = modelMapper;
+		this.retrieveInformationFromExternalMicroservice = retrieveInformationFromExternalMicroservice;
+		this.mapper = mapper;
 	}
 
 	public List<UserEntity> findAll(){
@@ -118,11 +126,6 @@ public class UserService {
 		}
 		user.setId(existingUser.getId());
 
-		System.out.println(existingUser);
-		System.out.println(user);
-
-		System.out.println(modelMapper);
-
 		modelMapper.map(user, existingUser);
 
 		log.info("Updated user with id " + id);
@@ -146,8 +149,9 @@ public class UserService {
 	}
 
 	public UserEntityDTO getUserWithAvgSpentAndFidelityPoints(int id){
-
-		List<CartEntity> carts = RetrieveCartInformation.getCarts(id);
+		
+		List<CartEntity> carts = retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:8082/carts/user/" + id,
+				new ParameterizedTypeReference<List<CartEntity>>() {});
 
 		return mapper.toUserWithAvgSpentAndFidelityPoints(findUserById(id), calculateAvgSpent(carts), getPoints(carts));
 	}
@@ -198,7 +202,6 @@ public class UserService {
 	}
 
 
-
 	public UserEntity addFavoriteProduct(int userId, int productId) {
 
 		UserEntity existingUser = userRepository.findById(userId)
@@ -206,13 +209,44 @@ public class UserService {
 
 		FavoriteProduct favorite = new FavoriteProduct(userId, productId);
 
-		try {
+		if(!favoriteRepository.existsByUserIdAndProductId(userId, productId)) {
 			favoriteRepository.save(favorite);
-		} catch(DataIntegrityViolationException ex) {
+			log.info("Favorite product saved on database");
+		}
+		else {
 			throw new DuplicateFavoriteException("Product with id " + productId + " is already favorite for user with id " + userId);
 		}
 
 		return existingUser;
+	}
+
+	@Transactional
+	public void deleteFavoriteProduct(int userId, int productId) {
+
+		if(favoriteRepository.existsByUserIdAndProductId(userId, productId)) {
+			favoriteRepository.deleteByUserIdAndProductId(userId, productId);
+			log.info("Favorite product deleted on database");
+		}
+		else {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, 
+					"User with id " + userId + " does not have product with id " + productId + " as favorite");
+		}
+	}
+
+	public ResponseEntity<Void> saveAllImportedUsers(MultipartFile file) {
+		try {
+			deleteAllUsers();
+			ObjectMapper objectMapper = new ObjectMapper();
+			List<UserEntity> users = objectMapper.readValue(file.getBytes(), new TypeReference<List<UserEntity>>(){});
+			saveAllUsers(users);
+			log.info("Users saved on database by file");
+			return new ResponseEntity<>(HttpStatus.CREATED);
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("Error saving users to database by file");
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
 	}
 
 

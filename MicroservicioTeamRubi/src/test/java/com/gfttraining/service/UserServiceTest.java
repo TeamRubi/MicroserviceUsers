@@ -13,6 +13,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,14 +31,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.gfttraining.DTO.Mapper;
 import com.gfttraining.DTO.UserEntityDTO;
-import com.gfttraining.connection.RetrieveCartInformation;
+import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.entity.CartEntity;
 import com.gfttraining.entity.FavoriteProduct;
 import com.gfttraining.entity.ProductEntity;
@@ -48,8 +49,6 @@ import com.gfttraining.repository.FavoriteRepository;
 import com.gfttraining.repository.UserRepository;
 
 
-
-@SpringBootTest
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
@@ -64,21 +63,25 @@ class UserServiceTest {
 	private UserEntityDTO userEntityDTO;
 
 	@Mock
-	private RetrieveCartInformation retrieveCartInformation;
-
-	@Value("${server.url}")
-	private String serverUrl;
-
+	private RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice;
+	
+	@Autowired
+	@Mock
+	private Mapper mapper;
+	
+	@Mock
+	RestTemplate restTemplate;
 
 	UserEntity userModel;
+
 	Optional<UserEntity> userModel2;
 
 	@BeforeEach
 	public void createUser() {
-		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
+		userModel = new UserEntity(12, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", null, null);
 		userModel2 = Optional
-				.of(new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN"));
-		userEntityDTO = new UserEntityDTO("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
+				.of(new UserEntity(12, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", null, null));
+		userEntityDTO = new UserEntityDTO(12, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA", BigDecimal.valueOf(20), 0, null);
 	}
 
 	@Mock
@@ -136,6 +139,7 @@ class UserServiceTest {
 
 	@Test
 	void getAllUsersByNameNotFound_test(){
+
 		List <UserEntity> userListTest1 = new ArrayList<>();
 
 		when(repository.findAllByName("Ernaaa")).thenReturn((userListTest1));
@@ -251,6 +255,7 @@ class UserServiceTest {
 		updatedUser.setName("Jose");
 
 		when(repository.findById(1)).thenReturn(Optional.of(userModel));
+		//when(repository.existsByEmail(anyString())).thenReturn(true);
 		when(repository.save(userModel)).thenReturn(userModel);
 
 		UserEntity result = userService.updateUserById(1, updatedUser);
@@ -306,34 +311,62 @@ class UserServiceTest {
 
 	}
 
-	@SuppressWarnings("static-access")
 	@Test
-	void getUserPointsis0_test() throws Exception{
+	void getUserPointsis_test() throws Exception{
 
-		List<ProductEntity> products =  Arrays.asList(new ProductEntity());
+		List<ProductEntity> products =  Arrays.asList(new ProductEntity(1, 2, "product", UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"), "patatas", BigDecimal.valueOf(10),2, BigDecimal.valueOf(20)));
 
 		List<CartEntity> carts = new ArrayList<>();
 
 		CartEntity cartEntity = new CartEntity();
 		cartEntity.setId(UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"));
-		cartEntity.setUserId(4);
+		cartEntity.setUserId(12);
 		cartEntity.setCreatedAt(LocalDateTime.of(2022, 4, 11, 10, 30, 0));
 		cartEntity.setUpdatedAt(LocalDateTime.of(2022, 4, 12, 10, 30, 0));
 		cartEntity.setStatus("SUBMITTED");
 		cartEntity.setProducts(products);
 
 		carts.add(cartEntity);
+	
+		when(retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:8082/carts/user/" + 12, new ParameterizedTypeReference<List<CartEntity>>() {
+		})).thenReturn(carts);
+		
+		when(repository.findById(anyInt())).thenReturn(userModel2);
+		
+		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(20), 1)).thenReturn(userEntityDTO);
+		
+		assertThat(0).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getPoints());
 
 
-		when(repository.findById(4)).thenReturn(userModel2);
+	}
+	
+	@Test
+	void getAvgSpent_test() {
+		
+		List<ProductEntity> products =  Arrays.asList(new ProductEntity(1, 2, "product", UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"), "patatas", BigDecimal.valueOf(10),2, BigDecimal.valueOf(20)));
 
+		List<CartEntity> carts = new ArrayList<>();
 
-		when(retrieveCartInformation.getCarts(anyInt())).thenReturn(carts);
-		when(userService.getUserWithAvgSpentAndFidelityPoints(4)).thenReturn(userEntityDTO);
+		CartEntity cartEntity = new CartEntity();
+		cartEntity.setId(UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"));
+		cartEntity.setUserId(12);
+		cartEntity.setCreatedAt(LocalDateTime.of(2022, 4, 11, 10, 30, 0));
+		cartEntity.setUpdatedAt(LocalDateTime.of(2022, 4, 12, 10, 30, 0));
+		cartEntity.setStatus("SUBMITTED");
+		cartEntity.setProducts(products);
 
+		carts.add(cartEntity);
+	
+		when(retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:8082/carts/user/" + 12, new ParameterizedTypeReference<List<CartEntity>>() {
+		})).thenReturn(carts);
+		
+		when(repository.findById(anyInt())).thenReturn(userModel2);
+		
+		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(20), 1)).thenReturn(userEntityDTO);
+		
+		assertThat(BigDecimal.valueOf(20)).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getAverageSpent());
 
-		assertEquals(0, userEntityDTO.getPoints());
-
+		
 	}
 
 
@@ -345,6 +378,8 @@ class UserServiceTest {
 		userModel.addFavorite(favorite);
 
 		when(repository.findById(anyInt())).thenReturn(Optional.of(userModel));
+
+		when(favoriteRepository.existsByUserIdAndProductId(anyInt(), anyInt())).thenReturn(false);
 
 		when(favoriteRepository.save(any(FavoriteProduct.class))).thenReturn(favorite);
 
@@ -376,13 +411,36 @@ class UserServiceTest {
 
 		when(repository.findById(anyInt())).thenReturn(Optional.of(userModel));
 
-		when(favoriteRepository.save(any(FavoriteProduct.class)))
-		.thenThrow(new DataIntegrityViolationException("error"));
+		when(favoriteRepository.existsByUserIdAndProductId(anyInt(), anyInt())).thenReturn(true);
 
 		assertThatThrownBy(()-> userService.addFavoriteProduct(userId,productId))
 		.isInstanceOf(DuplicateFavoriteException.class)
 		.hasMessageContaining("Product with id " + productId + " is already favorite for user with id " + userId);
 
+	}
+
+	@Test
+	void deleteFavoriteProduct_test() {
+
+		when(favoriteRepository.existsByUserIdAndProductId(anyInt(), anyInt())).thenReturn(true);
+
+		userService.deleteFavoriteProduct(1, 5);
+
+		verify(favoriteRepository, atLeastOnce()).existsByUserIdAndProductId(1, 5);
+		verify(favoriteRepository, atLeastOnce()).deleteByUserIdAndProductId(1, 5);
+	}
+
+	@Test
+	void deleteFavoriteProductWithNotExistingFavorite_test() {
+
+		int userId = 1;
+		int productId = 5;
+
+		when(favoriteRepository.existsByUserIdAndProductId(anyInt(), anyInt())).thenReturn(false);
+
+		assertThatThrownBy(()-> userService.deleteFavoriteProduct(userId,productId))
+		.isInstanceOf(ResponseStatusException.class)
+		.hasMessageContaining("User with id " + userId + " does not have product with id " + productId + " as favorite");
 	}
 
 
