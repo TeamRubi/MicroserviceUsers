@@ -90,7 +90,7 @@ class UserServiceTest {
 		userModel = new UserEntity(12, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", null, null);
 		userModel2 = Optional
 				.of(new UserEntity(12, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", null, null));
-		userEntityDTO = new UserEntityDTO(12, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA", BigDecimal.valueOf(0), 0, null);
+		userEntityDTO = new UserEntityDTO(12, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA", BigDecimal.valueOf(20), 0, null);
 	}
 
 	@Mock
@@ -321,9 +321,7 @@ class UserServiceTest {
 	}
 
 	@Test
-	void getUserPointsis0_test() throws Exception{
-		
-		String path = "http://localhost:8082/carts/user/" + 12;
+	void getUserPointsis_test() throws Exception{
 
 		List<ProductEntity> products =  Arrays.asList(new ProductEntity(1, 2, "product", UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"), "patatas", BigDecimal.valueOf(10),2, BigDecimal.valueOf(20)));
 
@@ -348,6 +346,34 @@ class UserServiceTest {
 		assertEquals(0, userService.getUserWithAvgSpentAndFidelityPoints(anyInt()).getPoints());
 
 
+	}
+	
+	@Test
+	void getAvgSpent_test() {
+		
+		List<ProductEntity> products =  Arrays.asList(new ProductEntity(1, 2, "product", UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"), "patatas", BigDecimal.valueOf(10),2, BigDecimal.valueOf(20)));
+
+		List<CartEntity> carts = new ArrayList<>();
+
+		CartEntity cartEntity = new CartEntity();
+		cartEntity.setId(UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"));
+		cartEntity.setUserId(12);
+		cartEntity.setCreatedAt(LocalDateTime.of(2022, 4, 11, 10, 30, 0));
+		cartEntity.setUpdatedAt(LocalDateTime.of(2022, 4, 12, 10, 30, 0));
+		cartEntity.setStatus("SUBMITTED");
+		cartEntity.setProducts(products);
+
+		carts.add(cartEntity);
+	
+		when(retrieveCartInformation.getCarts(anyInt())).thenReturn(carts);
+		
+		when(repository.findById(anyInt())).thenReturn(userModel2);
+		
+		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(20), 1)).thenReturn(userEntityDTO);
+		
+		assertEquals(BigDecimal.valueOf(20), userService.getUserWithAvgSpentAndFidelityPoints(anyInt()).getAverageSpent());
+
+		
 	}
 
 
