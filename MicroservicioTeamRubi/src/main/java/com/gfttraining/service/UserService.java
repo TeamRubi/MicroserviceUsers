@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import javax.persistence.EntityNotFoundException;
+import javax.transaction.Transactional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -197,7 +198,6 @@ public class UserService {
 	}
 
 
-
 	public UserEntity addFavoriteProduct(int userId, int productId) {
 
 		UserEntity existingUser = userRepository.findById(userId)
@@ -214,6 +214,19 @@ public class UserService {
 		}
 
 		return existingUser;
+	}
+
+	@Transactional
+	public void deleteFavoriteProduct(int userId, int productId) {
+
+		if(favoriteRepository.existsByUserIdAndProductId(userId, productId)) {
+			favoriteRepository.deleteByUserIdAndProductId(userId, productId);
+			log.info("Favorite product deleted on database");
+		}
+		else {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, 
+					"User with id " + userId + " does not have product with id " + productId + " as favorite");
+		}
 	}
 
 	public ResponseEntity<Void> saveAllImportedUsers(MultipartFile file) {

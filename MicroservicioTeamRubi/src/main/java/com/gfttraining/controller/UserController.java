@@ -96,6 +96,16 @@ public class UserController {
 		}
 	}
 
+	@DeleteMapping("/users/{userId}/{productId}")
+	public ResponseEntity<Void> deleteFavoriteProduct(@PathVariable int userId, @PathVariable int productId) throws Exception  {
+
+		userService.deleteFavoriteProduct(userId, productId);
+
+		return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+
+	}
+
+
 	private boolean productExists(int productId) {
 
 		try {
