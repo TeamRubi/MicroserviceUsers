@@ -38,15 +38,15 @@ public class UserService {
 	
 	private RetrieveCartInformation retrieveCartInformation;
 
-	@Autowired
 	private Mapper mapper;
 
 	@Autowired
-	public UserService(UserRepository userRepository, FavoriteRepository favoriteRepository, ModelMapper modelMapper, RetrieveCartInformation retrieveCartInformation) {
+	public UserService(UserRepository userRepository, FavoriteRepository favoriteRepository, ModelMapper modelMapper, RetrieveCartInformation retrieveCartInformation, Mapper mapper) {
 		this.userRepository = userRepository;
 		this.favoriteRepository = favoriteRepository;
 		this.modelMapper = modelMapper;
 		this.retrieveCartInformation = retrieveCartInformation;
+		this.mapper = mapper;
 	}
 
 	public List<UserEntity> findAll(){

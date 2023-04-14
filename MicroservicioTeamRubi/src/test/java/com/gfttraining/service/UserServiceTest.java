@@ -12,6 +12,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.anything;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -71,6 +72,7 @@ class UserServiceTest {
 	@Mock
 	private RetrieveCartInformation retrieveCartInformation;
 	
+	@Autowired
 	@Mock
 	private Mapper mapper;
 	
@@ -318,7 +320,7 @@ class UserServiceTest {
 		
 		String path = "http://localhost:8082/carts/user/" + 12;
 
-		List<ProductEntity> products =  Arrays.asList(new ProductEntity());
+		List<ProductEntity> products =  Arrays.asList(new ProductEntity(1, 2, "product", UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"), "patatas", BigDecimal.valueOf(10),2, BigDecimal.valueOf(20)));
 
 		List<CartEntity> carts = new ArrayList<>();
 
@@ -331,19 +333,12 @@ class UserServiceTest {
 		cartEntity.setProducts(products);
 
 		carts.add(cartEntity);
-		
-//		when(restTemplate.exchange(
-//			    Mockito.eq(path),
-//			    Mockito.eq(HttpMethod.GET),
-//			    Mockito.any(),
-//			    Mockito.<ParameterizedTypeReference<List<CartEntity>>>any())
-//			).thenReturn(new ResponseEntity<>(carts, HttpStatus.OK));
-		
+	
 		when(retrieveCartInformation.getCarts(anyInt())).thenReturn(carts);
 		
 		when(repository.findById(anyInt())).thenReturn(userModel2);
 		
-		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(0), 0)).thenReturn(userEntityDTO);
+		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(20), 1)).thenReturn(userEntityDTO);
 		
 		assertEquals(0, userService.getUserWithAvgSpentAndFidelityPoints(anyInt()).getPoints());
 
