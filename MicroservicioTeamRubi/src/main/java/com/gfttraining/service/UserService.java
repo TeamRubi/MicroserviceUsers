@@ -9,6 +9,9 @@ import javax.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -228,10 +231,23 @@ public class UserService {
 			log.info("Favorite product deleted on database");
 		}
 		else {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, 
-					"User with id " + userId + " does not have product with id " + productId + " as favorite");
+			throw new EmptyResultDataAccessException("User with id " + userId + " does not have product with id " + productId + " as favorite", 1);
 		}
 	}
+
+	@Transactional
+	public void deleteFavoriteProductFromAllUsers(int productId) {
+
+		if(favoriteRepository.existsByProductId(productId)) {
+			favoriteRepository.deleteByProductId(productId);
+			log.info("Favorites of that product deleted on database");
+		}
+		else {
+			throw new EmptyResultDataAccessException("Product " + productId + " is not in the favorites of any user", 1);
+		}
+	}
+
+
 
 	public ResponseEntity<Void> saveAllImportedUsers(MultipartFile file) {
 		try {
