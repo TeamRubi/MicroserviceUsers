@@ -7,13 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.anything;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -24,7 +22,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import javax.persistence.EntityNotFoundException;
-import javax.transaction.Transactional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,22 +29,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.gfttraining.DTO.Mapper;
 import com.gfttraining.DTO.UserEntityDTO;
-import com.gfttraining.connection.RetrieveCartInformation;
+import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.entity.CartEntity;
 import com.gfttraining.entity.FavoriteProduct;
 import com.gfttraining.entity.ProductEntity;
@@ -72,7 +63,7 @@ class UserServiceTest {
 	private UserEntityDTO userEntityDTO;
 
 	@Mock
-	private RetrieveCartInformation retrieveCartInformation;
+	private RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice;
 	
 	@Autowired
 	@Mock
@@ -337,13 +328,14 @@ class UserServiceTest {
 
 		carts.add(cartEntity);
 	
-		when(retrieveCartInformation.getCarts(anyInt())).thenReturn(carts);
+		when(retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:8082/carts/user/" + 12, new ParameterizedTypeReference<List<CartEntity>>() {
+		})).thenReturn(carts);
 		
 		when(repository.findById(anyInt())).thenReturn(userModel2);
 		
 		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(20), 1)).thenReturn(userEntityDTO);
 		
-		assertEquals(0, userService.getUserWithAvgSpentAndFidelityPoints(anyInt()).getPoints());
+		assertThat(0).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getPoints());
 
 
 	}
@@ -365,14 +357,14 @@ class UserServiceTest {
 
 		carts.add(cartEntity);
 	
-		when(retrieveCartInformation.getCarts("localhost:anything",anyInt(), new ParameterizedTypeReference<List<CartEntity>>() {
+		when(retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:8082/carts/user/" + 12, new ParameterizedTypeReference<List<CartEntity>>() {
 		})).thenReturn(carts);
 		
 		when(repository.findById(anyInt())).thenReturn(userModel2);
 		
 		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(20), 1)).thenReturn(userEntityDTO);
 		
-		assertEquals(BigDecimal.valueOf(20), userService.getUserWithAvgSpentAndFidelityPoints(anyInt()).getAverageSpent());
+		assertThat(BigDecimal.valueOf(20)).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getAverageSpent());
 
 		
 	}
