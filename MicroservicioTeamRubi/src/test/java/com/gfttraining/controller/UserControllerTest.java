@@ -202,4 +202,16 @@ class UserControllerTest {
 
 	}
 
+	@Test
+	void deleteFavoriteProductFromAllUsers_test() throws Exception {
+
+		int productId = 2;
+
+		ResponseEntity<Void> response = userController.deleteFavoriteProductFromAllUsers(productId);
+
+		verify(userService, atLeastOnce()).deleteFavoriteProductFromAllUsers(productId);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+	}
+
 }

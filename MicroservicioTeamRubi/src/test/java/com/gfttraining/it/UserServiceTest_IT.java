@@ -163,7 +163,7 @@ class UserServiceTest_IT {
 
 		when(restTemplate.getForEntity(anyString(), eq(String.class))).thenReturn(responseEntity);
 
-		mockMvc.perform(post("/users/" + userId + "/" + productId))
+		mockMvc.perform(post("/favorite/" + userId + "/" + productId))
 		.andExpect(status().isCreated())
 		.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 		.andExpect(jsonPath("$.id").value(userId))
@@ -183,7 +183,7 @@ class UserServiceTest_IT {
 
 		userService.addFavoriteProduct(userId, productId);
 
-		mockMvc.perform(post("/users/" + userId + "/" + productId))
+		mockMvc.perform(post("/favorite/" + userId + "/" + productId))
 		.andExpect(status().isConflict())
 		.andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
@@ -197,7 +197,7 @@ class UserServiceTest_IT {
 
 		userService.addFavoriteProduct(userId, productId);
 
-		mockMvc.perform(delete("/users/" + userId + "/" + productId))
+		mockMvc.perform(delete("/favorite/" + userId + "/" + productId))
 		.andExpect(status().isNoContent());
 	}
 
@@ -207,7 +207,30 @@ class UserServiceTest_IT {
 		int userId = 1;
 		int productId = 29;
 
-		mockMvc.perform(delete("/users/" + userId + "/" + productId))
+		mockMvc.perform(delete("/favorite/" + userId + "/" + productId))
+		.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void deleteFavoriteProductFromAllUsers_IT() throws Exception {
+
+		int userId = 1;
+		int productId = 25;
+
+		userService.addFavoriteProduct(userId, productId);
+
+		mockMvc.perform(delete("/favorite/" + productId))
+		.andExpect(status().isNoContent());
+	}
+
+	@Test
+	void deleteFavoriteProductFromAllUsers_WithNotExistingFavorites_IT() throws Exception {
+
+		int productId = 99;
+
+		userService.deleteFavoriteProductFromAllUsers(99);
+
+		mockMvc.perform(delete("/favorite/" + productId))
 		.andExpect(status().isNotFound());
 	}
 

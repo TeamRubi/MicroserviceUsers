@@ -39,6 +39,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -73,11 +74,11 @@ class UserServiceTest {
 
 	@Mock
 	private RetrieveCartInformation retrieveCartInformation;
-	
+
 	@Autowired
 	@Mock
 	private Mapper mapper;
-	
+
 	@Mock
 	RestTemplate restTemplate;
 
@@ -87,9 +88,9 @@ class UserServiceTest {
 
 	@BeforeEach
 	public void createUser() {
-		userModel = new UserEntity(12, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", null, null);
+		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
 		userModel2 = Optional
-				.of(new UserEntity(12, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", null, null));
+				.of(new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN"));
 		userEntityDTO = new UserEntityDTO(12, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA", BigDecimal.valueOf(0), 0, null);
 	}
 
@@ -322,7 +323,7 @@ class UserServiceTest {
 
 	@Test
 	void getUserPointsis0_test() throws Exception{
-		
+
 		String path = "http://localhost:8082/carts/user/" + 12;
 
 		List<ProductEntity> products =  Arrays.asList(new ProductEntity(1, 2, "product", UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"), "patatas", BigDecimal.valueOf(10),2, BigDecimal.valueOf(20)));
@@ -338,13 +339,13 @@ class UserServiceTest {
 		cartEntity.setProducts(products);
 
 		carts.add(cartEntity);
-	
+
 		when(retrieveCartInformation.getCarts(anyInt())).thenReturn(carts);
-		
+
 		when(repository.findById(anyInt())).thenReturn(userModel2);
-		
+
 		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(20), 1)).thenReturn(userEntityDTO);
-		
+
 		assertEquals(0, userService.getUserWithAvgSpentAndFidelityPoints(anyInt()).getPoints());
 
 
@@ -420,8 +421,35 @@ class UserServiceTest {
 		when(favoriteRepository.existsByUserIdAndProductId(anyInt(), anyInt())).thenReturn(false);
 
 		assertThatThrownBy(()-> userService.deleteFavoriteProduct(userId,productId))
-		.isInstanceOf(ResponseStatusException.class)
+		.isInstanceOf(EmptyResultDataAccessException.class)
 		.hasMessageContaining("User with id " + userId + " does not have product with id " + productId + " as favorite");
+	}
+
+
+	@Test
+	void deleteFavoriteProductFromAllUsers_test() {
+
+		int productId = 5;
+
+		when(favoriteRepository.existsByProductId(anyInt())).thenReturn(true);
+
+		userService.deleteFavoriteProductFromAllUsers(productId);
+
+		verify(favoriteRepository, atLeastOnce()).existsByProductId(productId);
+		verify(favoriteRepository, atLeastOnce()).deleteByProductId(productId);
+	}
+
+	@Test
+	void deleteFavoriteProductFromAllUsersWithNoProductInFavorites_test() {
+
+		int productId = 5;
+
+		when(favoriteRepository.existsByProductId(anyInt())).thenReturn(false);
+
+		assertThatThrownBy(()-> userService.deleteFavoriteProductFromAllUsers(productId))
+		.isInstanceOf(EmptyResultDataAccessException.class)
+		.hasMessageContaining("Product " + productId + " is not in the favorites of any user");
+
 	}
 
 
