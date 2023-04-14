@@ -281,7 +281,7 @@ class UserServiceTest_IT {
 	
 	
 	 @Test
-	 public void getUserPointsAndAvg () throws IOException, InterruptedException {
+	 public void getUserPointsAndAvg_IT () throws IOException, InterruptedException {
 			
 			stubFor(get(urlPathEqualTo("/carts/user/" + 12))
 	                .willReturn(aResponse()
@@ -301,7 +301,26 @@ class UserServiceTest_IT {
 			 assertThat("{\"points\":100, \"averageSpent\":1260.0}").isEqualTo(response.body());
 	 }
 	
-	
+	 @Test
+	 public void getUserPointsAndAvgNotFound_IT () throws IOException, InterruptedException {
+			
+			stubFor(get(urlPathEqualTo("/carts/user/" + 12))
+	                .willReturn(aResponse()
+	                    .withStatus(404)
+	                    .withHeader("Content-Type", "application/json")
+	                    .withBody("\"User not found")));
+			
+			HttpClient httpClient = HttpClient.newHttpClient();
+			
+			HttpRequest request = HttpRequest.newBuilder()
+			        .uri(URI.create("http://localhost:" + wireMockServer.port() + "/carts/user/" + 12))
+			        .GET()
+			        .build();
+			 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+			 assertThat(404).isEqualTo(response.statusCode());
+			 assertThat("\"User not found").isEqualTo(response.body());
+	 }
 
 
 }
