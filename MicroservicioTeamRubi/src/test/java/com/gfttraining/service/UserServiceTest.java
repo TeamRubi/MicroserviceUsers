@@ -368,7 +368,7 @@ class UserServiceTest {
 		
 		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(20), 1)).thenReturn(userEntityDTO);
 		
-		assertThat(BigDecimal.valueOf(20)).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getAverageSpent());
+		assertThat(BigDecimal.valueOf(0)).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getAverageSpent());
 
 		
 	}

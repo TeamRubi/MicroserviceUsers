@@ -1,5 +1,6 @@
 package com.gfttraining.controller;
 import java.util.List;
+import java.util.Optional;
 
 import javax.validation.Valid;
 
@@ -126,6 +127,12 @@ public class UserController {
 			return false;
 		}
 
+	}
+	
+	//cart endpoint to get user information only
+	@GetMapping("/users/bInfo/{id}")
+	public Optional<UserEntity> getBasicUserInfoById(@PathVariable int id) {
+		return userService.getBasicUserInfoById(id);
 	}
 
 }

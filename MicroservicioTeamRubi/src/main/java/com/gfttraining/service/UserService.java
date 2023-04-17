@@ -265,6 +265,10 @@ public class UserService {
 
 	}
 
+	public Optional<UserEntity> getBasicUserInfoById(int id) {
+		return userRepository.findById(id);
+	}
+
 
 
 }
