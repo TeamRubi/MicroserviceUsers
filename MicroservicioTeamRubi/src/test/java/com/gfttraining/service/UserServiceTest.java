@@ -316,7 +316,7 @@ class UserServiceTest {
 	}
 
 	@Test
-	void getUserPointsis_test() throws Exception{
+	void getUserPoints_test() throws Exception{
 
 		List<ProductEntity> products =  Arrays.asList(new ProductEntity(1, 2, "product", UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"), "patatas", BigDecimal.valueOf(10),2, BigDecimal.valueOf(20)));
 
@@ -340,9 +340,112 @@ class UserServiceTest {
 		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(20), 1)).thenReturn(userEntityDTO);
 		
 		assertThat(0).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getPoints());
-
-
 	}
+	
+	@Test
+	void getPoints_is_1_test(){
+
+		List<ProductEntity> products =  Arrays.asList(
+				new ProductEntity(1, 2, "product", UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"), "paraguas", BigDecimal.valueOf(10),2, BigDecimal.valueOf(20)));
+
+		List<CartEntity> carts = new ArrayList<>();
+
+		CartEntity cartEntity = new CartEntity();
+		cartEntity.setId(UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"));
+		cartEntity.setUserId(12);
+		cartEntity.setCreatedAt(LocalDateTime.of(2022, 4, 11, 10, 30, 0));
+		cartEntity.setUpdatedAt(LocalDateTime.of(2022, 4, 12, 10, 30, 0));
+		cartEntity.setStatus("SUBMITTED");
+		cartEntity.setProducts(products);
+
+		carts.add(cartEntity);
+	
+		Integer result = userService.getPoints(carts);
+		
+		assertThat(1).isEqualTo(result);
+	}
+	
+	@Test
+	void getPoints_is_3_test(){
+
+		List<ProductEntity> products =  Arrays.asList(
+				new ProductEntity(1, 2, "product", UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"), "pelotas padel", BigDecimal.valueOf(10),4, BigDecimal.valueOf(40)));
+
+		List<CartEntity> carts = new ArrayList<>();
+
+		CartEntity cartEntity = new CartEntity();
+		cartEntity.setId(UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"));
+		cartEntity.setUserId(12);
+		cartEntity.setCreatedAt(LocalDateTime.of(2022, 4, 11, 10, 30, 0));
+		cartEntity.setUpdatedAt(LocalDateTime.of(2022, 4, 12, 10, 30, 0));
+		cartEntity.setStatus("SUBMITTED");
+		cartEntity.setProducts(products);
+
+		carts.add(cartEntity);
+	
+		Integer result = userService.getPoints(carts);
+		
+		assertThat(3).isEqualTo(result);
+	}
+	
+	
+	@Test
+	void getPoints_is_5_test(){
+
+		List<ProductEntity> products =  Arrays.asList(
+				new ProductEntity(1, 2, "product", UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"), "salmon noruego", BigDecimal.valueOf(10),5, BigDecimal.valueOf(50)));
+
+		List<CartEntity> carts = new ArrayList<>();
+
+		CartEntity cartEntity = new CartEntity();
+		cartEntity.setId(UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"));
+		cartEntity.setUserId(12);
+		cartEntity.setCreatedAt(LocalDateTime.of(2022, 4, 11, 10, 30, 0));
+		cartEntity.setUpdatedAt(LocalDateTime.of(2022, 4, 12, 10, 30, 0));
+		cartEntity.setStatus("SUBMITTED");
+		cartEntity.setProducts(products);
+
+		carts.add(cartEntity);
+	
+		Integer result = userService.getPoints(carts);
+		
+		assertThat(5).isEqualTo(result);
+	}
+
+	
+
+	
+	@Test
+	void getPoints_is_10_test(){
+
+		List<ProductEntity> products =  Arrays.asList(
+				new ProductEntity(1, 2, "product", UUID.fromString("7e2bb8f9-6bbc-4bc4-4bc4-f72cb21b035f"), "coca-cola", BigDecimal.valueOf(2.50),4, BigDecimal.valueOf(10)),
+				new ProductEntity(1, 2, "product", UUID.fromString("7e2bb8f9-98a1-4bc4-915f-f72cb21b035f"), "patatas", BigDecimal.valueOf(1.50),6, BigDecimal.valueOf(9)),
+				new ProductEntity(1, 2, "product", UUID.fromString("7e2bb8f9-6bbc-4bc4-6bbc-f72cb21b035f"), "aceitunas", BigDecimal.valueOf(1.75),5, BigDecimal.valueOf(8.75)),
+				new ProductEntity(1, 2, "product", UUID.fromString("7e2bb8f9-6bbc-4bc4-4bc4-f72cb21b035f"), "entrecot", BigDecimal.valueOf(25),10, BigDecimal.valueOf(250))
+				);
+
+		List<CartEntity> carts = new ArrayList<>();
+
+		CartEntity cartEntity = new CartEntity();
+		cartEntity.setId(UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"));
+		cartEntity.setUserId(12);
+		cartEntity.setCreatedAt(LocalDateTime.of(2022, 4, 11, 10, 30, 0));
+		cartEntity.setUpdatedAt(LocalDateTime.of(2022, 4, 12, 10, 30, 0));
+		cartEntity.setStatus("SUBMITTED");
+		cartEntity.setProducts(products);
+
+		carts.add(cartEntity);
+	
+		Integer result = userService.getPoints(carts);
+		
+		assertThat(10).isEqualTo(result);
+	}
+
+
+		
+	
+	
 	
 	@Test
 	void getAvgSpent_test() {
@@ -370,9 +473,23 @@ class UserServiceTest {
 		
 		assertThat(BigDecimal.valueOf(0)).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getAverageSpent());
 
-		
 	}
+	
+	@Test
+	void getAvgSpentis0_test() {
+		
+		List<ProductEntity> products =  Arrays.asList(new ProductEntity(1, 2, "product", UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"), "patatas", BigDecimal.valueOf(10),2, BigDecimal.valueOf(20)));
 
+		List<CartEntity> carts = new ArrayList<>();
+
+		CartEntity cartEntity = new CartEntity();
+		
+		BigDecimal result=userService.calculateAvgSpent(carts);
+		
+		assertThat(BigDecimal.valueOf(0)).isEqualTo(result);
+
+	}
+	
 
 	@Test
 	void addFavoriteProduct_test() {

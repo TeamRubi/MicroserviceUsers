@@ -42,7 +42,7 @@ public class UserController {
 	}
 
 	@GetMapping("/users/name/{name}")
-	public List<UserEntity> GetUserById(@PathVariable String name){
+	public List<UserEntity> GetUserByName(@PathVariable String name){
 		return userService.findAllByName(name);
 	}
 
