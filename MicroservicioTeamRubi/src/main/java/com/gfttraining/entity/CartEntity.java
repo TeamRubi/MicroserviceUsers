@@ -22,4 +22,6 @@ public class CartEntity {
 	private String status;
 	private List<ProductEntity> products;
 
+
+
 }
