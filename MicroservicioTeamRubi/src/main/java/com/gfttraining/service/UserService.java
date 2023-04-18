@@ -7,7 +7,6 @@ import javax.persistence.EntityNotFoundException;
 import javax.transaction.Transactional;
 
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -20,7 +19,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.config.FeatureFlag;
 import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
-import com.gfttraining.dto.Mapper;
 import com.gfttraining.dto.UserEntityDTO;
 import com.gfttraining.entity.CartEntity;
 import com.gfttraining.entity.FavoriteProduct;
@@ -68,16 +66,6 @@ public class UserService {
 			throw new EntityNotFoundException("Usuario con el id: "+id+" no encontrado");
 		}
 		log.info("Found user by ID");
-		return user.get();
-	}
-
-	public UserEntity getBasicUserInfoById(int id) {
-		Optional<UserEntity> user = userRepository.findById(id);
-		if(user.isEmpty()) {
-			log.error("getBasicUserInfoById() -> no such user with the ID: " + id);
-			throw new EntityNotFoundException("Informacion basica del usuario con el id: "+id+" no encontrado");
-		}
-		log.info("Found user basic information by ID");
 		return user.get();
 	}
 
@@ -162,13 +150,14 @@ public class UserService {
 		List<CartEntity> carts = retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:8082/carts/user/" + id,
 				new ParameterizedTypeReference<List<CartEntity>>() {});
 
-		UserEntityDTO userDTO = modelMapper.map(findUserById(id), UserEntityDTO.class);
+		UserEntityDTO userDTO = new UserEntityDTO();
+		modelMapper.map(findUserById(id), userDTO);
+
 		userDTO.setAverageSpent(calculateAvgSpent(carts));
 		userDTO.setPoints(getPoints(carts));
 		log.info("Returning a UserEntityDTO with fidelityPoints and avgSpent");
 		return userDTO;
 	}
-
 
 	public BigDecimal calculateAvgSpent(List<CartEntity> carts) {
 
@@ -217,7 +206,6 @@ public class UserService {
 		return points;
 	}
 
-
 	public UserEntity addFavoriteProduct(int userId, int productId) {
 
 		UserEntity existingUser = userRepository.findById(userId)
@@ -260,20 +248,19 @@ public class UserService {
 		}
 	}
 
-
-
 	public ResponseEntity<Void> saveAllImportedUsers(MultipartFile file) {
 		try {
-			deleteAllUsers();
+			userRepository.deleteAll();
+			log.info("Deleted all users");
 			ObjectMapper objectMapper = new ObjectMapper();
 			List<UserEntity> users = objectMapper.readValue(file.getBytes(), new TypeReference<List<UserEntity>>(){});
-			saveAllUsers(users);
+			userRepository.saveAll(users);
+			log.info("Saved all users to DB");
 			log.info("Users saved on database by file");
 			return new ResponseEntity<>(HttpStatus.CREATED);
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error("Error saving users to database by file");
-			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+			throw new RuntimeException("There has been an error saving users to database by file");
 		}
 
 	}

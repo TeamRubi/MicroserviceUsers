@@ -93,7 +93,6 @@ public class UserController {
 		}
 	}
 
-
 	@PostMapping("/favorite/{userId}/{productId}")
 	public ResponseEntity<UserEntity> addFavoriteProduct(@PathVariable int userId, @PathVariable int productId) throws Exception  {
 
@@ -120,7 +119,6 @@ public class UserController {
 		userService.deleteFavoriteProductFromAllUsers(productId);
 
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-
 	}
 
 
@@ -133,13 +131,6 @@ public class UserController {
 		catch(HttpClientErrorException.NotFound | ResourceAccessException ex) {
 			return false;
 		}
-
-	}
-
-	//cart endpoint to get user information only
-	@GetMapping("/users/bInfo/{id}")
-	public UserEntity getBasicUserInfoById(@PathVariable int id) {
-		return userService.getBasicUserInfoById(id);
 	}
 
 }

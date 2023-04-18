@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -48,7 +49,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.gfttraining.config.FeatureFlag;
 import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
-import com.gfttraining.dto.Mapper;
 import com.gfttraining.dto.UserEntityDTO;
 import com.gfttraining.entity.CartEntity;
 import com.gfttraining.entity.FavoriteProduct;
@@ -78,10 +78,6 @@ class UserServiceTest {
 
 	@Mock
 	private RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice;
-
-	@Autowired
-	@Mock
-	private Mapper mapper;
 
 	@Mock
 	private ModelMapper modelMapper;
@@ -160,30 +156,6 @@ class UserServiceTest {
 		assertEquals("Usuario con el id: " + 1234 + " no encontrado", exception.getMessage());
 
 	}
-
-	@Test
-	void getBasicUserInfoById_test() {
-
-		when(userRepository.findById(1)).thenReturn(optionalUserModel);
-
-		UserEntity result = userService.getBasicUserInfoById(1);
-
-		verify(userRepository, Mockito.times(1)).findById(1);
-		assertEquals(userModel, result);
-	}
-
-	@Test
-	void getBasicUserInfoByIdNotFound_test() {
-
-		when(userRepository.findById(1234)).thenReturn((Optional.empty()));
-
-		EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
-			userService.getBasicUserInfoById(1234);
-		});
-
-		assertEquals("Informacion basica del usuario con el id: " + 1234 + " no encontrado", exception.getMessage());
-	}
-
 
 	@Test
 	void getAllUsersByName_test(){
@@ -300,6 +272,7 @@ class UserServiceTest {
 		verify(userRepository, times(1)).findById(1);
 		verify(userRepository, times(1)).save(userModel);
 		assertThat(updatedUser.getName()).isEqualTo(result.getName());
+		assertThat(result.getLastname()).isNotEqualTo(null);
 
 	}
 
@@ -310,29 +283,8 @@ class UserServiceTest {
 
 		assertThatThrownBy(() -> userService.updateUserById(anyInt(), userModel))
 		.isInstanceOf(ResponseStatusException.class).hasMessageContaining("User not found");
-
 	}
 
-	@Test
-	void updateUserByIdWithNullValues_test() {
-
-		userModel.setId(1);
-
-		UserEntity updatedUser = new UserEntity();
-		updatedUser.setName("Jose");
-
-		when(userRepository.findById(1)).thenReturn(Optional.of(userModel));
-
-		when(userRepository.existsByEmail(anyString())).thenReturn(false);
-
-		when(userRepository.save(userModel)).thenReturn(userModel);
-
-
-		UserEntity result = userService.updateUserById(1, updatedUser);
-
-		assertThat(result.getLastname()).isNotEqualTo(null);
-
-	}
 
 	@Test
 	void createUserWithEmailThatAlreadyExists_test() {
@@ -387,14 +339,15 @@ class UserServiceTest {
 
 		List<CartEntity> carts = new ArrayList<>();
 
+		List<ProductEntity> products = new ArrayList<>();
+		cartEntity.setProducts(products);
+
 		carts.add(cartEntity);
 
 		when(retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:8082/carts/user/" + 12, new ParameterizedTypeReference<List<CartEntity>>() {
 		})).thenReturn(carts);
 
 		when(userRepository.findById(anyInt())).thenReturn(optionalUserModel);
-
-		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(20), 1)).thenReturn(userModelDTO);
 
 		assertThat(0).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getPoints());
 	}
@@ -498,8 +451,6 @@ class UserServiceTest {
 		})).thenReturn(carts);
 
 		when(userRepository.findById(anyInt())).thenReturn(optionalUserModel);
-
-		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(20), 1)).thenReturn(userModelDTO);
 
 		assertThat(BigDecimal.valueOf(0)).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getAverageSpent());
 
@@ -627,15 +578,11 @@ class UserServiceTest {
 
 		MultipartFile file = new MockMultipartFile("file", new byte[0]);
 
-		List<UserEntity> users = Arrays.asList();
-
-		doThrow(new RuntimeException("Error al eliminar los usuarios")).when(userRepository).deleteAll();
-
-		ResponseEntity<Void> response = userService.saveAllImportedUsers(file);
+		doThrow(new RuntimeException("There has been an error at deleting users")).when(userRepository).deleteAll();
 
 		assertThatThrownBy(()-> userService.saveAllImportedUsers(file))
 		.isInstanceOf(RuntimeException.class)
-		.hasMessageContaining("Error al eliminar los usuarios");
+		.hasMessageContaining("There has been an error saving users to database by file");
 
 		verify(userRepository, times(1)).deleteAll();
 		verifyNoMoreInteractions(userRepository);

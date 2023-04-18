@@ -206,16 +206,6 @@ class UserControllerTest {
 
 	}
 
-	@Test
-	void getBasicUserInfoById_test () {
-
-		userModel.setId(1);
-		when(userService.getBasicUserInfoById(1)).thenReturn(userModel);
-
-		userService.getBasicUserInfoById(1);
-		verify(userService, Mockito.times(1)).getBasicUserInfoById(1);
-
-	}
 
 	@Test
 	void getUserById_test2 () {
