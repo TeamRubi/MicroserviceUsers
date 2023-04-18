@@ -75,6 +75,15 @@ public class UserService {
 		return user.get();
 	}
 
+	public UserEntity getBasicUserInfoById(int id) {
+		Optional<UserEntity> user = userRepository.findById(id);
+		if(user.isEmpty()) {
+			log.error("getBasicUserInfoById() -> no such user with the ID: " + id);
+			throw new EntityNotFoundException("Informacion basica del usuario con el id: "+id+" no encontrado");
+		}
+		log.info("Found user basic information by ID");
+		return user.get();
+	}
 
 	public List<UserEntity> findAllByName(String name){
 		List<UserEntity> users = userRepository.findAllByName(name);

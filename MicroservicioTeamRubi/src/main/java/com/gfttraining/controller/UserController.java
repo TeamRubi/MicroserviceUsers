@@ -133,6 +133,13 @@ public class UserController {
 		catch(HttpClientErrorException.NotFound | ResourceAccessException ex) {
 			return false;
 		}
+
+	}
+
+	//cart endpoint to get user information only
+	@GetMapping("/users/bInfo/{id}")
+	public UserEntity getBasicUserInfoById(@PathVariable int id) {
+		return userService.getBasicUserInfoById(id);
 	}
 
 }
