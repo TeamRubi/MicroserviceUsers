@@ -1,7 +1,14 @@
 package com.gfttraining.it;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -11,11 +18,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import javax.annotation.PostConstruct;
-import javax.transaction.Transactional;
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import javax.transaction.Transactional;
 
 import org.junit.AfterClass;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +33,7 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -34,21 +44,11 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.config.AppConfig;
-import com.gfttraining.config.AppConfig.*;
+import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.entity.UserEntity;
 import com.gfttraining.service.UserService;
-
-
-
 import com.github.tomakehurst.wiremock.WireMockServer;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.io.IOException;
-import java.net.URI;
-
-
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import com.github.tomakehurst.wiremock.stubbing.Scenario;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -279,26 +279,7 @@ class UserServiceTest_IT {
 		assertThat("{\"points\":100, \"averageSpent\":1260.0}").isEqualTo(response.body());
 	}
 
-//	 @Test
-//	 public void getUserPointsAndAvg_IT () throws IOException, InterruptedException {
-//
-//			stubFor(get(urlPathEqualTo("/carts/user/" + 12))
-//	                .willReturn(aResponse()
-//	                    .withStatus(200)
-//	                    .withHeader("Content-Type", "application/json")
-//	                    .withBody("{\"points\":100, \"averageSpent\":1260.0}")));
-//
-//			HttpClient httpClient = HttpClient.newHttpClient();
-//
-//			HttpRequest request = HttpRequest.newBuilder()
-//			        .uri(URI.create("http://localhost:" + wireMockServer.port() + "/carts/user/" + 12))
-//			        .GET()
-//			        .build();
-//			 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-//
-//			 assertThat(200).isEqualTo(response.statusCode());
-//			 assertThat("{\"points\":100, \"averageSpent\":1260.0}").isEqualTo(response.body());
-//	 }
+
 //
 //	 @Test
 //	 public void getUserPointsAndAvgNotFound_IT () throws IOException, InterruptedException {
@@ -320,6 +301,38 @@ class UserServiceTest_IT {
 //			 assertThat(404).isEqualTo(response.statusCode());
 //			 assertThat("\"User not found").isEqualTo(response.body());
 //	 }
+	
+	 @Test
+	    public void shouldRetryThreeTimesAndSucceedOnThirdAttempt() {
+		 
+		 RetrieveInformationFromExternalMicroservice  retrieveInformationFromExternalMicroservice = new RetrieveInformationFromExternalMicroservice();
+		 
+	        stubFor(get(urlEqualTo("/external-service"))
+	                .inScenario("Connection retries")
+	                .whenScenarioStateIs(Scenario.STARTED)
+	                .willReturn(aResponse().withStatus(500))
+	                .willSetStateTo("Connection failed 1"));
+
+	        stubFor(get(urlEqualTo("/external-service"))
+	                .inScenario("Connection retries")
+	                .whenScenarioStateIs("Connection failed 1")
+	                .willReturn(aResponse().withStatus(500))
+	                .willSetStateTo("Connection failed 2"));
+
+	        stubFor(get(urlEqualTo("/external-service"))
+	                .inScenario("Connection retries")
+	                .whenScenarioStateIs("Connection failed 2")
+	                .willReturn(aResponse().withStatus(200).withBody("{\"result\":\"success\"}")));
+
+	        String result = "";
+			try {
+				result = retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:" + wireMockServer.port() + "/external-service", new ParameterizedTypeReference<String>() {});
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+	        assertThat(result).isEqualTo("{\"result\":\"success\"}");
+	    }
 
 
 }
