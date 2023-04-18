@@ -6,8 +6,11 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -22,13 +25,17 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.sql.Driver;
+import java.util.NoSuchElementException;
 
 import org.junit.AfterClass;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
@@ -44,12 +51,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.config.AppConfig;
 import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.entity.UserEntity;
+import com.gfttraining.repository.UserRepository;
 import com.gfttraining.service.UserService;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -63,12 +70,14 @@ class UserServiceTest_IT {
 	@Autowired
 	UserService userService;
 
+
 	UserEntity userModel;
 
 	WireMockServer wireMockServer;
 
 	@Autowired
 	private AppConfig appConfig;
+
 
 	String userPath;
 	String favoritePath;
@@ -335,5 +344,17 @@ class UserServiceTest_IT {
 	        assertThat(result).isEqualTo("{\"result\":\"success\"}");
 	    }
 
+	 
+	 @Test
+	  void deleteUserEndToEndTest() throws Exception{
+		 
+		mockMvc.perform(get("/users/bInfo/12")).andExpect(status().isOk());
+		
+		mockMvc.perform(delete("/users/12")).andExpect(status().isNoContent());
+		
+		mockMvc.perform(get("/users/bInfo/12")).andExpect(status().isNotFound());
+		
+		 		
+	 }
 
 }
