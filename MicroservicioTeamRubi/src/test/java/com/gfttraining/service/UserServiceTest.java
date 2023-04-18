@@ -2,9 +2,9 @@ package com.gfttraining.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -12,8 +12,10 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -30,16 +32,21 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.dto.Mapper;
 import com.gfttraining.dto.UserEntityDTO;
-import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.entity.CartEntity;
 import com.gfttraining.entity.FavoriteProduct;
 import com.gfttraining.entity.ProductEntity;
@@ -48,7 +55,6 @@ import com.gfttraining.exception.DuplicateEmailException;
 import com.gfttraining.exception.DuplicateFavoriteException;
 import com.gfttraining.repository.FavoriteRepository;
 import com.gfttraining.repository.UserRepository;
-
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -135,18 +141,18 @@ class UserServiceTest {
 	@Test
 	void getBasicUserInfoById_test() {
 
-		when(repository.findById(1)).thenReturn(userModel2);
+		when(userRepository.findById(1)).thenReturn(optionalUserModel);
 
 		UserEntity result = userService.getBasicUserInfoById(1);
 
-		verify(repository, Mockito.times(1)).findById(1);
+		verify(userRepository, Mockito.times(1)).findById(1);
 		assertEquals(userModel, result);
 	}
 
 	@Test
 	void getBasicUserInfoByIdNotFound_test() {
 
-		when(repository.findById(1234)).thenReturn((Optional.empty()));
+		when(userRepository.findById(1234)).thenReturn((Optional.empty()));
 
 		EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
 			userService.getBasicUserInfoById(1234);
@@ -611,14 +617,14 @@ class UserServiceTest {
 
 		MultipartFile file = Mockito.mock(MultipartFile.class);
 
-		Mockito.doNothing().when(repository).deleteAll();
+		Mockito.doNothing().when(userRepository).deleteAll();
 
 		byte[] content = "[{\"email\": \"user@gmail.com\", \"name\": \"pedro\", \"lastname\": \"soler\", \"address\": \"monzon\", \"paymentmethod\": \"VISA\"}, {\"email\": \"user@gmail.com\", \"name\": \"pedro\", \"lastname\": \"soler\", \"address\": \"monzon\", \"paymentmethod\": \"VISA\"}]".getBytes();
 		when(file.getBytes()).thenReturn(content);
 
 		ResponseEntity<Void> response = userService.saveAllImportedUsers(file);
 
-		verify(repository, Mockito.times(1)).deleteAll();
+		verify(userRepository, Mockito.times(1)).deleteAll();
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
 	}
@@ -629,16 +635,17 @@ class UserServiceTest {
 		MultipartFile file = new MockMultipartFile("file", new byte[0]);
 
 		List<UserEntity> users = Arrays.asList();
-
-		doNothing().when(repository).saveAll(users);
-
-		doThrow(new RuntimeException("Error al eliminar los usuarios")).when(repository).deleteAll();
+		
+		doThrow(new RuntimeException("Error al eliminar los usuarios")).when(userRepository).deleteAll();
 
 		ResponseEntity<Void> response = userService.saveAllImportedUsers(file);
-		assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+		
+		assertThatThrownBy(()-> userService.saveAllImportedUsers(file))
+		.isInstanceOf(RuntimeException.class)
+		.hasMessageContaining("Error al eliminar los usuarios");
 
-		verify(repository, times(1)).deleteAll();
-		verifyNoMoreInteractions(repository);
+		verify(userRepository, times(1)).deleteAll();
+		verifyNoMoreInteractions(userRepository);
 	}
 
 
