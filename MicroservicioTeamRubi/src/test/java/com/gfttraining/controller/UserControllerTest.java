@@ -154,7 +154,7 @@ class UserControllerTest {
 		when(userService.addFavoriteProduct(anyInt(), anyInt())).thenReturn(userModel);
 
 		//mocking http request
-		ResponseEntity<String> responseEntity = new ResponseEntity<String>("Datos de prueba", HttpStatus.OK);
+		ResponseEntity<String> responseEntity = new ResponseEntity<>("Datos de prueba", HttpStatus.OK);
 
 		when(restTemplate.getForEntity(anyString(), eq(String.class)))
 		.thenReturn(responseEntity);

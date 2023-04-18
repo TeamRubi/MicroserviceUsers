@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
@@ -33,15 +34,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.gfttraining.DTO.Mapper;
-import com.gfttraining.DTO.UserEntityDTO;
+import com.gfttraining.dto.Mapper;
+import com.gfttraining.dto.UserEntityDTO;
 import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.entity.CartEntity;
 import com.gfttraining.entity.FavoriteProduct;
@@ -61,14 +58,17 @@ class UserServiceTest {
 	private UserService userService;
 
 	@Mock
-	private UserRepository repository;
+	private UserRepository userRepository;
+
+	@Mock
+	private FavoriteRepository favoriteRepository;
 
 	@Mock
 	private UserEntityDTO userEntityDTO;
 
 	@Mock
 	private RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice;
-	
+
 	@Autowired
 	@Mock
 	private Mapper mapper;
@@ -76,20 +76,33 @@ class UserServiceTest {
 	@Mock
 	RestTemplate restTemplate;
 
-	UserEntity userModel;
-
-	Optional<UserEntity> userModel2;
+	private String emailModel;
+	private UserEntity userModel;
+	private Optional<UserEntity> optionalUserModel;
+	private CartEntity cartEntity;
 
 	@BeforeEach
 	public void createUser() {
-		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
-		userModel2 = Optional
-				.of(new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN"));
-		userEntityDTO = new UserEntityDTO(12, "pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN", "TRANSFERENCIA", BigDecimal.valueOf(0), 0, null);
+		emailModel = "pedro@chapo.com";
+		userModel = new UserEntity(emailModel, "Pedro", "Chapo", "calle falsa", "SPAIN");
+		optionalUserModel = Optional.of(userModel);
+		userEntityDTO = new UserEntityDTO(12, emailModel, "Pedro", "Chapo", "calle falsa", "SPAIN", "TRANSFER", BigDecimal.valueOf(0), 0, null);
 	}
 
-	@Mock
-	private FavoriteRepository favoriteRepository;
+	@BeforeEach
+	public void createCartWithProducts() {
+
+		cartEntity = new CartEntity();
+
+		List<ProductEntity> products =  Arrays.asList(new ProductEntity(1, 2, "product", cartEntity.getId(), "patatas",
+				BigDecimal.valueOf(10),2, BigDecimal.valueOf(20)));
+
+		cartEntity = CartEntity.builder().userId(12)
+				.createdAt(LocalDateTime.of(2022, 4, 11, 10, 30, 0))
+				.updatedAt(LocalDateTime.of(2022, 4, 12, 10, 30, 0))
+				.status("SUBMITTED").products(products).build();
+
+	}
 
 	@Test
 	void getUserById_test() {
@@ -97,25 +110,23 @@ class UserServiceTest {
 		userModel.setId(1);
 		userModel.setName("Erna");
 
-		when(repository.findById(1)).thenReturn(Optional.of(userModel));
+		when(userRepository.findById(1)).thenReturn(Optional.of(userModel));
 
 		UserEntity result = userService.findUserById(1);
 
 		assertNotNull(result);
 		assertEquals(userModel.getName(), result.getName());
 
-		verify(repository, times(1)).findById(1);
+		verify(userRepository, times(1)).findById(1);
 
 	}
 
 	@Test
 	void getUserByIdNotFound_test(){
 
-		when(repository.findById(1234)).thenReturn((Optional.empty()));
+		when(userRepository.findById(1234)).thenReturn((Optional.empty()));
 
-		EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
-			userService.findUserById(1234);
-		});
+		EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> userService.findUserById(1234));
 
 		assertEquals("Usuario con el id: " + 1234 + " no encontrado", exception.getMessage());
 
@@ -130,14 +141,14 @@ class UserServiceTest {
 		userTest1.setName("Erna");
 		userListTest1.add(userTest1);
 
-		when(repository.findAllByName("Erna")).thenReturn((userListTest1));
+		when(userRepository.findAllByName("Erna")).thenReturn((userListTest1));
 
 		List<UserEntity> result = userService.findAllByName("Erna");
 
 		assertNotNull(result);
 		assertEquals(userListTest1.get(0).getName(), result.get(0).getName());
 
-		verify(repository, times(1)).findAllByName("Erna");
+		verify(userRepository, times(1)).findAllByName("Erna");
 
 	}
 
@@ -145,14 +156,13 @@ class UserServiceTest {
 	void getAllUsersByNameNotFound_test(){
 
 		List <UserEntity> userListTest1 = new ArrayList<>();
+		String name = "Ernaaa";
 
-		when(repository.findAllByName("Ernaaa")).thenReturn((userListTest1));
+		when(userRepository.findAllByName(name)).thenReturn((userListTest1));
 
-		EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
-			userService.findAllByName("Ernaaa");
-		});
+		EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> userService.findAllByName(name));
 
-		assertEquals("Usuario con el nombre: " + "Ernaaa" + " no encontrado", exception.getMessage());
+		assertEquals("Usuario con el nombre: " + name + " no encontrado", exception.getMessage());
 
 	}
 
@@ -162,7 +172,7 @@ class UserServiceTest {
 		expectedUsers.add(userModel);
 		expectedUsers.add(userModel);
 
-		when(repository.findAll()).thenReturn(expectedUsers);
+		when(userRepository.findAll()).thenReturn(expectedUsers);
 
 		List<UserEntity> actualUsers = userService.findAll();
 
@@ -178,7 +188,7 @@ class UserServiceTest {
 
 		userService.saveAllUsers(usersList);
 
-		verify(repository).saveAll(usersList);
+		verify(userRepository).saveAll(usersList);
 
 	}
 
@@ -187,7 +197,7 @@ class UserServiceTest {
 
 		userService.deleteAllUsers();
 
-		verify(repository).deleteAll();
+		verify(userRepository).deleteAll();
 
 	}
 
@@ -197,17 +207,15 @@ class UserServiceTest {
 
 		userService.deleteUserById(1);
 
-		verify(repository, times(1)).deleteById(1);
+		verify(userRepository, times(1)).deleteById(1);
 	}
 
 	@Test
 	void deleteUserByIdNotFound_test() {
 
-		doThrow(EmptyResultDataAccessException.class).when(repository).deleteById(1234);
+		doThrow(EmptyResultDataAccessException.class).when(userRepository).deleteById(1234);
 
-		EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
-			userService.deleteUserById(1234);
-		});
+		EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> userService.deleteUserById(1234));
 
 		assertEquals("No se ha podido eliminar el usuario con el id: " + 1234 + " de la base de datos",
 				exception.getMessage());
@@ -216,7 +224,7 @@ class UserServiceTest {
 
 	@Test
 	void createUser_test() {
-		when(repository.save(userModel)).thenReturn(userModel);
+		when(userRepository.save(userModel)).thenReturn(userModel);
 		UserEntity createduser = userService.createUser(userModel);
 		assertThat(userModel).isEqualTo(createduser);
 	}
@@ -229,13 +237,13 @@ class UserServiceTest {
 		UserEntity updatedUser = new UserEntity();
 		updatedUser.setName("Jose");
 
-		when(repository.findById(1)).thenReturn(Optional.of(userModel));
-		when(repository.save(userModel)).thenReturn(userModel);
+		when(userRepository.findById(1)).thenReturn(Optional.of(userModel));
+		when(userRepository.save(userModel)).thenReturn(userModel);
 
 		UserEntity result = userService.updateUserById(1, updatedUser);
 
-		verify(repository, times(1)).findById(1);
-		verify(repository, times(1)).save(userModel);
+		verify(userRepository, times(1)).findById(1);
+		verify(userRepository, times(1)).save(userModel);
 		assertThat(updatedUser.getName()).isEqualTo(result.getName());
 
 	}
@@ -243,7 +251,7 @@ class UserServiceTest {
 	@Test
 	void updateUserByIdNoValidId_test() {
 
-		when(repository.findById(anyInt())).thenReturn(Optional.empty());
+		when(userRepository.findById(anyInt())).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> userService.updateUserById(anyInt(), userModel))
 		.isInstanceOf(ResponseStatusException.class).hasMessageContaining("User not found");
@@ -258,9 +266,12 @@ class UserServiceTest {
 		UserEntity updatedUser = new UserEntity();
 		updatedUser.setName("Jose");
 
-		when(repository.findById(1)).thenReturn(Optional.of(userModel));
-		//when(repository.existsByEmail(anyString())).thenReturn(true);
-		when(repository.save(userModel)).thenReturn(userModel);
+		when(userRepository.findById(1)).thenReturn(Optional.of(userModel));
+
+		when(userRepository.existsByEmail(anyString())).thenReturn(false);
+
+		when(userRepository.save(userModel)).thenReturn(userModel);
+
 
 		UserEntity result = userService.updateUserById(1, updatedUser);
 
@@ -271,7 +282,7 @@ class UserServiceTest {
 	@Test
 	void createUserWithEmailThatAlreadyExists_test() {
 
-		when(repository.existsByEmail("pepe@pepe.com")).thenReturn(true);
+		when(userRepository.existsByEmail(emailModel)).thenReturn(true);
 
 		assertThatThrownBy(() -> userService.createUser(userModel)).isInstanceOf(DuplicateEmailException.class)
 		.hasMessageContaining("email " + userModel.getEmail() + " is already in use");
@@ -283,8 +294,8 @@ class UserServiceTest {
 
 		Optional<UserEntity> newUser = Optional.of(userModel);
 
-		when(repository.existsByEmail("pepe@pepe.com")).thenReturn(true);
-		when(repository.findById(1)).thenReturn(newUser);
+		when(userRepository.existsByEmail(emailModel)).thenReturn(true);
+		when(userRepository.findById(1)).thenReturn(newUser);
 
 		assertThatThrownBy(() -> userService.updateUserById(1, newUser.get()))
 		.isInstanceOf(DuplicateEmailException.class)
@@ -297,7 +308,7 @@ class UserServiceTest {
 	void getUserByEmailBasic_test() {
 
 		userService.createUser(userModel);
-		when(repository.findByEmail("pepe@pepe.com")).thenReturn(userModel);
+		when(userRepository.findByEmail(emailModel)).thenReturn(userModel);
 
 		UserEntity foundUser = userService.findUserByEmail("pepe@pepe.com");
 		assertThat(foundUser).isEqualTo(userModel);
@@ -307,41 +318,31 @@ class UserServiceTest {
 	@DisplayName("Given a user email, Then throws exception, When the emails are repeated")
 	void getUserByEmailWithEmailNotFound_test() {
 
-		when(repository.findByEmail("pepe@pepe.com")).thenReturn(null);
+		when(userRepository.findByEmail(emailModel)).thenReturn(null);
 
-		assertThatThrownBy(() -> userService.findUserByEmail("pepe@pepe.com"))
+		assertThatThrownBy(() -> userService.findUserByEmail(emailModel))
 		.isInstanceOf(ResponseStatusException.class)
-		.hasMessageContaining("User with email " + "pepe@pepe.com" + " not found");
+		.hasMessageContaining("User with email " + emailModel + " not found");
 
 	}
 
 	@Test
 	void getUserPoints_test() throws Exception{
 
-		List<ProductEntity> products =  Arrays.asList(new ProductEntity(1, 2, "product", UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"), "patatas", BigDecimal.valueOf(10),2, BigDecimal.valueOf(20)));
-
 		List<CartEntity> carts = new ArrayList<>();
 
-		CartEntity cartEntity = new CartEntity();
-		cartEntity.setId(UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"));
-		cartEntity.setUserId(12);
-		cartEntity.setCreatedAt(LocalDateTime.of(2022, 4, 11, 10, 30, 0));
-		cartEntity.setUpdatedAt(LocalDateTime.of(2022, 4, 12, 10, 30, 0));
-		cartEntity.setStatus("SUBMITTED");
-		cartEntity.setProducts(products);
-
 		carts.add(cartEntity);
-	
+
 		when(retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:8082/carts/user/" + 12, new ParameterizedTypeReference<List<CartEntity>>() {
 		})).thenReturn(carts);
-		
-		when(repository.findById(anyInt())).thenReturn(userModel2);
+
+		when(userRepository.findById(anyInt())).thenReturn(optionalUserModel);
 
 		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(20), 1)).thenReturn(userEntityDTO);
-		
+
 		assertThat(0).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getPoints());
 	}
-	
+
 	@Test
 	void getPoints_is_1_test(){
 
@@ -449,30 +450,20 @@ class UserServiceTest {
 	
 	@Test
 	void getAvgSpent_test() {
-		
-		List<ProductEntity> products =  Arrays.asList(new ProductEntity(1, 2, "product", UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"), "patatas", BigDecimal.valueOf(10),2, BigDecimal.valueOf(20)));
 
 		List<CartEntity> carts = new ArrayList<>();
 
-		CartEntity cartEntity = new CartEntity();
-		cartEntity.setId(UUID.fromString("7e2bb8f9-6bbc-4bc4-915f-f72cb21b035f"));
-		cartEntity.setUserId(12);
-		cartEntity.setCreatedAt(LocalDateTime.of(2022, 4, 11, 10, 30, 0));
-		cartEntity.setUpdatedAt(LocalDateTime.of(2022, 4, 12, 10, 30, 0));
-		cartEntity.setStatus("SUBMITTED");
-		cartEntity.setProducts(products);
-
 		carts.add(cartEntity);
-	
+
 		when(retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:8082/carts/user/" + 12, new ParameterizedTypeReference<List<CartEntity>>() {
 		})).thenReturn(carts);
-		
-		when(repository.findById(anyInt())).thenReturn(userModel2);
-		
+
+		when(userRepository.findById(anyInt())).thenReturn(optionalUserModel);
+
 		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(20), 1)).thenReturn(userEntityDTO);
 		
 		assertThat(BigDecimal.valueOf(0)).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getAverageSpent());
-
+ 
 	}
 	
 	@Test
@@ -498,7 +489,7 @@ class UserServiceTest {
 
 		userModel.addFavorite(favorite);
 
-		when(repository.findById(anyInt())).thenReturn(Optional.of(userModel));
+		when(userRepository.findById(anyInt())).thenReturn(Optional.of(userModel));
 
 		when(favoriteRepository.existsByUserIdAndProductId(anyInt(), anyInt())).thenReturn(false);
 
@@ -508,7 +499,7 @@ class UserServiceTest {
 
 		assertThat(user).isEqualTo(userModel);
 		verify(favoriteRepository, atLeastOnce()).save(favorite);
-		verify(repository, atLeastOnce()).findById(1);
+		verify(userRepository, atLeastOnce()).findById(1);
 
 	}
 
@@ -516,7 +507,7 @@ class UserServiceTest {
 	void addFavoriteProductWithNotExistingUser_test() {
 
 		int userId = 600;
-		when(repository.findById(anyInt())).thenReturn(Optional.empty());
+		when(userRepository.findById(anyInt())).thenReturn(Optional.empty());
 
 		assertThatThrownBy(()-> userService.addFavoriteProduct(userId,5))
 		.isInstanceOf(ResponseStatusException.class)
@@ -530,7 +521,7 @@ class UserServiceTest {
 		int userId = 60;
 		int productId = 50;
 
-		when(repository.findById(anyInt())).thenReturn(Optional.of(userModel));
+		when(userRepository.findById(anyInt())).thenReturn(Optional.of(userModel));
 
 		when(favoriteRepository.existsByUserIdAndProductId(anyInt(), anyInt())).thenReturn(true);
 

@@ -2,8 +2,6 @@ package com.gfttraining.it;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -13,60 +11,41 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gfttraining.config.AppConfig;
+import com.gfttraining.config.AppConfig.*;
 import com.gfttraining.entity.UserEntity;
-import com.gfttraining.controller.UserController;
 import com.gfttraining.service.UserService;
 
 
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.io.IOException;
 import java.net.URI;
-
-
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -84,27 +63,36 @@ class UserServiceTest_IT {
 	UserService userService;
 
 	UserEntity userModel;
-	
-	
+
 	WireMockServer wireMockServer;
-	
+
+	@Autowired
+	private AppConfig appConfig;
+
+
+	String userPath;
+	String favoritePath;
+	String userCartsPath;
 
 	@BeforeEach
 	public void createUser() {
 		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
+		userPath = appConfig.getUserPath();
+		favoritePath = appConfig.getFavoritePath();
+		userCartsPath = appConfig.getUserCartsPath();
 	}
 
 	@Mock
 	RestTemplate restTemplate;
-	
-	
+
+
 	@BeforeEach
 	public void setUpCarrito() {
 		wireMockServer = new WireMockServer();
 		wireMockServer.start();
-	
-    }
-	
+
+	}
+
 	@AfterClass
 	public void tearDownCarrito() {
 		wireMockServer.stop();
@@ -117,7 +105,7 @@ class UserServiceTest_IT {
 		ObjectMapper objectMapper = new ObjectMapper();
 		String json = objectMapper.writeValueAsString(userModel);
 
-		mockMvc.perform(post("/users")
+		mockMvc.perform(post(userPath)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(json)).andExpect(status().isCreated());
 	}
@@ -136,7 +124,7 @@ class UserServiceTest_IT {
 
 		String jsonString = objectMapper.writeValueAsString(jsonNode);
 
-		mockMvc.perform(post("/users")
+		mockMvc.perform(post(userPath)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(jsonString)).andExpect(status().isBadRequest());
 
@@ -145,7 +133,7 @@ class UserServiceTest_IT {
 	@Test
 	public void updateUserById_IT() throws Exception {
 
-		mockMvc.perform(patch("/users/1")
+		mockMvc.perform(patch(userPath + "/1")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{ \"name\": \"Pablo\", \"lastname\": \"Garcia\" }"))
 		.andExpect(status().isCreated());
@@ -156,14 +144,12 @@ class UserServiceTest_IT {
 	void createUserWithRepeatedEmail_IT() throws Exception {
 
 		ObjectMapper objectMapper = new ObjectMapper();
-		UserEntity existingUser = new UserEntity("pabloperez@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5","SPAIN");
 
-		userService.createUser(existingUser);
+		userService.createUser(userModel);
 
-		UserEntity user = new UserEntity("pabloperez@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5","SPAIN");
-		String json = objectMapper.writeValueAsString(user);
+		String json = objectMapper.writeValueAsString(userModel);
 
-		mockMvc.perform(post("/users")
+		mockMvc.perform(post(userPath)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(json)).andExpect(status().isConflict());
 
@@ -173,24 +159,21 @@ class UserServiceTest_IT {
 	void updateUserByIdWithRepeatedEmail_IT() throws Exception {
 
 		ObjectMapper objectMapper = new ObjectMapper();
-		UserEntity existingUser = new UserEntity("pablo@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5","SPAIN");
 
-		userService.updateUserById(1, existingUser);
+		userService.updateUserById(1, userModel);
 
-		UserEntity user = new UserEntity("pablo@gmail.com","Pablo", "Perez", "Avinguda Diagonal 5","SPAIN");
-		String json = objectMapper.writeValueAsString(user);
+		String json = objectMapper.writeValueAsString(userModel);
 
-		mockMvc.perform(patch("/users/2")
+		mockMvc.perform(patch(userPath + "/2")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(json)).andExpect(status().isConflict());
-
 	}
 
 	@Test
 	void getUserByEmailWithEmailNotFound_IT() throws Exception {
 
 		String email = "newnotexistingemail@gmail.com";
-		mockMvc.perform(get("/users/email/" + email))
+		mockMvc.perform(get(userPath + "/email/" + email))
 		.andExpect(status().isNotFound());
 
 	}
@@ -201,11 +184,11 @@ class UserServiceTest_IT {
 		int userId = 1;
 		int productId = 23;
 
-		ResponseEntity<String> responseEntity = new ResponseEntity<String>("test", HttpStatus.OK);
+		ResponseEntity<String> responseEntity = new ResponseEntity<>("test", HttpStatus.OK);
 
 		when(restTemplate.getForEntity(anyString(), eq(String.class))).thenReturn(responseEntity);
 
-		mockMvc.perform(post("/favorite/" + userId + "/" + productId))
+		mockMvc.perform(post(favoritePath + "/" + userId + "/" + productId))
 		.andExpect(status().isCreated())
 		.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 		.andExpect(jsonPath("$.id").value(userId))
@@ -219,13 +202,13 @@ class UserServiceTest_IT {
 		int userId = 1;
 		int productId = 25;
 
-		ResponseEntity<String> responseEntity = new ResponseEntity<String>("test", HttpStatus.OK);
+		ResponseEntity<String> responseEntity = new ResponseEntity<>("test", HttpStatus.OK);
 
 		when(restTemplate.getForEntity(anyString(), eq(String.class))).thenReturn(responseEntity);
 
 		userService.addFavoriteProduct(userId, productId);
 
-		mockMvc.perform(post("/favorite/" + userId + "/" + productId))
+		mockMvc.perform(post(favoritePath + "/" + userId + "/" + productId))
 		.andExpect(status().isConflict())
 		.andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
@@ -239,7 +222,7 @@ class UserServiceTest_IT {
 
 		userService.addFavoriteProduct(userId, productId);
 
-		mockMvc.perform(delete("/favorite/" + userId + "/" + productId))
+		mockMvc.perform(delete(favoritePath + "/" + userId + "/" + productId))
 		.andExpect(status().isNoContent());
 	}
 
@@ -249,7 +232,7 @@ class UserServiceTest_IT {
 		int userId = 1;
 		int productId = 29;
 
-		mockMvc.perform(delete("/favorite/" + userId + "/" + productId))
+		mockMvc.perform(delete(favoritePath + "/" + userId + "/" + productId))
 		.andExpect(status().isNotFound());
 	}
 
@@ -261,7 +244,7 @@ class UserServiceTest_IT {
 
 		userService.addFavoriteProduct(userId, productId);
 
-		mockMvc.perform(delete("/favorite/product/" + productId))
+		mockMvc.perform(delete(favoritePath + "/product/" + productId))
 		.andExpect(status().isNoContent());
 	}
 
@@ -272,53 +255,51 @@ class UserServiceTest_IT {
 
 		userService.deleteFavoriteProductFromAllUsers(99);
 
-		mockMvc.perform(delete("/favorite/product/" + productId))
+		mockMvc.perform(delete(favoritePath + "/product/" + productId))
 		.andExpect(status().isNotFound());
 	}
-	
-	
-	
-	 @Test
-	 public void getUserPointsAndAvg_IT () throws IOException, InterruptedException {
-			
-			stubFor(get(urlPathEqualTo("/carts/user/" + 12))
-	                .willReturn(aResponse()
-	                    .withStatus(200)
-	                    .withHeader("Content-Type", "application/json")
-	                    .withBody("{\"points\":100, \"averageSpent\":1260.0}")));
-			
-			HttpClient httpClient = HttpClient.newHttpClient();
-			
-			HttpRequest request = HttpRequest.newBuilder()
-			        .uri(URI.create("http://localhost:" + wireMockServer.port() + "/carts/user/" + 12))
-			        .GET()
-			        .build();
-			 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-			 assertThat(200).isEqualTo(response.statusCode());
-			 assertThat("{\"points\":100, \"averageSpent\":1260.0}").isEqualTo(response.body());
-	 }
-	
-	 @Test
-	 public void getUserPointsAndAvgNotFound_IT () throws IOException, InterruptedException {
-			
-			stubFor(get(urlPathEqualTo("/carts/user/" + 12))
-	                .willReturn(aResponse()
-	                    .withStatus(404)
-	                    .withHeader("Content-Type", "application/json")
-	                    .withBody("\"User not found")));
-			
-			HttpClient httpClient = HttpClient.newHttpClient();
-			
-			HttpRequest request = HttpRequest.newBuilder()
-			        .uri(URI.create("http://localhost:" + wireMockServer.port() + "/carts/user/" + 12))
-			        .GET()
-			        .build();
-			 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+	@Test
+	public void getUserPointsAndAvg_IT () throws IOException, InterruptedException {
 
-			 assertThat(404).isEqualTo(response.statusCode());
-			 assertThat("\"User not found").isEqualTo(response.body());
-	 }
+		stubFor(get(urlPathEqualTo(userCartsPath + "/" + 12))
+				.willReturn(aResponse()
+						.withStatus(200)
+						.withHeader("Content-Type", "application/json")
+						.withBody("{\"points\":100, \"averageSpent\":1260.0}")));
+
+		HttpClient httpClient = HttpClient.newHttpClient();
+
+		HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create("http://localhost:" + wireMockServer.port() + userCartsPath + 12))
+				.GET()
+				.build();
+		HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+		assertThat(200).isEqualTo(response.statusCode());
+		assertThat("{\"points\":100, \"averageSpent\":1260.0}").isEqualTo(response.body());
+	}
+
+	@Test
+	public void getUserPointsAndAvgNotFound_IT () throws IOException, InterruptedException {
+
+		stubFor(get(urlPathEqualTo(userCartsPath + "/" + 12))
+				.willReturn(aResponse()
+						.withStatus(404)
+						.withHeader("Content-Type", "application/json")
+						.withBody("\"User not found")));
+
+		HttpClient httpClient = HttpClient.newHttpClient();
+
+		HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create("http://localhost:" + wireMockServer.port() + userCartsPath + 12))
+				.GET()
+				.build();
+		HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+		assertThat(404).isEqualTo(response.statusCode());
+		assertThat("\"User not found").isEqualTo(response.body());
+	}
 
 
 }

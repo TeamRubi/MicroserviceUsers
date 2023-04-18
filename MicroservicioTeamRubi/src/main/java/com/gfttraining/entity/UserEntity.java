@@ -63,7 +63,7 @@ public class UserEntity {
 
 	@OneToMany(cascade = CascadeType.ALL)
 	@JoinColumn(name = "user_id", referencedColumnName = "id")
-	private Set<FavoriteProduct> favorites = new LinkedHashSet<FavoriteProduct>();
+	private Set<FavoriteProduct> favorites = new LinkedHashSet<>();
 
 
 	public void addFavorite(FavoriteProduct product) {

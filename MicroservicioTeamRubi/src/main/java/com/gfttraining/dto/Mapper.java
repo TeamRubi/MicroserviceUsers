@@ -1,4 +1,4 @@
-package com.gfttraining.DTO;
+package com.gfttraining.dto;
 
 import java.math.BigDecimal;
 
@@ -13,14 +13,14 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class Mapper {
 
-	private ModelMapper mapper;
+	private ModelMapper modelMapper;
 
 	public Mapper() {
-		this.mapper = new ModelMapper();
+		this.modelMapper = new ModelMapper();
 	}
 
 	public UserEntityDTO toUserWithAvgSpentAndFidelityPoints(UserEntity user, BigDecimal spent, int points) {
-		UserEntityDTO userDTO = mapper.map(user, UserEntityDTO.class);
+		UserEntityDTO userDTO = modelMapper.map(user, UserEntityDTO.class);
 		userDTO.setAverageSpent(spent);
 		userDTO.setPoints(points);
 		log.info("Returning a UserEntityDTO with fidelityPoints and avgSpent");
