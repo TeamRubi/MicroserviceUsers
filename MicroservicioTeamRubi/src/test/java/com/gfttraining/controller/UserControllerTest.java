@@ -88,8 +88,8 @@ class UserControllerTest {
 
 		ResponseEntity<Void> response = userController.saveAllImportedUsers(file);
 
-//		Mockito.verify(userService, Mockito.times(1)).deleteAllUsers();
-//		Mockito.verify(userService, Mockito.times(1)).saveAllUsers(Mockito.anyList());
+		Mockito.verify(userService, Mockito.times(1)).deleteAllUsers();
+		Mockito.verify(userService, Mockito.times(1)).saveAllUsers(Mockito.anyList());
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
 	}
