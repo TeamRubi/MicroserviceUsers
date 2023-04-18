@@ -80,16 +80,17 @@ class UserControllerTest {
 
 		MultipartFile file = Mockito.mock(MultipartFile.class);
 
-		Mockito.doNothing().when(userService).deleteAllUsers();
-		Mockito.doNothing().when(userService).saveAllUsers(Mockito.anyList());
+		//Mockito.doNothing().when(userService).deleteAllUsers();
+		//Mockito.doNothing().when(userService).saveAllUsers(Mockito.anyList());
 
-		byte[] content = "[{\"email\": \"user@gmail.com\", \"name\": \"pedro\", \"lastname\": \"soler\", \"address\": \"monzon\", \"paymentmethod\": \"VISA\"}, {\"email\": \"user@gmail.com\", \"name\": \"pedro\", \"lastname\": \"soler\", \"address\": \"monzon\", \"paymentmethod\": \"VISA\"}]".getBytes();
-		Mockito.when(file.getBytes()).thenReturn(content);
+		when(userService.saveAllImportedUsers(file)).thenReturn(new ResponseEntity<>(HttpStatus.CREATED));
+
+		//byte[] content = "[{\"email\": \"user@gmail.com\", \"name\": \"pedro\", \"lastname\": \"soler\", \"address\": \"monzon\", \"paymentmethod\": \"VISA\"}, {\"email\": \"user@gmail.com\", \"name\": \"pedro\", \"lastname\": \"soler\", \"address\": \"monzon\", \"paymentmethod\": \"VISA\"}]".getBytes();
+		//Mockito.when(file.getBytes()).thenReturn(content);
 
 		ResponseEntity<Void> response = userController.saveAllImportedUsers(file);
 
-		Mockito.verify(userService, Mockito.times(1)).deleteAllUsers();
-		Mockito.verify(userService, Mockito.times(1)).saveAllUsers(Mockito.anyList());
+		Mockito.verify(userService, Mockito.times(1)).saveAllImportedUsers(file);
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
 	}
