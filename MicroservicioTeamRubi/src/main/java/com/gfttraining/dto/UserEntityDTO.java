@@ -1,4 +1,4 @@
-package com.gfttraining.DTO;
+package com.gfttraining.dto;
 
 import java.math.BigDecimal;
 import java.util.Set;
@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 @NoArgsConstructor
 @RequiredArgsConstructor
 public class UserEntityDTO {
-	
+
 	private int id;
 	@NonNull
 	private String email;

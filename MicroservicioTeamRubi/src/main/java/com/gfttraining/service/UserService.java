@@ -9,9 +9,7 @@ import javax.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -20,9 +18,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gfttraining.DTO.Mapper;
-import com.gfttraining.DTO.UserEntityDTO;
 import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
+import com.gfttraining.dto.Mapper;
+import com.gfttraining.dto.UserEntityDTO;
 import com.gfttraining.entity.CartEntity;
 import com.gfttraining.entity.FavoriteProduct;
 import com.gfttraining.entity.ProductEntity;
@@ -43,7 +41,7 @@ public class UserService {
 	private FavoriteRepository favoriteRepository;
 
 	private ModelMapper modelMapper;
-	
+
 	private RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice;;
 
 	private Mapper mapper;
@@ -81,8 +79,6 @@ public class UserService {
 		}
 		log.info("Found user by Name");
 		return users;
-
-
 	}
 
 	public void saveAllUsers(List<UserEntity> usersList) {
@@ -152,7 +148,7 @@ public class UserService {
 	}
 
 	public UserEntityDTO getUserWithAvgSpentAndFidelityPoints(int id){
-		
+
 		List<CartEntity> carts = retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:8082/carts/user/" + id,
 				new ParameterizedTypeReference<List<CartEntity>>() {});
 

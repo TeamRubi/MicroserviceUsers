@@ -5,15 +5,17 @@ import java.util.List;
 import java.util.UUID;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@Builder
 public class CartEntity {
 
-	private UUID id;
+	@Builder.Default UUID id = UUID.randomUUID();
 	private int userId;
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;

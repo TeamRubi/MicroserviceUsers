@@ -31,3 +31,16 @@ server:
   port: 8080
   
 debug: false
+
+
+paths:
+  user: "/user"
+  favorite: "/favorite"
+  usercarts: "/carts/user"
+
+feature-flags:
+  enablefavorites: true
+  promotion: false
+ 
+
+  

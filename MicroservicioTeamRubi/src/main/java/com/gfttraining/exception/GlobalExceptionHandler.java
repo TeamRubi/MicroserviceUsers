@@ -32,8 +32,8 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ExceptionResponse> handlerException(EntityNotFoundException exception,WebRequest req){
 		ExceptionResponse res = new ExceptionResponse(LocalDate.now(), exception.getMessage(),null);
 
-		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.NOT_FOUND);
-	}; 
+		return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
+	}
 
 	@ExceptionHandler(ConstraintViolationException.class)
 	public ResponseEntity<ExceptionResponse> handleConstraintViolationException(ConstraintViolationException ex) {
@@ -48,7 +48,7 @@ public class GlobalExceptionHandler {
 
 		log.error("createUser() -> " + errors.toString());
 
-		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.BAD_REQUEST);
+		return new ResponseEntity<>(res, HttpStatus.BAD_REQUEST);
 	}
 
 
@@ -65,7 +65,7 @@ public class GlobalExceptionHandler {
 
 		log.error("createUser() -> " + errors.toString());
 
-		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.BAD_REQUEST);
+		return new ResponseEntity<>(res, HttpStatus.BAD_REQUEST);
 	}
 
 
@@ -78,38 +78,38 @@ public class GlobalExceptionHandler {
 
 		log.error(ex.getReason());
 
-		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.NOT_FOUND);
+		return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
 	}
 
 
 	@ExceptionHandler(DuplicateEmailException.class)
 	public ResponseEntity<ExceptionResponse> handleDataIntegrityViolationException(DuplicateEmailException ex) {
 
-		ExceptionResponse res = new ExceptionResponse(ex.getMessage(), LocalDate.now());
+		ExceptionResponse res = new ExceptionResponse(LocalDate.now(), ex.getMessage());
 
 		log.error("Trying to insert an existing email to a user");
 
-		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.CONFLICT);
+		return new ResponseEntity<>(res, HttpStatus.CONFLICT);
 	}
 
 	@ExceptionHandler(DuplicateFavoriteException.class)
 	public ResponseEntity<ExceptionResponse> handleDataIntegrityViolationException(DuplicateFavoriteException ex) {
 
-		ExceptionResponse res = new ExceptionResponse(ex.getMessage(), LocalDate.now());
+		ExceptionResponse res = new ExceptionResponse(LocalDate.now(), ex.getMessage());
 
 		log.error("Trying to insert an existing favorite product to a user");
 
-		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.CONFLICT);
+		return new ResponseEntity<>(res, HttpStatus.CONFLICT);
 	}
 
 	@ExceptionHandler(EmptyResultDataAccessException.class)
 	public ResponseEntity<ExceptionResponse> handleDataIntegrityViolationException(EmptyResultDataAccessException ex) {
 
-		ExceptionResponse res = new ExceptionResponse(ex.getMessage(), LocalDate.now());
+		ExceptionResponse res = new ExceptionResponse(LocalDate.now(), ex.getMessage());
 
 		log.error("Trying to delete a favorite product to a user");
 
-		return new ResponseEntity<ExceptionResponse>(res, HttpStatus.NOT_FOUND);
+		return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
 	}
 
 
