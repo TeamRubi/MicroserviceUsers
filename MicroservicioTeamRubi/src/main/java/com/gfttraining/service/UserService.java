@@ -45,20 +45,14 @@ public class UserService {
 
 	private RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice;
 
-	private Mapper mapper;
-
-	@Autowired
 	private FeatureFlag featureFlag;
 
-	@Autowired
 	public UserService(UserRepository userRepository, FavoriteRepository favoriteRepository, ModelMapper modelMapper, 
-			RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice, Mapper mapper,
-			FeatureFlag featureFlag) {
+			RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice, FeatureFlag featureFlag) {
 		this.userRepository = userRepository;
 		this.favoriteRepository = favoriteRepository;
 		this.modelMapper = modelMapper;
 		this.retrieveInformationFromExternalMicroservice = retrieveInformationFromExternalMicroservice;
-		this.mapper = mapper;
 		this.featureFlag = featureFlag;
 	}
 
@@ -168,7 +162,11 @@ public class UserService {
 		List<CartEntity> carts = retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:8082/carts/user/" + id,
 				new ParameterizedTypeReference<List<CartEntity>>() {});
 
-		return mapper.toUserWithAvgSpentAndFidelityPoints(findUserById(id), calculateAvgSpent(carts), getPoints(carts));
+		UserEntityDTO userDTO = modelMapper.map(findUserById(id), UserEntityDTO.class);
+		userDTO.setAverageSpent(calculateAvgSpent(carts));
+		userDTO.setPoints(getPoints(carts));
+		log.info("Returning a UserEntityDTO with fidelityPoints and avgSpent");
+		return userDTO;
 	}
 
 

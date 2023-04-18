@@ -32,7 +32,6 @@ server:
   
 debug: false
 
-
 paths:
   user: "/user"
   favorite: "/favorite"
