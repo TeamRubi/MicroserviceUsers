@@ -149,6 +149,30 @@ class UserServiceTest {
 	}
 
 	@Test
+	void getBasicUserInfoById_test() {
+
+		when(repository.findById(1)).thenReturn(userModel2);
+
+		UserEntity result = userService.getBasicUserInfoById(1);
+
+		verify(repository, Mockito.times(1)).findById(1);
+		assertEquals(userModel, result);
+	}
+
+	@Test
+	void getBasicUserInfoByIdNotFound_test() {
+
+		when(repository.findById(1234)).thenReturn((Optional.empty()));
+
+		EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
+			userService.getBasicUserInfoById(1234);
+		});
+
+		assertEquals("Informacion basica del usuario con el id: " + 1234 + " no encontrado", exception.getMessage());
+	}
+
+
+	@Test
 	void getAllUsersByName_test(){
 
 		List <UserEntity> userListTest1 = new ArrayList<>();
@@ -561,6 +585,41 @@ class UserServiceTest {
 		.isInstanceOf(EmptyResultDataAccessException.class)
 		.hasMessageContaining("Product " + productId + " is not in the favorites of any user");
 
+	}
+
+	@Test
+	void importUsersByFile() throws Exception{
+
+		MultipartFile file = Mockito.mock(MultipartFile.class);
+
+		Mockito.doNothing().when(repository).deleteAll();
+
+		byte[] content = "[{\"email\": \"user@gmail.com\", \"name\": \"pedro\", \"lastname\": \"soler\", \"address\": \"monzon\", \"paymentmethod\": \"VISA\"}, {\"email\": \"user@gmail.com\", \"name\": \"pedro\", \"lastname\": \"soler\", \"address\": \"monzon\", \"paymentmethod\": \"VISA\"}]".getBytes();
+		when(file.getBytes()).thenReturn(content);
+
+		ResponseEntity<Void> response = userService.saveAllImportedUsers(file);
+
+		verify(repository, Mockito.times(1)).deleteAll();
+		assertEquals(HttpStatus.CREATED, response.getStatusCode());
+
+	}
+
+	@Test
+	public void testSaveAllImportedUsersWithError() throws IOException {
+
+		MultipartFile file = new MockMultipartFile("file", new byte[0]);
+
+		List<UserEntity> users = Arrays.asList();
+
+		doNothing().when(repository).saveAll(users);
+
+		doThrow(new RuntimeException("Error al eliminar los usuarios")).when(repository).deleteAll();
+
+		ResponseEntity<Void> response = userService.saveAllImportedUsers(file);
+		assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+
+		verify(repository, times(1)).deleteAll();
+		verifyNoMoreInteractions(repository);
 	}
 
 
