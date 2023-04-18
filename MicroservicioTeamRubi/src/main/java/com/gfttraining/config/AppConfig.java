@@ -27,6 +27,11 @@ public class AppConfig {
 	@Value("${paths.user-carts}")
 	private String userCartsPath;
 
+	@Bean
+	public FeatureFlag featureFlag() {
+		return new FeatureFlag();
+	}
+
 
 	@Bean
 	public ModelMapper modelMapper() {

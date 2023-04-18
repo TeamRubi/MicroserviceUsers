@@ -35,6 +35,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -45,6 +46,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.gfttraining.config.FeatureFlag;
 import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.dto.Mapper;
 import com.gfttraining.dto.UserEntityDTO;
@@ -70,8 +72,9 @@ class UserServiceTest {
 	@Mock
 	private FavoriteRepository favoriteRepository;
 
+	@Autowired
 	@Mock
-	private UserEntityDTO userEntityDTO;
+	private FeatureFlag featureFlag;
 
 	@Mock
 	private RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice;
@@ -81,10 +84,14 @@ class UserServiceTest {
 	private Mapper mapper;
 
 	@Mock
+	private ModelMapper modelMapper;
+
+	@Mock
 	RestTemplate restTemplate;
 
 	private String emailModel;
 	private UserEntity userModel;
+	private UserEntityDTO userModelDTO;
 	private Optional<UserEntity> optionalUserModel;
 	private CartEntity cartEntity;
 	private ProductEntity product1point;
@@ -98,7 +105,7 @@ class UserServiceTest {
 		emailModel = "pedro@chapo.com";
 		userModel = new UserEntity(emailModel, "Pedro", "Chapo", "calle falsa", "SPAIN");
 		optionalUserModel = Optional.of(userModel);
-		userEntityDTO = new UserEntityDTO(12, emailModel, "Pedro", "Chapo", "calle falsa", "SPAIN", "TRANSFER", BigDecimal.valueOf(0), 0, null);
+		userModelDTO = new UserEntityDTO(12, emailModel, "Pedro", "Chapo", "calle falsa", "SPAIN", "TRANSFER", BigDecimal.valueOf(0), 0, null);
 	}
 
 	@BeforeEach
@@ -279,12 +286,14 @@ class UserServiceTest {
 	void updateUserById_test() {
 
 		userModel.setId(1);
-
 		UserEntity updatedUser = new UserEntity();
 		updatedUser.setName("Jose");
 
 		when(userRepository.findById(1)).thenReturn(Optional.of(userModel));
-		when(userRepository.save(userModel)).thenReturn(userModel);
+		when(userRepository.existsByEmail(any())).thenReturn(false);
+
+		userModel.setName(updatedUser.getName());
+		when(userRepository.save(any())).thenReturn(userModel);
 
 		UserEntity result = userService.updateUserById(1, updatedUser);
 
@@ -356,7 +365,8 @@ class UserServiceTest {
 		userService.createUser(userModel);
 		when(userRepository.findByEmail(emailModel)).thenReturn(userModel);
 
-		UserEntity foundUser = userService.findUserByEmail("pepe@pepe.com");
+		UserEntity foundUser = userService.findUserByEmail(emailModel);
+
 		assertThat(foundUser).isEqualTo(userModel);
 	}
 
@@ -384,16 +394,31 @@ class UserServiceTest {
 
 		when(userRepository.findById(anyInt())).thenReturn(optionalUserModel);
 
-		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(20), 1)).thenReturn(userEntityDTO);
+		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(20), 1)).thenReturn(userModelDTO);
 
 		assertThat(0).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getPoints());
+	}
+
+	@Test
+	void getAvgSpentIs0_test() {
+
+		List<CartEntity> carts = new ArrayList<>();
+
+		List<ProductEntity> products = new ArrayList<>();
+		cartEntity.setProducts(products);
+
+		carts.add(cartEntity);
+
+		BigDecimal result=userService.calculateAvgSpent(carts);
+
+		assertThat(BigDecimal.valueOf(0)).isEqualTo(result);
+
 	}
 
 	@Test
 	void getPoints_is_1_test(){
 
 		List<CartEntity> carts = new ArrayList<>();
-
 
 		List<ProductEntity> products = new ArrayList<>(Arrays.asList(product1point));
 
@@ -460,11 +485,12 @@ class UserServiceTest {
 
 
 
-
 	@Test
 	void getAvgSpent_test() {
 
 		List<CartEntity> carts = new ArrayList<>();
+		List<ProductEntity> products = new ArrayList<>();
+		cartEntity.setProducts(products);
 
 		carts.add(cartEntity);
 
@@ -473,25 +499,11 @@ class UserServiceTest {
 
 		when(userRepository.findById(anyInt())).thenReturn(optionalUserModel);
 
-		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(20), 1)).thenReturn(userEntityDTO);
+		when(mapper.toUserWithAvgSpentAndFidelityPoints(userModel, BigDecimal.valueOf(20), 1)).thenReturn(userModelDTO);
 
 		assertThat(BigDecimal.valueOf(0)).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getAverageSpent());
 
 	}
-
-	@Test
-	void getAvgSpentIs0_test() {
-
-		List<CartEntity> carts = new ArrayList<>();
-
-		carts.add(cartEntity);
-
-		BigDecimal result=userService.calculateAvgSpent(carts);
-
-		assertThat(BigDecimal.valueOf(0)).isEqualTo(result);
-
-	}
-
 
 	@Test
 	void addFavoriteProduct_test() {
@@ -616,11 +628,11 @@ class UserServiceTest {
 		MultipartFile file = new MockMultipartFile("file", new byte[0]);
 
 		List<UserEntity> users = Arrays.asList();
-		
+
 		doThrow(new RuntimeException("Error al eliminar los usuarios")).when(userRepository).deleteAll();
 
 		ResponseEntity<Void> response = userService.saveAllImportedUsers(file);
-		
+
 		assertThatThrownBy(()-> userService.saveAllImportedUsers(file))
 		.isInstanceOf(RuntimeException.class)
 		.hasMessageContaining("Error al eliminar los usuarios");

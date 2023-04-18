@@ -52,12 +52,14 @@ public class UserService {
 
 	@Autowired
 	public UserService(UserRepository userRepository, FavoriteRepository favoriteRepository, ModelMapper modelMapper, 
-			RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice, Mapper mapper) {
+			RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice, Mapper mapper,
+			FeatureFlag featureFlag) {
 		this.userRepository = userRepository;
 		this.favoriteRepository = favoriteRepository;
 		this.modelMapper = modelMapper;
 		this.retrieveInformationFromExternalMicroservice = retrieveInformationFromExternalMicroservice;
 		this.mapper = mapper;
+		this.featureFlag = featureFlag;
 	}
 
 	public List<UserEntity> findAll(){
