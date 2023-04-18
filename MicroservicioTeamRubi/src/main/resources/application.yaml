@@ -39,8 +39,8 @@ paths:
   usercarts: "/carts/user"
 
 feature-flags:
-  enablefavorites: true
-  promotion: false
+  enablePromotion: false
+  enableUserExtraInfo: true
  
 
   

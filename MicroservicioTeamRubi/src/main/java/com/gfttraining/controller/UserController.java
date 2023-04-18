@@ -20,7 +20,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.gfttraining.config.AppConfig;
+import com.gfttraining.config.FeatureFlag;
 import com.gfttraining.dto.UserEntityDTO;
 import com.gfttraining.entity.UserEntity;
 import com.gfttraining.service.UserService;
@@ -32,9 +32,12 @@ public class UserController {
 
 	private RestTemplate restTemplate;
 
-	public UserController(UserService userService, RestTemplate restTemplate) {
+	private FeatureFlag featureFlag;
+
+	public UserController(UserService userService, RestTemplate restTemplate, FeatureFlag featureFlag) {
 		this.userService = userService;
 		this.restTemplate = restTemplate;
+		this.featureFlag = featureFlag;
 	}
 
 	@GetMapping("/users")
@@ -78,10 +81,18 @@ public class UserController {
 		return new ResponseEntity<>(userService.findUserByEmail(email), HttpStatus.OK);
 	}
 
+	@SuppressWarnings("unchecked")
 	@GetMapping("/users/{id}")
-	public UserEntityDTO getUserById(@PathVariable int id) {
-		return userService.getUserWithAvgSpentAndFidelityPoints(id);
+	public <T> T getUserById(@PathVariable int id) {
+		if(featureFlag.isEnableUserExtraInfo()) {
+			return (T) userService.getUserWithAvgSpentAndFidelityPoints(id);
+		}
+		else {
+			return (T) userService.findUserById(id);
+
+		}
 	}
+
 
 	@PostMapping("/favorite/{userId}/{productId}")
 	public ResponseEntity<UserEntity> addFavoriteProduct(@PathVariable int userId, @PathVariable int productId) throws Exception  {
@@ -114,7 +125,6 @@ public class UserController {
 
 
 	private boolean productExists(int productId) {
-
 		try {
 			ResponseEntity<String> responseEntity = restTemplate.getForEntity(
 					"http://localhost:8081/products/id/" + productId, String.class);
@@ -123,13 +133,6 @@ public class UserController {
 		catch(HttpClientErrorException.NotFound | ResourceAccessException ex) {
 			return false;
 		}
-
-	}
-	
-	//cart endpoint to get user information only
-	@GetMapping("/users/bInfo/{id}")
-	public Optional<UserEntity> getBasicUserInfoById(@PathVariable int id) {
-		return userService.getBasicUserInfoById(id);
 	}
 
 }

@@ -69,7 +69,6 @@ class UserServiceTest_IT {
 	@Autowired
 	private AppConfig appConfig;
 
-
 	String userPath;
 	String favoritePath;
 	String userCartsPath;
@@ -97,8 +96,8 @@ class UserServiceTest_IT {
 	public void tearDownCarrito() {
 		wireMockServer.stop();
 	}
-	
-	
+
+
 	@Test 
 	void createUserBasic_IT() throws Exception {
 

@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gfttraining.config.FeatureFlag;
 import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.dto.Mapper;
 import com.gfttraining.dto.UserEntityDTO;
@@ -42,12 +43,16 @@ public class UserService {
 
 	private ModelMapper modelMapper;
 
-	private RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice;;
+	private RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice;
 
 	private Mapper mapper;
 
 	@Autowired
-	public UserService(UserRepository userRepository, FavoriteRepository favoriteRepository, ModelMapper modelMapper, RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice, Mapper mapper) {
+	private FeatureFlag featureFlag;
+
+	@Autowired
+	public UserService(UserRepository userRepository, FavoriteRepository favoriteRepository, ModelMapper modelMapper, 
+			RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice, Mapper mapper) {
 		this.userRepository = userRepository;
 		this.favoriteRepository = favoriteRepository;
 		this.modelMapper = modelMapper;
@@ -176,25 +181,28 @@ public class UserService {
 
 	public Integer getPoints(List<CartEntity> carts) {
 		int points = 0;
-		if (!carts.isEmpty()) {
-			for (CartEntity cartEntity : carts) {
-				List<ProductEntity> products = cartEntity.getProducts();
-				for (ProductEntity productEntity : products) {
-					BigDecimal sumSpent = productEntity.getTotalPrize();
-					if (sumSpent.compareTo(new BigDecimal("20")) >= 0 && sumSpent.compareTo(new BigDecimal("29.99")) <= 0) {
-						points +=1;
-					}
-					else if (sumSpent.compareTo(new BigDecimal("30")) >= 0 && sumSpent.compareTo(new BigDecimal("49.99")) <= 0) {
-						points +=3;
-					}
-					else if (sumSpent.compareTo(new BigDecimal("50")) >= 0 && sumSpent.compareTo(new BigDecimal("99.99")) <= 0) {
-						points +=5;    
-					}
-					else if (sumSpent.compareTo(new BigDecimal("100")) >= 0 ) {
-						points +=10;
-					}
+		for (CartEntity cartEntity : carts) {
+			for (ProductEntity productEntity : cartEntity.getProducts()) {
+				BigDecimal sumSpent = productEntity.getTotalPrize();
+				int basePoints = 0;
+				if (sumSpent.compareTo(new BigDecimal("20")) >= 0 && sumSpent.compareTo(new BigDecimal("29.99")) <= 0) {
+					basePoints +=1;
+				}
+				else if (sumSpent.compareTo(new BigDecimal("30")) >= 0 && sumSpent.compareTo(new BigDecimal("49.99")) <= 0) {
+					basePoints +=3;
+				}
+				else if (sumSpent.compareTo(new BigDecimal("50")) >= 0 && sumSpent.compareTo(new BigDecimal("99.99")) <= 0) {
+					basePoints +=5;    
+				}
+				else if (sumSpent.compareTo(new BigDecimal("100")) >= 0 ) {
+					basePoints +=10;
 				}
 
+				if(featureFlag.isEnablePromotion()) {
+					basePoints *= 2;
+				}
+
+				points += basePoints;
 			}
 		}
 		return points;
@@ -260,11 +268,6 @@ public class UserService {
 		}
 
 	}
-
-	public Optional<UserEntity> getBasicUserInfoById(int id) {
-		return userRepository.findById(id);
-	}
-
 
 
 }
