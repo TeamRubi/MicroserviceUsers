@@ -85,14 +85,13 @@ public class UserController {
 		return new ResponseEntity<>(userService.findUserByEmail(email), HttpStatus.OK);
 	}
 
-	@SuppressWarnings("unchecked")
 	@GetMapping("/users/{id}")
-	public <T> T getUserById(@PathVariable int id) {
+	public Object getUserById(@PathVariable int id) {
 		if(featureFlag.isEnableUserExtraInfo()) {
-			return (T) userService.getUserWithAvgSpentAndFidelityPoints(id);
+			return userService.getUserWithAvgSpentAndFidelityPoints(id);
 		}
 		else {
-			return (T) userService.findUserById(id);
+			return userService.findUserById(id);
 
 		}
 	}

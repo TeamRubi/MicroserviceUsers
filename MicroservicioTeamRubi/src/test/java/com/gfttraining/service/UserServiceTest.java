@@ -47,6 +47,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.config.FeatureFlag;
 import com.gfttraining.connection.RetrieveInfoFromExternalMicroservice;
 import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
@@ -432,9 +434,11 @@ class UserServiceTest {
 
 		carts.add(cartEntity);
 
+		when(featureFlag.isEnablePromotion()).thenReturn(true);
+
 		Integer result = userService.getPoints(carts);
 
-		assertThat(10).isEqualTo(result);
+		assertThat(20).isEqualTo(result);
 	}
 
 
@@ -444,6 +448,8 @@ class UserServiceTest {
 
 		List<CartEntity> carts = new ArrayList<>();
 		List<ProductEntity> products = new ArrayList<>();
+		products.add(product1point);
+		products.add(product3points);
 		cartEntity.setProducts(products);
 
 		carts.add(cartEntity);
@@ -453,7 +459,7 @@ class UserServiceTest {
 
 		when(userRepository.findById(anyInt())).thenReturn(optionalUserModel);
 
-		assertThat(BigDecimal.valueOf(0)).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getAverageSpent());
+		assertThat(BigDecimal.valueOf(50/products.size())).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getAverageSpent());
 
 	}
 
@@ -562,10 +568,19 @@ class UserServiceTest {
 
 		MultipartFile file = Mockito.mock(MultipartFile.class);
 
-		Mockito.doNothing().when(userRepository).deleteAll();
+		ObjectMapper objmapper = Mockito.mock(ObjectMapper.class);
+
+		doNothing().when(userRepository).deleteAll();
+
 
 		byte[] content = "[{\"email\": \"user@gmail.com\", \"name\": \"pedro\", \"lastname\": \"soler\", \"address\": \"monzon\", \"paymentmethod\": \"VISA\"}, {\"email\": \"user@gmail.com\", \"name\": \"pedro\", \"lastname\": \"soler\", \"address\": \"monzon\", \"paymentmethod\": \"VISA\"}]".getBytes();
 		when(file.getBytes()).thenReturn(content);
+
+		List<UserEntity> userList = Collections.emptyList();
+
+		when(userRepository.saveAll(any())).thenReturn(userList);
+
+		when(objmapper.readValue(content, new TypeReference<List<UserEntity>>(){})).thenReturn(userList);
 
 		ResponseEntity<Void> response = userService.saveAllImportedUsers(file);
 

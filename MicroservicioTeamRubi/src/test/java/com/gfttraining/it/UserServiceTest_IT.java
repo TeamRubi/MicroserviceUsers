@@ -14,6 +14,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -29,6 +30,7 @@ import java.sql.Driver;
 import java.util.NoSuchElementException;
 
 import org.junit.AfterClass;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -86,7 +88,7 @@ class UserServiceTest_IT {
 
 	@BeforeEach
 	public void createUser() {
-		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
+		userModel = new UserEntity("pepe@pepsacse.com", "Pepito", "Perez", "calle falsa", "SPAIN");
 		userPath = appConfig.getUserPath();
 		favoritePath = appConfig.getFavoritePath();
 		userCartsPath = appConfig.getUserCartsPath();
@@ -99,11 +101,12 @@ class UserServiceTest_IT {
 	@BeforeEach
 	public void setUpCarrito() {
 		wireMockServer = new WireMockServer();
+		//wireMockServer = new WireMockServer(options().port(8081));
 		wireMockServer.start();
 
 	}
 
-	@AfterClass
+	@AfterEach
 	public void tearDownCarrito() {
 		wireMockServer.stop();
 	}
@@ -143,9 +146,20 @@ class UserServiceTest_IT {
 	@Test
 	public void updateUserById_IT() throws Exception {
 
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		JsonNode jsonNode = objectMapper.createObjectNode()
+				.put("name", "John")
+				.put("country", "SPAIN");
+
+		String jsonString = objectMapper.writeValueAsString(jsonNode);
+
+		userModel.setId(1);
+		userService.createUser(userModel);
+
 		mockMvc.perform(patch(userPath + "/1")
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("{ \"name\": \"Pablo\", \"lastname\": \"Garcia\" }"))
+				.content(jsonString))
 		.andExpect(status().isCreated());
 
 	}
@@ -358,7 +372,7 @@ class UserServiceTest_IT {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(json)).andExpect(status().isCreated());
 
-		mockMvc.perform(get("/users/1001")).andExpect(status().isOk());
+		mockMvc.perform(get("/users/1000")).andExpect(status().isOk());
 
 		mockMvc.perform(delete("/users/1001")).andExpect(status().isNoContent());
 

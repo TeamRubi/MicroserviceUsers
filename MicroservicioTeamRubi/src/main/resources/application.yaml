@@ -28,12 +28,12 @@ logging:
     name: ../MicroservicioTeamRubi/src/main/resources/UserMicroservice_Log.log
     
 server:
-  port: 8080
+  port: 8085
   
 debug: false
 
 paths:
-  user: "/user"
+  user: "/users"
   favorite: "/favorite"
   usercarts: "/carts/user"
 
