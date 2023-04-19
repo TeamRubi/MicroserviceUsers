@@ -290,27 +290,27 @@ class UserServiceTest_IT {
 	}
 
 
-//
-//	 @Test
-//	 public void getUserPointsAndAvgNotFound_IT () throws IOException, InterruptedException {
-//
-//			stubFor(get(urlPathEqualTo("/carts/user/" + 12))
-//	                .willReturn(aResponse()
-//	                    .withStatus(404)
-//	                    .withHeader("Content-Type", "application/json")
-//	                    .withBody("\"User not found")));
-//
-//			HttpClient httpClient = HttpClient.newHttpClient();
-//
-//			HttpRequest request = HttpRequest.newBuilder()
-//			        .uri(URI.create("http://localhost:" + wireMockServer.port() + "/carts/user/" + 12))
-//			        .GET()
-//			        .build();
-//			 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-//
-//			 assertThat(404).isEqualTo(response.statusCode());
-//			 assertThat("\"User not found").isEqualTo(response.body());
-//	 }
+
+	 @Test
+	 public void getUserPointsAndAvgNotFound_IT () throws IOException, InterruptedException {
+
+			stubFor(get(urlPathEqualTo("/carts/user/" + 12))
+	                .willReturn(aResponse()
+	                    .withStatus(404)
+	                    .withHeader("Content-Type", "application/json")
+	                    .withBody("\"User not found")));
+
+			HttpClient httpClient = HttpClient.newHttpClient();
+
+			HttpRequest request = HttpRequest.newBuilder()
+			        .uri(URI.create("http://localhost:" + wireMockServer.port() + "/carts/user/" + 12))
+			        .GET()
+			        .build();
+			 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+			 assertThat(404).isEqualTo(response.statusCode());
+			 assertThat("\"User not found").isEqualTo(response.body());
+	 }
 	
 	 @Test
 	    public void shouldRetryThreeTimesAndSucceedOnThirdAttempt() {
@@ -388,6 +388,28 @@ class UserServiceTest_IT {
 		
 		mockMvc.perform(get("/users/1001")).andExpect(status().isOk())
 											.andExpect(jsonPath("$.name").value("Pablo"));
+		
+	 }
+	 
+	 
+	 
+	 @Test
+	  void updateUserFavouriteEndToEndTest() throws Exception{
+		 int userId = 11;
+			int productId = 13;
+
+			mockMvc.perform(post("/favorite/" + userId + "/" + productId))
+			.andExpect(status().isCreated())
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+			.andExpect(jsonPath("$.id").value(userId))
+			.andExpect(jsonPath("$.favorites[*].productId", hasItem(productId)));
+			
+			mockMvc.perform(get("/users/11")).andExpect(status().isOk())
+				.andExpect(jsonPath("$.favorites[*].productId", hasItem(productId)));
+			
+			mockMvc.perform(delete(favoritePath + "/product/" + productId))
+			.andExpect(status().isNoContent());
+			
 		
 	 }
 
