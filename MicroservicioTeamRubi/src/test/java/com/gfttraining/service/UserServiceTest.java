@@ -48,7 +48,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.gfttraining.config.FeatureFlag;
-import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
+import com.gfttraining.connection.RetrieveInfoFromExternalMicroservice;
 import com.gfttraining.dto.UserEntityDTO;
 import com.gfttraining.entity.CartEntity;
 import com.gfttraining.entity.FavoriteProduct;
@@ -77,7 +77,7 @@ class UserServiceTest {
 	private FeatureFlag featureFlag;
 
 	@Mock
-	private RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice;
+	private RetrieveInfoFromExternalMicroservice retrieveInformationFromExternalMicroservice;
 
 	@Mock
 	private ModelMapper modelMapper;

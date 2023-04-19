@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -14,6 +15,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -216,6 +218,37 @@ class UserControllerTest {
 
 		userService.findUserById(1);
 		verify(userService, Mockito.times(1)).findUserById(1);
+
+	}
+
+	@Test
+	void getUserByName_test() {
+
+		String name = "Pepito";
+
+		List<UserEntity> users = new ArrayList<>();
+		users.add(userModel);
+
+		when(userService.findAllByName(name)).thenReturn(users);
+		List<UserEntity> userResult = userController.getUserByName(name);
+
+		assertThat(userResult).allSatisfy(user -> assertThat(user.getName()).isEqualTo(name));
+		verify(userService, atLeastOnce()).findAllByName(name);
+
+	}
+
+	@Test
+	void deleteUserById_test() {
+
+		int id = 1;
+
+		doNothing().when(userService).deleteUserById(id);
+
+		ResponseEntity<Void> response = userController.deleteUserById(id);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+		verify(userService, atLeastOnce()).deleteUserById(id);
 
 	}
 

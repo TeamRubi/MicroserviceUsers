@@ -49,7 +49,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.config.AppConfig;
-import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
+import com.gfttraining.connection.RetrieveInfoFromExternalMicroservice;
 import com.gfttraining.entity.UserEntity;
 import com.gfttraining.repository.UserRepository;
 import com.gfttraining.service.UserService;
@@ -315,7 +315,7 @@ class UserServiceTest_IT {
 	 @Test
 	    public void shouldRetryThreeTimesAndSucceedOnThirdAttempt() {
 		 
-		 RetrieveInformationFromExternalMicroservice  retrieveInformationFromExternalMicroservice = new RetrieveInformationFromExternalMicroservice();
+		 RetrieveInfoFromExternalMicroservice  retrieveInformationFromExternalMicroservice = new RetrieveInfoFromExternalMicroservice();
 		 
 	        stubFor(get(urlEqualTo("/external-service"))
 	                .inScenario("Connection retries")
