@@ -28,7 +28,7 @@ public class RetrieveInformationFromExternalMicroservice {
             try {
                 ResponseEntity<T> responseEntity = restTemplate.exchange(path, HttpMethod.GET, null, responseType);
                 T response = responseEntity.getBody();
-                log.info("Response retrieved from the microservice");
+                log.info("Response retrieved from " + path);
                 return response;
             } catch (Exception e) {
                 if (++retryCount == MAX_RETRIES) {
