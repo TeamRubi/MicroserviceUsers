@@ -272,7 +272,7 @@ class UserServiceTest {
 		verify(userRepository, times(1)).findById(1);
 		verify(userRepository, times(1)).save(userModel);
 		assertThat(updatedUser.getName()).isEqualTo(result.getName());
-		assertThat(result.getLastname()).isNotEqualTo(null);
+		assertThat(result.getLastName()).isNotEqualTo(null);
 
 	}
 

@@ -48,7 +48,8 @@ public class UserEntity {
 
 	@NotNull(message = "lastname cannot be null")
 	@NonNull
-	private String lastname;
+	@Column(name = "lastname")
+	private String lastName;
 
 	@NotNull(message = "address cannot be null")
 	@NonNull
@@ -59,7 +60,8 @@ public class UserEntity {
 	private String country;
 
 	@Nullable
-	private String paymentmethod;
+	@Column(name = "paymentmethod")
+	private String paymentMethod;
 
 	@OneToMany(cascade = CascadeType.ALL)
 	@JoinColumn(name = "user_id", referencedColumnName = "id")

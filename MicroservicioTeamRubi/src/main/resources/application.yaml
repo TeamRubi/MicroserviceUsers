@@ -28,7 +28,7 @@ logging:
     name: ../MicroservicioTeamRubi/src/main/resources/UserMicroservice_Log.log
     
 server:
-  port: 8085
+  port: 8080
   
 debug: false
 
