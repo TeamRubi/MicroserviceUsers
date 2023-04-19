@@ -18,7 +18,6 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.config.FeatureFlag;
-import com.gfttraining.connection.RetrieveInfoFromExternalMicroservice;
 import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.dto.UserEntityDTO;
 import com.gfttraining.entity.CartEntity;
@@ -47,7 +46,7 @@ public class UserService {
 	private FeatureFlag featureFlag;
 
 	public UserService(UserRepository userRepository, FavoriteRepository favoriteRepository, ModelMapper modelMapper, 
-			RetrieveInfoFromExternalMicroservice retrieveInformationFromExternalMicroservice, FeatureFlag featureFlag) {
+			RetrieveInformationFromExternalMicroservice retrieveInfo, FeatureFlag featureFlag) {
 		this.userRepository = userRepository;
 		this.favoriteRepository = favoriteRepository;
 		this.modelMapper = modelMapper;

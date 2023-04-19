@@ -33,6 +33,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.entity.FavoriteProduct;
 import com.gfttraining.entity.UserEntity;
 import com.gfttraining.service.UserService;
@@ -46,6 +47,9 @@ class UserControllerTest {
 
 	@Mock
 	private RestTemplate restTemplate;
+
+	@Mock
+	private RetrieveInformationFromExternalMicroservice retrieveInfo;
 
 	@InjectMocks
 	UserController userController;

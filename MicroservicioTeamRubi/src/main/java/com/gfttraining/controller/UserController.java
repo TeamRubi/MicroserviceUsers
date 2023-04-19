@@ -34,17 +34,14 @@ public class UserController {
 
 	private UserService userService;
 
-	private RestTemplate restTemplate;
-
 	private FeatureFlag featureFlag;
 
-	private RetrieveInformationFromExternalMicroservice retrieve;
+	private RetrieveInformationFromExternalMicroservice retrieveInfo;
 
-	public UserController(UserService userService, RestTemplate restTemplate, FeatureFlag featureFlag,RetrieveInformationFromExternalMicroservice retrieve) {
+	public UserController(UserService userService, FeatureFlag featureFlag, RetrieveInformationFromExternalMicroservice retrieveInfo) {
 		this.userService = userService;
-		this.restTemplate = restTemplate;
 		this.featureFlag = featureFlag;
-		this.retrieve = retrieve;
+		this.retrieveInfo = retrieveInfo;
 	}
 
 	@GetMapping("/users")
@@ -131,7 +128,7 @@ public class UserController {
 
 	private boolean productExists(int productId) {
 		try {
-			retrieve.getExternalInformation("http://localhost:8081/products/id/" + productId, new ParameterizedTypeReference<String>() {});
+			retrieveInfo.getExternalInformation("http://localhost:8081/products/id/" + productId, new ParameterizedTypeReference<String>() {});
 			return true;
 		}
 		catch(HttpClientErrorException.NotFound ex) {
