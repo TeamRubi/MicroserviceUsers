@@ -6,7 +6,9 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -14,6 +16,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -27,10 +31,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.gfttraining.config.FeatureFlag;
+import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
+import com.gfttraining.dto.UserEntityDTO;
 import com.gfttraining.entity.FavoriteProduct;
 import com.gfttraining.entity.UserEntity;
 import com.gfttraining.service.UserService;
@@ -45,14 +53,22 @@ class UserControllerTest {
 	@Mock
 	private RestTemplate restTemplate;
 
+	@Mock
+	private RetrieveInformationFromExternalMicroservice retrieveInfo;
+
+	@Mock
+	private FeatureFlag featureFlag;
+
 	@InjectMocks
 	UserController userController;
 
 	UserEntity userModel;
+	UserEntityDTO userModelDTO;
 
 	@BeforeEach
 	public void createUser() {
 		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
+		userModelDTO = new UserEntityDTO(12, "pepe@pepe.com", "Pedro", "Chapo", "calle falsa", "SPAIN", "TRANSFER", BigDecimal.valueOf(0), 0, null);
 	}
 
 	@Test
@@ -155,10 +171,7 @@ class UserControllerTest {
 		when(userService.addFavoriteProduct(anyInt(), anyInt())).thenReturn(userModel);
 
 		//mocking http request
-		ResponseEntity<String> responseEntity = new ResponseEntity<>("Datos de prueba", HttpStatus.OK);
-
-		when(restTemplate.getForEntity(anyString(), eq(String.class)))
-		.thenReturn(responseEntity);
+		when(retrieveInfo.getExternalInformation(anyString(), any())).thenReturn("example");
 
 		ResponseEntity<UserEntity> response = userController.addFavoriteProduct(1, productId);
 
@@ -168,14 +181,12 @@ class UserControllerTest {
 
 	}
 
-
 	@Test
 	void addFavoriteProductWithNotExistingProduct_test() throws Exception {
 
 		int productId = 200;
 
-		when(restTemplate.getForEntity(anyString(), eq(String.class)))
-		.thenReturn(new ResponseEntity<String>("",HttpStatus.NOT_FOUND));
+		doThrow(HttpClientErrorException.NotFound.class).when(retrieveInfo).getExternalInformation(anyString(), any());
 
 		assertThatThrownBy(()-> userController.addFavoriteProduct(1, productId))
 		.isInstanceOf(ResponseStatusException.class)
@@ -209,13 +220,65 @@ class UserControllerTest {
 
 
 	@Test
-	void getUserById_test2 () {
+	void getUserById () {
 
 		userModel.setId(1);
+
+		when(featureFlag.isEnableUserExtraInfo()).thenReturn(false);
 		when(userService.findUserById(1)).thenReturn(userModel);
 
-		userService.findUserById(1);
-		verify(userService, Mockito.times(1)).findUserById(1);
+		UserEntity user = (UserEntity) userController.getUserById(1);
+
+		verify(userService, atLeastOnce()).findUserById(1);
+		assertThat(user.getId()).isEqualTo(1);
+
+	}
+
+	@Test
+	void getUserByIdWithExtraInfo () {
+
+		userModelDTO.setId(1);
+
+		when(featureFlag.isEnableUserExtraInfo()).thenReturn(true);
+		when(userService.getUserWithAvgSpentAndFidelityPoints(1)).thenReturn(userModelDTO);
+
+		UserEntityDTO user = (UserEntityDTO) userController.getUserById(1);
+
+		verify(userService, atLeastOnce()).getUserWithAvgSpentAndFidelityPoints(1);
+		assertThat(user.getId()).isEqualTo(1);
+
+	}
+
+
+
+	@Test
+	void getUserByName_test() {
+
+		String name = "Pepito";
+
+		List<UserEntity> users = new ArrayList<>();
+		users.add(userModel);
+
+		when(userService.findAllByName(name)).thenReturn(users);
+		List<UserEntity> userResult = userController.getUserByName(name);
+
+		assertThat(userResult).allSatisfy(user -> assertThat(user.getName()).isEqualTo(name));
+		verify(userService, atLeastOnce()).findAllByName(name);
+
+	}
+
+	@Test
+	void deleteUserById_test() {
+
+		int id = 1;
+
+		doNothing().when(userService).deleteUserById(id);
+
+		ResponseEntity<Void> response = userController.deleteUserById(id);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+		verify(userService, atLeastOnce()).deleteUserById(id);
 
 	}
 
