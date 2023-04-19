@@ -348,13 +348,47 @@ class UserServiceTest_IT {
 	 @Test
 	  void deleteUserEndToEndTest() throws Exception{
 		 
-		mockMvc.perform(get("/users/bInfo/12")).andExpect(status().isOk());
+		ObjectMapper objectMapper = new ObjectMapper();
+		String json = objectMapper.writeValueAsString(userModel);
+
+		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound()); 
 		
-		mockMvc.perform(delete("/users/12")).andExpect(status().isNoContent());
+		mockMvc.perform(post("/users")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(json)).andExpect(status().isCreated());
 		
-		mockMvc.perform(get("/users/bInfo/12")).andExpect(status().isNotFound());
+		mockMvc.perform(get("/users/1001")).andExpect(status().isOk());
 		
-		 		
+		mockMvc.perform(delete("/users/1001")).andExpect(status().isNoContent());
+		
+		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
+		
+	 }
+	 
+	 
+	 @Test
+	  void updateUserEndToEndTest() throws Exception{
+		 
+		ObjectMapper objectMapper = new ObjectMapper();
+		String json = objectMapper.writeValueAsString(userModel);
+
+		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound()); 
+		
+		mockMvc.perform(post("/users")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(json)).andExpect(status().isCreated());
+		
+		mockMvc.perform(get("/users/1001")).andExpect(status().isOk());
+		
+		mockMvc.perform(patch("/users/1001")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{ \"name\": \"Pablo\", \"lastname\": \"Garcia\" }"))
+		.andExpect(status().isCreated());
+
+		
+		mockMvc.perform(get("/users/1001")).andExpect(status().isOk())
+											.andExpect(jsonPath("$.name").value("Pablo"));
+		
 	 }
 
 }
