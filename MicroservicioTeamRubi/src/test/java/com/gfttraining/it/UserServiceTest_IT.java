@@ -50,6 +50,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.config.AppConfig;
 import com.gfttraining.connection.RetrieveInfoFromExternalMicroservice;
+import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.entity.UserEntity;
 import com.gfttraining.repository.UserRepository;
 import com.gfttraining.service.UserService;
@@ -290,71 +291,105 @@ class UserServiceTest_IT {
 	}
 
 
-//
-//	 @Test
-//	 public void getUserPointsAndAvgNotFound_IT () throws IOException, InterruptedException {
-//
-//			stubFor(get(urlPathEqualTo("/carts/user/" + 12))
-//	                .willReturn(aResponse()
-//	                    .withStatus(404)
-//	                    .withHeader("Content-Type", "application/json")
-//	                    .withBody("\"User not found")));
-//
-//			HttpClient httpClient = HttpClient.newHttpClient();
-//
-//			HttpRequest request = HttpRequest.newBuilder()
-//			        .uri(URI.create("http://localhost:" + wireMockServer.port() + "/carts/user/" + 12))
-//			        .GET()
-//			        .build();
-//			 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-//
-//			 assertThat(404).isEqualTo(response.statusCode());
-//			 assertThat("\"User not found").isEqualTo(response.body());
-//	 }
-	
-	 @Test
-	    public void shouldRetryThreeTimesAndSucceedOnThirdAttempt() {
-		 
-		 RetrieveInfoFromExternalMicroservice  retrieveInformationFromExternalMicroservice = new RetrieveInfoFromExternalMicroservice();
-		 
-	        stubFor(get(urlEqualTo("/external-service"))
-	                .inScenario("Connection retries")
-	                .whenScenarioStateIs(Scenario.STARTED)
-	                .willReturn(aResponse().withStatus(500))
-	                .willSetStateTo("Connection failed 1"));
+	//
+	//	 @Test
+	//	 public void getUserPointsAndAvgNotFound_IT () throws IOException, InterruptedException {
+	//
+	//			stubFor(get(urlPathEqualTo("/carts/user/" + 12))
+	//	                .willReturn(aResponse()
+	//	                    .withStatus(404)
+	//	                    .withHeader("Content-Type", "application/json")
+	//	                    .withBody("\"User not found")));
+	//
+	//			HttpClient httpClient = HttpClient.newHttpClient();
+	//
+	//			HttpRequest request = HttpRequest.newBuilder()
+	//			        .uri(URI.create("http://localhost:" + wireMockServer.port() + "/carts/user/" + 12))
+	//			        .GET()
+	//			        .build();
+	//			 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+	//
+	//			 assertThat(404).isEqualTo(response.statusCode());
+	//			 assertThat("\"User not found").isEqualTo(response.body());
+	//	 }
 
-	        stubFor(get(urlEqualTo("/external-service"))
-	                .inScenario("Connection retries")
-	                .whenScenarioStateIs("Connection failed 1")
-	                .willReturn(aResponse().withStatus(500))
-	                .willSetStateTo("Connection failed 2"));
+	@Test
+	public void shouldRetryThreeTimesAndSucceedOnThirdAttempt() {
 
-	        stubFor(get(urlEqualTo("/external-service"))
-	                .inScenario("Connection retries")
-	                .whenScenarioStateIs("Connection failed 2")
-	                .willReturn(aResponse().withStatus(200).withBody("{\"result\":\"success\"}")));
+		RetrieveInformationFromExternalMicroservice  retrieveInformationFromExternalMicroservice = new RetrieveInformationFromExternalMicroservice();
 
-	        String result = "";
-			try {
-				result = retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:" + wireMockServer.port() + "/external-service", new ParameterizedTypeReference<String>() {});
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+		stubFor(get(urlEqualTo("/external-service"))
+				.inScenario("Connection retries")
+				.whenScenarioStateIs(Scenario.STARTED)
+				.willReturn(aResponse().withStatus(500))
+				.willSetStateTo("Connection failed 1"));
 
-	        assertThat(result).isEqualTo("{\"result\":\"success\"}");
-	    }
+		stubFor(get(urlEqualTo("/external-service"))
+				.inScenario("Connection retries")
+				.whenScenarioStateIs("Connection failed 1")
+				.willReturn(aResponse().withStatus(500))
+				.willSetStateTo("Connection failed 2"));
 
-	 
-	 @Test
-	  void deleteUserEndToEndTest() throws Exception{
-		 
-		mockMvc.perform(get("/users/bInfo/12")).andExpect(status().isOk());
-		
-		mockMvc.perform(delete("/users/12")).andExpect(status().isNoContent());
-		
-		mockMvc.perform(get("/users/bInfo/12")).andExpect(status().isNotFound());
-		
-		 		
-	 }
+		stubFor(get(urlEqualTo("/external-service"))
+				.inScenario("Connection retries")
+				.whenScenarioStateIs("Connection failed 2")
+				.willReturn(aResponse().withStatus(200).withBody("{\"result\":\"success\"}")));
+
+		String result = "";
+		try {
+			result = retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:" + wireMockServer.port() + "/external-service", new ParameterizedTypeReference<String>() {});
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		assertThat(result).isEqualTo("{\"result\":\"success\"}");
+	}
+
+
+	@Test
+	void deleteUserEndToEndTest() throws Exception{
+
+		ObjectMapper objectMapper = new ObjectMapper();
+		String json = objectMapper.writeValueAsString(userModel);
+
+		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound()); 
+
+		mockMvc.perform(post("/users")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json)).andExpect(status().isCreated());
+
+		mockMvc.perform(get("/users/1001")).andExpect(status().isOk());
+
+		mockMvc.perform(delete("/users/1001")).andExpect(status().isNoContent());
+
+		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
+
+	}
+
+
+	@Test
+	void updateUserEndToEndTest() throws Exception{
+
+		ObjectMapper objectMapper = new ObjectMapper();
+		String json = objectMapper.writeValueAsString(userModel);
+
+		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound()); 
+
+		mockMvc.perform(post("/users")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json)).andExpect(status().isCreated());
+
+		mockMvc.perform(get("/users/1001")).andExpect(status().isOk());
+
+		mockMvc.perform(patch("/users/1001")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{ \"name\": \"Pablo\", \"lastname\": \"Garcia\" }"))
+		.andExpect(status().isCreated());
+
+
+		mockMvc.perform(get("/users/1001")).andExpect(status().isOk())
+		.andExpect(jsonPath("$.name").value("Pablo"));
+
+	}
 
 }

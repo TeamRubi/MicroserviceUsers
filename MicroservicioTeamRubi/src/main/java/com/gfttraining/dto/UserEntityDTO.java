@@ -23,12 +23,12 @@ public class UserEntityDTO {
 	@NonNull
 	private String name;
 	@NonNull
-	private String lastname;
+	private String lastName;
 	@NonNull
 	private String address;
 	@NonNull
 	private String country;
-	private String paymentmethod;
+	private String paymentMethod;
 	private BigDecimal averageSpent;
 	private int points;
 	private Set<FavoriteProduct> favorites;

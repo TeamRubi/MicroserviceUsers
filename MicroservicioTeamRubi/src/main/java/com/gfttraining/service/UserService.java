@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.config.FeatureFlag;
 import com.gfttraining.connection.RetrieveInfoFromExternalMicroservice;
+import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.dto.UserEntityDTO;
 import com.gfttraining.entity.CartEntity;
 import com.gfttraining.entity.FavoriteProduct;
@@ -41,7 +42,7 @@ public class UserService {
 
 	private ModelMapper modelMapper;
 
-	private RetrieveInfoFromExternalMicroservice retrieveInformationFromExternalMicroservice;
+	private RetrieveInformationFromExternalMicroservice retrieveInfo;
 
 	private FeatureFlag featureFlag;
 
@@ -50,7 +51,7 @@ public class UserService {
 		this.userRepository = userRepository;
 		this.favoriteRepository = favoriteRepository;
 		this.modelMapper = modelMapper;
-		this.retrieveInformationFromExternalMicroservice = retrieveInformationFromExternalMicroservice;
+		this.retrieveInfo = retrieveInfo;
 		this.featureFlag = featureFlag;
 	}
 
@@ -147,10 +148,11 @@ public class UserService {
 
 	public UserEntityDTO getUserWithAvgSpentAndFidelityPoints(int id){
 
-		List<CartEntity> carts = retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:8082/carts/user/" + id,
+		List<CartEntity> carts = retrieveInfo.getExternalInformation("http://localhost:8082/carts/user/" + id,
 				new ParameterizedTypeReference<List<CartEntity>>() {});
 
 		UserEntityDTO userDTO = new UserEntityDTO();
+
 		modelMapper.map(findUserById(id), userDTO);
 
 		userDTO.setAverageSpent(calculateAvgSpent(carts));

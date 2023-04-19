@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import javax.validation.Valid;
 
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,7 +22,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.gfttraining.config.FeatureFlag;
+import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.dto.UserEntityDTO;
+import com.gfttraining.entity.CartEntity;
+import com.gfttraining.entity.ProductEntity;
 import com.gfttraining.entity.UserEntity;
 import com.gfttraining.service.UserService;
 
@@ -34,10 +38,13 @@ public class UserController {
 
 	private FeatureFlag featureFlag;
 
-	public UserController(UserService userService, RestTemplate restTemplate, FeatureFlag featureFlag) {
+	private RetrieveInformationFromExternalMicroservice retrieve;
+
+	public UserController(UserService userService, RestTemplate restTemplate, FeatureFlag featureFlag,RetrieveInformationFromExternalMicroservice retrieve) {
 		this.userService = userService;
 		this.restTemplate = restTemplate;
 		this.featureFlag = featureFlag;
+		this.retrieve = retrieve;
 	}
 
 	@GetMapping("/users")
@@ -124,11 +131,10 @@ public class UserController {
 
 	private boolean productExists(int productId) {
 		try {
-			ResponseEntity<String> responseEntity = restTemplate.getForEntity(
-					"http://localhost:8081/products/id/" + productId, String.class);
-			return responseEntity.getStatusCode() == HttpStatus.OK;
+			retrieve.getExternalInformation("http://localhost:8081/products/id/" + productId, new ParameterizedTypeReference<String>() {});
+			return true;
 		}
-		catch(HttpClientErrorException.NotFound | ResourceAccessException ex) {
+		catch(HttpClientErrorException.NotFound ex) {
 			return false;
 		}
 	}

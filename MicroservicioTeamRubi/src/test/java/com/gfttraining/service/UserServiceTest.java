@@ -49,6 +49,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.gfttraining.config.FeatureFlag;
 import com.gfttraining.connection.RetrieveInfoFromExternalMicroservice;
+import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.dto.UserEntityDTO;
 import com.gfttraining.entity.CartEntity;
 import com.gfttraining.entity.FavoriteProduct;
@@ -77,7 +78,7 @@ class UserServiceTest {
 	private FeatureFlag featureFlag;
 
 	@Mock
-	private RetrieveInfoFromExternalMicroservice retrieveInformationFromExternalMicroservice;
+	private RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice;
 
 	@Mock
 	private ModelMapper modelMapper;
@@ -272,7 +273,7 @@ class UserServiceTest {
 		verify(userRepository, times(1)).findById(1);
 		verify(userRepository, times(1)).save(userModel);
 		assertThat(updatedUser.getName()).isEqualTo(result.getName());
-		assertThat(result.getLastname()).isNotEqualTo(null);
+		assertThat(result.getLastName()).isNotEqualTo(null);
 
 	}
 
