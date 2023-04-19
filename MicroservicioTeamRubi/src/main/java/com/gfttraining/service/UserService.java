@@ -147,11 +147,9 @@ public class UserService {
 
 	public UserEntityDTO getUserWithAvgSpentAndFidelityPoints(int id){
 
-		List<CartEntity> carts = retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:8082/carts/user/" + id,
-				new ParameterizedTypeReference<List<CartEntity>>() {});
+		List<CartEntity> carts = retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:8082/carts/user/" + id);
 
-		UserEntityDTO userDTO = new UserEntityDTO();
-		modelMapper.map(findUserById(id), userDTO);
+		UserEntityDTO userDTO = modelMapper.map(findUserById(id), UserEntityDTO.class);
 
 		userDTO.setAverageSpent(calculateAvgSpent(carts));
 		userDTO.setPoints(getPoints(carts));
