@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -15,16 +14,15 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import javax.persistence.EntityNotFoundException;
 
@@ -34,7 +32,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +44,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.config.FeatureFlag;
 import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.dto.UserEntityDTO;
@@ -78,7 +76,6 @@ class UserServiceTest {
 
 	@Mock
 	private RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice;
-
 	@Mock
 	private ModelMapper modelMapper;
 
@@ -94,7 +91,7 @@ class UserServiceTest {
 	private ProductEntity product3points;
 	private ProductEntity product5points;
 	private ProductEntity product10points;
-
+	
 
 	@BeforeEach
 	public void createUser() {
@@ -431,18 +428,22 @@ class UserServiceTest {
 
 		carts.add(cartEntity);
 
+		when(featureFlag.isEnablePromotion()).thenReturn(true);
+
 		Integer result = userService.getPoints(carts);
 
-		assertThat(10).isEqualTo(result);
+		assertThat(20).isEqualTo(result);
 	}
 
 
 
 	@Test
-	void getAvgSpent_test() {
+	void getAvgSpent_test() throws InterruptedException {
 
 		List<CartEntity> carts = new ArrayList<>();
 		List<ProductEntity> products = new ArrayList<>();
+		products.add(product1point);
+		products.add(product3points);
 		cartEntity.setProducts(products);
 
 		carts.add(cartEntity);
@@ -452,7 +453,7 @@ class UserServiceTest {
 
 		when(userRepository.findById(anyInt())).thenReturn(optionalUserModel);
 
-		assertThat(BigDecimal.valueOf(0)).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getAverageSpent());
+		assertThat(BigDecimal.valueOf(50/products.size())).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getAverageSpent());
 
 	}
 
@@ -556,22 +557,22 @@ class UserServiceTest {
 
 	}
 
-	@Test
-	void importUsersByFile() throws Exception{
+    @Test
+    public void testSaveAllImportedUsers() throws Exception {
+        List<UserEntity> users = Arrays.asList(userModel, userModel);
+        byte[] content = new ObjectMapper().writeValueAsBytes(users);
+        MockMultipartFile file = new MockMultipartFile("users.json", content);
 
-		MultipartFile file = Mockito.mock(MultipartFile.class);
+        doNothing().when(userRepository).deleteAll();
+        when(userRepository.saveAll(anyList())).thenReturn(users);
 
-		Mockito.doNothing().when(userRepository).deleteAll();
+        ResponseEntity<Void> response = userService.saveAllImportedUsers(file);
 
-		byte[] content = "[{\"email\": \"user@gmail.com\", \"name\": \"pedro\", \"lastname\": \"soler\", \"address\": \"monzon\", \"paymentmethod\": \"VISA\"}, {\"email\": \"user@gmail.com\", \"name\": \"pedro\", \"lastname\": \"soler\", \"address\": \"monzon\", \"paymentmethod\": \"VISA\"}]".getBytes();
-		when(file.getBytes()).thenReturn(content);
+        verify(userRepository, times(1)).deleteAll();
+        verify(userRepository, times(1)).saveAll(eq(users));
 
-		ResponseEntity<Void> response = userService.saveAllImportedUsers(file);
-
-		verify(userRepository, Mockito.times(1)).deleteAll();
-		assertEquals(HttpStatus.CREATED, response.getStatusCode());
-
-	}
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+    }
 
 	@Test
 	public void testSaveAllImportedUsersWithError() throws IOException {
