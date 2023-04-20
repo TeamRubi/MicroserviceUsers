@@ -49,6 +49,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.config.AppConfig;
+import com.gfttraining.config.FeatureFlag;
 import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.entity.UserEntity;
 import com.gfttraining.repository.UserRepository;
@@ -77,6 +78,10 @@ class UserServiceTest_IT {
 
 	@Autowired
 	private AppConfig appConfig;
+	
+	
+	@Autowired
+	private FeatureFlag featureFlag;
 
 
 	String userPath;
@@ -347,21 +352,35 @@ class UserServiceTest_IT {
 	 
 	 @Test
 	  void deleteUserEndToEndTest() throws Exception{
-		 
+
 		ObjectMapper objectMapper = new ObjectMapper();
 		String json = objectMapper.writeValueAsString(userModel);
-
-		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound()); 
+		 featureFlag.setEnableUserExtraInfo(false);
+		
+		if (featureFlag.isEnableUserExtraInfo()) {
+		    mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
+		} else {
+		    mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
+		}
+		
 		
 		mockMvc.perform(post("/users")
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(json)).andExpect(status().isCreated());
 		
-		mockMvc.perform(get("/users/1001")).andExpect(status().isOk());
+		if (featureFlag.isEnableUserExtraInfo()) {
+		    mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
+		} else {
+		    mockMvc.perform(get("/users/1001")).andExpect(status().isOk());
+		}
 		
 		mockMvc.perform(delete("/users/1001")).andExpect(status().isNoContent());
 		
-		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
+		if (featureFlag.isEnableUserExtraInfo()) {
+		    mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
+		} else {
+		    mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
+		}
 		
 	 }
 	 
@@ -371,23 +390,38 @@ class UserServiceTest_IT {
 		 
 		ObjectMapper objectMapper = new ObjectMapper();
 		String json = objectMapper.writeValueAsString(userModel);
+		
+		 featureFlag.setEnableUserExtraInfo(false);
+		 
+		 if (featureFlag.isEnableUserExtraInfo()) {
+			    mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
+			} else {
+			    mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
+			}
 
-		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound()); 
 		
 		mockMvc.perform(post("/users")
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(json)).andExpect(status().isCreated());
 		
-		mockMvc.perform(get("/users/1001")).andExpect(status().isOk());
+		if (featureFlag.isEnableUserExtraInfo()) {
+		    mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
+		} else {
+		    mockMvc.perform(get("/users/1001")).andExpect(status().isOk());
+		}
 		
 		mockMvc.perform(patch("/users/1001")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{ \"name\": \"Pablo\", \"lastname\": \"Garcia\" }"))
 		.andExpect(status().isCreated());
 
+		if (featureFlag.isEnableUserExtraInfo()) {
+		    mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
+		} else {
+		    mockMvc.perform(get("/users/1001")).andExpect(status().isOk())
+		    .andExpect(jsonPath("$.name").value("Pablo"));;
+		}
 		
-		mockMvc.perform(get("/users/1001")).andExpect(status().isOk())
-											.andExpect(jsonPath("$.name").value("Pablo"));
 		
 	 }
 	 
