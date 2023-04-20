@@ -19,9 +19,11 @@ public class RetrieveInformationFromExternalMicroservice {
 	
 	private RestTemplate restTemplate;
 
+	public RetrieveInformationFromExternalMicroservice(RestTemplate restTemplate) {
+		this.restTemplate = restTemplate;
+	}
+
 	public <T> T getExternalInformation(String path, ParameterizedTypeReference<T> responseType) {
-		
-		restTemplate = new RestTemplate();
 		
 	    int retryCount = 0;
 	    while (true) {
