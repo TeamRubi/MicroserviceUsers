@@ -14,6 +14,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -29,6 +30,7 @@ import java.sql.Driver;
 import java.util.NoSuchElementException;
 
 import org.junit.AfterClass;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -49,6 +51,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.config.AppConfig;
+import com.gfttraining.connection.RetrieveInfoFromExternalMicroservice;
 import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.entity.UserEntity;
 import com.gfttraining.repository.UserRepository;
@@ -85,7 +88,7 @@ class UserServiceTest_IT {
 
 	@BeforeEach
 	public void createUser() {
-		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
+		userModel = new UserEntity("pepe@pepsacse.com", "Pepito", "Perez", "calle falsa", "SPAIN");
 		userPath = appConfig.getUserPath();
 		favoritePath = appConfig.getFavoritePath();
 		userCartsPath = appConfig.getUserCartsPath();
@@ -98,11 +101,12 @@ class UserServiceTest_IT {
 	@BeforeEach
 	public void setUpCarrito() {
 		wireMockServer = new WireMockServer();
+		//wireMockServer = new WireMockServer(options().port(8081));
 		wireMockServer.start();
 
 	}
 
-	@AfterClass
+	@AfterEach
 	public void tearDownCarrito() {
 		wireMockServer.stop();
 	}
@@ -142,9 +146,20 @@ class UserServiceTest_IT {
 	@Test
 	public void updateUserById_IT() throws Exception {
 
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		JsonNode jsonNode = objectMapper.createObjectNode()
+				.put("name", "John")
+				.put("country", "SPAIN");
+
+		String jsonString = objectMapper.writeValueAsString(jsonNode);
+
+		userModel.setId(1);
+		userService.createUser(userModel);
+
 		mockMvc.perform(patch(userPath + "/1")
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("{ \"name\": \"Pablo\", \"lastname\": \"Garcia\" }"))
+				.content(jsonString))
 		.andExpect(status().isCreated());
 
 	}
@@ -290,105 +305,128 @@ class UserServiceTest_IT {
 	}
 
 
-//
-//	 @Test
-//	 public void getUserPointsAndAvgNotFound_IT () throws IOException, InterruptedException {
-//
-//			stubFor(get(urlPathEqualTo("/carts/user/" + 12))
-//	                .willReturn(aResponse()
-//	                    .withStatus(404)
-//	                    .withHeader("Content-Type", "application/json")
-//	                    .withBody("\"User not found")));
-//
-//			HttpClient httpClient = HttpClient.newHttpClient();
-//
-//			HttpRequest request = HttpRequest.newBuilder()
-//			        .uri(URI.create("http://localhost:" + wireMockServer.port() + "/carts/user/" + 12))
-//			        .GET()
-//			        .build();
-//			 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-//
-//			 assertThat(404).isEqualTo(response.statusCode());
-//			 assertThat("\"User not found").isEqualTo(response.body());
-//	 }
-	
-	 @Test
-	    public void shouldRetryThreeTimesAndSucceedOnThirdAttempt() {
-		 
-		 RetrieveInformationFromExternalMicroservice  retrieveInformationFromExternalMicroservice = new RetrieveInformationFromExternalMicroservice();
-		 
-	        stubFor(get(urlEqualTo("/external-service"))
-	                .inScenario("Connection retries")
-	                .whenScenarioStateIs(Scenario.STARTED)
-	                .willReturn(aResponse().withStatus(500))
-	                .willSetStateTo("Connection failed 1"));
 
-	        stubFor(get(urlEqualTo("/external-service"))
-	                .inScenario("Connection retries")
-	                .whenScenarioStateIs("Connection failed 1")
-	                .willReturn(aResponse().withStatus(500))
-	                .willSetStateTo("Connection failed 2"));
+	@Test
+	public void getUserPointsAndAvgNotFound_IT () throws IOException, InterruptedException {
 
-	        stubFor(get(urlEqualTo("/external-service"))
-	                .inScenario("Connection retries")
-	                .whenScenarioStateIs("Connection failed 2")
-	                .willReturn(aResponse().withStatus(200).withBody("{\"result\":\"success\"}")));
+		stubFor(get(urlPathEqualTo("/carts/user/" + 12))
+				.willReturn(aResponse()
+						.withStatus(404)
+						.withHeader("Content-Type", "application/json")
+						.withBody("\"User not found")));
 
-	        String result = "";
-			try {
-				result = retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:" + wireMockServer.port() + "/external-service", new ParameterizedTypeReference<String>() {});
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+		HttpClient httpClient = HttpClient.newHttpClient();
 
-	        assertThat(result).isEqualTo("{\"result\":\"success\"}");
-	    }
+		HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create("http://localhost:" + wireMockServer.port() + "/carts/user/" + 12))
+				.GET()
+				.build();
+		HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-	 
-	 @Test
-	  void deleteUserEndToEndTest() throws Exception{
-		 
+		assertThat(404).isEqualTo(response.statusCode());
+		assertThat("\"User not found").isEqualTo(response.body());
+	}
+
+
+	@Test
+	public void shouldRetryThreeTimesAndSucceedOnThirdAttempt() {
+
+		RetrieveInformationFromExternalMicroservice  retrieveInformationFromExternalMicroservice = new RetrieveInformationFromExternalMicroservice();
+
+		stubFor(get(urlEqualTo("/external-service"))
+				.inScenario("Connection retries")
+				.whenScenarioStateIs(Scenario.STARTED)
+				.willReturn(aResponse().withStatus(500))
+				.willSetStateTo("Connection failed 1"));
+
+		stubFor(get(urlEqualTo("/external-service"))
+				.inScenario("Connection retries")
+				.whenScenarioStateIs("Connection failed 1")
+				.willReturn(aResponse().withStatus(500))
+				.willSetStateTo("Connection failed 2"));
+
+		stubFor(get(urlEqualTo("/external-service"))
+				.inScenario("Connection retries")
+				.whenScenarioStateIs("Connection failed 2")
+				.willReturn(aResponse().withStatus(200).withBody("{\"result\":\"success\"}")));
+
+		String result = "";
+		try {
+			result = retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:" + wireMockServer.port() + "/external-service", new ParameterizedTypeReference<String>() {});
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		assertThat(result).isEqualTo("{\"result\":\"success\"}");
+	}
+
+
+	@Test
+	void deleteUserEndToEndTest() throws Exception{
+
 		ObjectMapper objectMapper = new ObjectMapper();
 		String json = objectMapper.writeValueAsString(userModel);
 
 		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound()); 
-		
+
 		mockMvc.perform(post("/users")
-					.contentType(MediaType.APPLICATION_JSON)
-					.content(json)).andExpect(status().isCreated());
-		
-		mockMvc.perform(get("/users/1001")).andExpect(status().isOk());
-		
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json)).andExpect(status().isCreated());
+
+		mockMvc.perform(get("/users/1000")).andExpect(status().isOk());
+
 		mockMvc.perform(delete("/users/1001")).andExpect(status().isNoContent());
-		
+
 		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
-		
-	 }
-	 
-	 
-	 @Test
-	  void updateUserEndToEndTest() throws Exception{
-		 
+
+	}
+
+
+	@Test
+	void updateUserEndToEndTest() throws Exception{
+
 		ObjectMapper objectMapper = new ObjectMapper();
 		String json = objectMapper.writeValueAsString(userModel);
 
 		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound()); 
-		
+
 		mockMvc.perform(post("/users")
-					.contentType(MediaType.APPLICATION_JSON)
-					.content(json)).andExpect(status().isCreated());
-		
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json)).andExpect(status().isCreated());
+
 		mockMvc.perform(get("/users/1001")).andExpect(status().isOk());
-		
+
 		mockMvc.perform(patch("/users/1001")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{ \"name\": \"Pablo\", \"lastname\": \"Garcia\" }"))
 		.andExpect(status().isCreated());
 
-		
+
 		mockMvc.perform(get("/users/1001")).andExpect(status().isOk())
-											.andExpect(jsonPath("$.name").value("Pablo"));
-		
-	 }
+		.andExpect(jsonPath("$.name").value("Pablo"));
+
+	}
+
+
+
+	@Test
+	void updateUserFavouriteEndToEndTest() throws Exception{
+		int userId = 11;
+		int productId = 13;
+
+		mockMvc.perform(post("/favorite/" + userId + "/" + productId))
+		.andExpect(status().isCreated())
+		.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+		.andExpect(jsonPath("$.id").value(userId))
+		.andExpect(jsonPath("$.favorites[*].productId", hasItem(productId)));
+
+		mockMvc.perform(get("/users/11")).andExpect(status().isOk())
+		.andExpect(jsonPath("$.favorites[*].productId", hasItem(productId)));
+
+		mockMvc.perform(delete(favoritePath + "/product/" + productId))
+		.andExpect(status().isNoContent());
+
+
+	}
 
 }
