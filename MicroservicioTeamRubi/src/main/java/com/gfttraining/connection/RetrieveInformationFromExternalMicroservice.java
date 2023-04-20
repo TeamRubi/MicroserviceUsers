@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class RetrieveInformationFromExternalMicroservice {
 
-	private final int MAX_RETRIES = 3;
+	final int MAX_RETRIES = 3;
 
 	public <T> T getExternalInformation(String path, ParameterizedTypeReference<T> responseType) {
 		RestTemplate restTemplate = new RestTemplate();
