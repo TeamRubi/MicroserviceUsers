@@ -331,7 +331,7 @@ class UserServiceTest_IT {
 	@Test
 	public void shouldRetryThreeTimesAndSucceedOnThirdAttempt() {
 
-		RetrieveInformationFromExternalMicroservice  retrieveInformationFromExternalMicroservice = new RetrieveInformationFromExternalMicroservice();
+		RetrieveInformationFromExternalMicroservice  retrieveInformationFromExternalMicroservice = new RetrieveInformationFromExternalMicroservice(restTemplate);
 
 		stubFor(get(urlEqualTo("/external-service"))
 				.inScenario("Connection retries")
