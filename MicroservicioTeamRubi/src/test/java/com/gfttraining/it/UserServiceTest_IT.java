@@ -354,11 +354,6 @@ class UserServiceTest_IT {
 
 		assertThat(result).isEqualTo("{\"result\":\"success\"}");
 	}
-
-
-	@Test
-	void deleteUserEndToEndTest() throws Exception{
-
 	 
 	 @Test
 	  void deleteUserEndToEndTest() throws Exception{
