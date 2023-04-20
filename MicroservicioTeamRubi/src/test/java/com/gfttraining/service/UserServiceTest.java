@@ -8,11 +8,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -30,7 +32,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,10 +44,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.config.FeatureFlag;
-import com.gfttraining.connection.RetrieveInfoFromExternalMicroservice;
 import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.dto.UserEntityDTO;
 import com.gfttraining.entity.CartEntity;
@@ -558,31 +557,22 @@ class UserServiceTest {
 
 	}
 
-	@Test
-	void importUsersByFile() throws Exception{
+    @Test
+    public void testSaveAllImportedUsers() throws Exception {
+        List<UserEntity> users = Arrays.asList(userModel, userModel);
+        byte[] content = new ObjectMapper().writeValueAsBytes(users);
+        MockMultipartFile file = new MockMultipartFile("users.json", content);
 
-		MultipartFile file = Mockito.mock(MultipartFile.class);
+        doNothing().when(userRepository).deleteAll();
+        when(userRepository.saveAll(anyList())).thenReturn(users);
 
-		ObjectMapper objmapper = Mockito.mock(ObjectMapper.class);
+        ResponseEntity<Void> response = userService.saveAllImportedUsers(file);
 
-		doNothing().when(userRepository).deleteAll();
+        verify(userRepository, times(1)).deleteAll();
+        verify(userRepository, times(1)).saveAll(eq(users));
 
-
-		byte[] content = "[{\"email\": \"user@gmail.com\", \"name\": \"pedro\", \"lastname\": \"soler\", \"address\": \"monzon\", \"paymentmethod\": \"VISA\"}, {\"email\": \"user@gmail.com\", \"name\": \"pedro\", \"lastname\": \"soler\", \"address\": \"monzon\", \"paymentmethod\": \"VISA\"}]".getBytes();
-		when(file.getBytes()).thenReturn(content);
-
-		List<UserEntity> userList = Collections.emptyList();
-
-		when(userRepository.saveAll(any())).thenReturn(userList);
-
-		when(objmapper.readValue(content, new TypeReference<List<UserEntity>>(){})).thenReturn(userList);
-
-		ResponseEntity<Void> response = userService.saveAllImportedUsers(file);
-
-		verify(userRepository, Mockito.times(1)).deleteAll();
-		assertEquals(HttpStatus.CREATED, response.getStatusCode());
-
-	}
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+    }
 
 	@Test
 	public void testSaveAllImportedUsersWithError() throws IOException {
