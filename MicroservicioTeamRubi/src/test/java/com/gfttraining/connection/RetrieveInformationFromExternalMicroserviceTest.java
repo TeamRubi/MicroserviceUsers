@@ -13,7 +13,9 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(MockitoExtension.class)
 class RetrieveInformationFromExternalMicroserviceTest {
@@ -27,25 +29,20 @@ class RetrieveInformationFromExternalMicroserviceTest {
 
 	@Test
 	public void testGetExternalInformation_Fail() {
+	    String path = "http://localhost:8082/inventedMicroservice/users/12";
+	    String expectedErrorMessage = "Failed to retrieve external information";
 
-		String path = "http://localhost:8082/notWorkingEndpoint";
-		String expectedResponse = "No response";
+	    when(restTemplate.exchange(path, HttpMethod.GET, null, 
+	        new ParameterizedTypeReference<String>() {}))
+        .thenThrow(new ResourceAccessException(expectedErrorMessage));
 
-		ResponseEntity<String> responseEntity = new ResponseEntity<>(expectedResponse, HttpStatus.NOT_FOUND);
-
-		when(restTemplate.exchange(path, HttpMethod.GET, null, 
-			new ParameterizedTypeReference<String>() {}))
-			.thenReturn(responseEntity);
-
-		ResponseEntity<String> actualResponse = retrieveInformation.getExternalInformation(path, 
-			new ParameterizedTypeReference<ResponseEntity<String>>() {});
-
-		Assertions.assertEquals(404, actualResponse.getStatusCode());
-		
+	    Assertions.assertThrows(ResponseStatusException.class, () -> {
+	        retrieveInformation.getExternalInformation(path, new ParameterizedTypeReference<String>() {});
+	    });
 	}
-	
+
 	@Test
-	public void testGetExternalInformation_Success() {
+	public void testGetExternalInformation_Success() throws InterruptedException {
 
 		String path = "http://localhost:8082/cart/users/12";
 		String expectedResponse = "Response";
@@ -62,6 +59,5 @@ class RetrieveInformationFromExternalMicroserviceTest {
 		Assertions.assertEquals(expectedResponse, actualResponse);
 		
 	}
-
 }
 

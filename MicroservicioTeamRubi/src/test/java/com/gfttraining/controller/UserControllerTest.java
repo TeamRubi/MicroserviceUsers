@@ -220,7 +220,7 @@ class UserControllerTest {
 
 
 	@Test
-	void getUserById () {
+	void getUserById () throws InterruptedException {
 
 		userModel.setId(1);
 
@@ -235,7 +235,7 @@ class UserControllerTest {
 	}
 
 	@Test
-	void getUserByIdWithExtraInfo () {
+	void getUserByIdWithExtraInfo () throws InterruptedException {
 
 		userModelDTO.setId(1);
 

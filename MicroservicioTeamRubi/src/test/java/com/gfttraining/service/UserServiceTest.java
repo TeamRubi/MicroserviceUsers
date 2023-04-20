@@ -438,7 +438,7 @@ class UserServiceTest {
 
 
 	@Test
-	void getAvgSpent_test() {
+	void getAvgSpent_test() throws InterruptedException {
 
 		List<CartEntity> carts = new ArrayList<>();
 		List<ProductEntity> products = new ArrayList<>();

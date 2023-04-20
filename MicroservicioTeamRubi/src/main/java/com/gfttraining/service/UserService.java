@@ -145,7 +145,7 @@ public class UserService {
 
 	}
 
-	public UserEntityDTO getUserWithAvgSpentAndFidelityPoints(int id){
+	public UserEntityDTO getUserWithAvgSpentAndFidelityPoints(int id) throws InterruptedException{
 
 		List<CartEntity> carts = retrieveInfo.getExternalInformation("http://localhost:8082/carts/user/" + id,
 				new ParameterizedTypeReference<List<CartEntity>>() {});

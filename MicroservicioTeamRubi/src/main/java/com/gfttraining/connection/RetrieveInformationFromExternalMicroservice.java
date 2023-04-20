@@ -23,7 +23,7 @@ public class RetrieveInformationFromExternalMicroservice {
 		this.restTemplate = restTemplate;
 	}
 
-	public <T> T getExternalInformation(String path, ParameterizedTypeReference<T> responseType) {
+	public <T> T getExternalInformation(String path, ParameterizedTypeReference<T> responseType) throws InterruptedException {
 		
 	    int retryCount = 0;
 	    while (true) {
@@ -38,11 +38,7 @@ public class RetrieveInformationFromExternalMicroservice {
 	                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Couldn't connect with the microservice");
 	            }
 	            log.error("Couldn't connect with the microservice. Retrying in 10 second...");
-	            try {
-	                Thread.sleep(10000);
-	            } catch (InterruptedException e1) {
-	                e1.printStackTrace();
-	            }
+	            Thread.sleep(10000);
 	        }
 	    }
 	}

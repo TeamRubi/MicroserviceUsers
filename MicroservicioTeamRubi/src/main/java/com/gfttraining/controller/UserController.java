@@ -86,7 +86,7 @@ public class UserController {
 	}
 
 	@GetMapping("/users/{id}")
-	public Object getUserById(@PathVariable int id) {
+	public Object getUserById(@PathVariable int id) throws InterruptedException {
 		if(featureFlag.isEnableUserExtraInfo()) {
 			return userService.getUserWithAvgSpentAndFidelityPoints(id);
 		}
@@ -125,7 +125,7 @@ public class UserController {
 	}
 
 
-	private boolean productExists(int productId) {
+	private boolean productExists(int productId) throws InterruptedException {
 		try {
 			retrieveInfo.getExternalInformation("http://localhost:8081/products/id/" + productId, new ParameterizedTypeReference<String>() {});
 			return true;
