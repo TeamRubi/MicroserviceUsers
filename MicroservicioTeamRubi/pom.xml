@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.gfttraining</groupId>
-	<artifactId>JPA_ADRI_TEST</artifactId>
+	<artifactId>TeamRubi</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>JPA_ADRI_TEST</name>
+	<name>MicroservicioUsuarios</name>
 	<description>Demo project for Spring Boot</description>
 	<properties>
 		<java.version>11</java.version>
@@ -101,7 +101,6 @@
 		    <groupId>org.springframework</groupId>
 		    <artifactId>spring-web</artifactId>
 		</dependency>
-
 
 	    <dependency>
 	    	<groupId>org.springframework.boot</groupId>

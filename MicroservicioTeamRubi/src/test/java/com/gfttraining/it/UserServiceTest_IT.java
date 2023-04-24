@@ -49,8 +49,8 @@ import com.gfttraining.repository.UserRepository;
 import com.gfttraining.service.UserService;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
+import com.github.tomakehurst.wiremock.client.WireMock;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -256,13 +256,13 @@ class UserServiceTest_IT {
 	@Test
 	public void getUserPointsAndAvg_IT() throws IOException, InterruptedException {
 
-		stubFor(get(urlPathEqualTo(userCartsPath + "/" + 12)).willReturn(aResponse().withStatus(200)
+		stubFor(WireMock.get(urlPathEqualTo(userCartsPath + "/" + 12)).willReturn(aResponse().withStatus(200)
 				.withHeader("Content-Type", "application/json").withBody("{\"points\":100, \"averageSpent\":1260.0}")));
 
 		HttpClient httpClient = HttpClient.newHttpClient();
 
 		HttpRequest request = HttpRequest.newBuilder()
-				.uri(URI.create("http://localhost:" + wireMockServer.port() + userCartsPath + 12)).GET().build();
+				.uri(URI.create("http://localhost:" + wireMockServer.port() + userCartsPath + "/" + 12)).GET().build();
 		HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
 		assertThat(200).isEqualTo(response.statusCode());
@@ -272,7 +272,7 @@ class UserServiceTest_IT {
 	@Test
 	public void getUserPointsAndAvgNotFound_IT() throws IOException, InterruptedException {
 
-		stubFor(get(urlPathEqualTo("/carts/user/" + 12)).willReturn(aResponse().withStatus(404)
+		stubFor(WireMock.get(urlPathEqualTo("/carts/user/" + 12)).willReturn(aResponse().withStatus(404)
 				.withHeader("Content-Type", "application/json").withBody("\"User not found")));
 
 		HttpClient httpClient = HttpClient.newHttpClient();
@@ -291,15 +291,15 @@ class UserServiceTest_IT {
 		RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice = new RetrieveInformationFromExternalMicroservice(
 				restTemplate);
 
-		stubFor(get(urlEqualTo("/external-service")).inScenario("Connection retries")
+		stubFor(WireMock.get(urlEqualTo("/external-service")).inScenario("Connection retries")
 				.whenScenarioStateIs(Scenario.STARTED).willReturn(aResponse().withStatus(500))
 				.willSetStateTo("Connection failed 1"));
 
-		stubFor(get(urlEqualTo("/external-service")).inScenario("Connection retries")
+		stubFor(WireMock.get(urlEqualTo("/external-service")).inScenario("Connection retries")
 				.whenScenarioStateIs("Connection failed 1").willReturn(aResponse().withStatus(500))
 				.willSetStateTo("Connection failed 2"));
 
-		stubFor(get(urlEqualTo("/external-service")).inScenario("Connection retries")
+		stubFor(WireMock.get(urlEqualTo("/external-service")).inScenario("Connection retries")
 				.whenScenarioStateIs("Connection failed 2")
 				.willReturn(aResponse().withStatus(200).withBody("{\"result\":\"success\"}")));
 
@@ -318,6 +318,7 @@ class UserServiceTest_IT {
 
 	@Test
 	void deleteUserEndToEndTest() throws Exception {
+		//parametrized test
 
 		ObjectMapper objectMapper = new ObjectMapper();
 		String json = objectMapper.writeValueAsString(userModel);
