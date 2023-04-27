@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -70,7 +71,9 @@ class UserControllerTest {
 		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
 		userModelDTO = new UserEntityDTO(12, "pepe@pepe.com", "Pedro", "Chapo", "calle falsa", "SPAIN", "TRANSFER", BigDecimal.valueOf(0), 0, null);
 	}
-
+	
+	
+	@DisplayName("Return all of Users in database")
 	@Test
 	void getAllUsers_test() throws Exception {
 
@@ -81,7 +84,8 @@ class UserControllerTest {
 		assertThat(existingUsers).containsAll(users);
 
 	}
-
+	
+	@DisplayName("Delete all of Users in database")
 	@Test
 	void deleteAllUsers_test() throws Exception {
 
@@ -90,7 +94,8 @@ class UserControllerTest {
 		Mockito.verify(userService, Mockito.times(1)).deleteAllUsers();
 
 	}
-
+	
+	@DisplayName("Given a file,then import all of Users in file to the database")
 	@Test
 	void importUsersByFile() throws Exception{
 
@@ -110,7 +115,8 @@ class UserControllerTest {
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
 	}
-
+	
+	@DisplayName("Given a file,then import all of Users in file to the database but in the save method throw a exception")
 	public void testSaveAllImportedUsersWithError() throws IOException {
 
 		MultipartFile file = new MockMultipartFile("file", new byte[0]);
@@ -124,6 +130,7 @@ class UserControllerTest {
 		verifyNoMoreInteractions(userService);
 	}
 
+	@DisplayName("Given a fields,then a user is created and saved into the database")
 	@Test
 	void createUser_test() {
 
@@ -134,7 +141,7 @@ class UserControllerTest {
 		assertThat(HttpStatus.CREATED).isEqualTo(response.getStatusCode());
 	}
 
-
+	@DisplayName("Given a fields,then a user is updated and saved into the database")
 	@Test
 	void updateUserById_test() {
 
@@ -146,7 +153,8 @@ class UserControllerTest {
 		assertThat(response.getBody()).isEqualTo(userModel);
 
 	}
-
+	
+	@DisplayName("Given a email,then find a user in database, that matches with the email")
 	@Test
 	void getUserByEmail_test() {
 
@@ -160,7 +168,9 @@ class UserControllerTest {
 		assertThat(response.getBody()).isEqualTo(userModel);
 
 	}
-
+	
+	
+	@DisplayName("Given a product,then the product is added into a user to show their favorite product")
 	@Test
 	void addFavoriteProduct_test() throws Exception {
 
@@ -180,7 +190,8 @@ class UserControllerTest {
 		assertThat(response.getBody()).isEqualTo(userModel);
 
 	}
-
+	
+	@DisplayName("Given a not existing product,then the product is added into a user but throw an exception")
 	@Test
 	void addFavoriteProductWithNotExistingProduct_test() throws Exception {
 
@@ -193,7 +204,9 @@ class UserControllerTest {
 		.hasMessageContaining("product with id " + productId + " not found");
 
 	}
-
+	
+	
+	@DisplayName("Given a product,then the favorite producte from user is deleted")
 	@Test
 	void deleteFavoriteProduct_test() throws Exception {
 
@@ -205,7 +218,9 @@ class UserControllerTest {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
 	}
+	
 
+	@DisplayName("Given a list of Users,then the favorite product is deleted from all Users in database")
 	@Test
 	void deleteFavoriteProductFromAllUsers_test() throws Exception {
 
@@ -218,7 +233,9 @@ class UserControllerTest {
 
 	}
 
-
+	
+	
+	@DisplayName("Given an id,then find a user in database, that matches with the id")
 	@Test
 	void getUserById () throws InterruptedException {
 
@@ -233,7 +250,8 @@ class UserControllerTest {
 		assertThat(user.getId()).isEqualTo(1);
 
 	}
-
+	
+	@DisplayName("Given an id,then find a user in database and connect to the other microservice to return more information, that matches with the id")
 	@Test
 	void getUserByIdWithExtraInfo () throws InterruptedException {
 
@@ -250,7 +268,7 @@ class UserControllerTest {
 	}
 
 
-
+	@DisplayName("Given a name,then find a user in database, that matches with the name")
 	@Test
 	void getUserByName_test() {
 
@@ -266,7 +284,9 @@ class UserControllerTest {
 		verify(userService, atLeastOnce()).findAllByName(name);
 
 	}
-
+	
+	
+	@DisplayName("Given a id,then find a user in database, that matches with the id and delete this user")
 	@Test
 	void deleteUserById_test() {
 
