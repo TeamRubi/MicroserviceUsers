@@ -126,6 +126,7 @@ class UserServiceTest {
 
 	}
 
+	@DisplayName("GIVEN an id, WHEN the endpoint is called, THEN returns a UserntityDTO")
 	@Test
 	void getUserById_test() {
 
@@ -143,6 +144,7 @@ class UserServiceTest {
 
 	}
 
+	@DisplayName("GIVEN a non existing id, WHEN the endpoint is called, THEN throws an exception")
 	@Test
 	void getUserByIdNotFound_test(){
 
@@ -154,6 +156,7 @@ class UserServiceTest {
 
 	}
 
+	@DisplayName("GIVEN a name, WHEN the endpoint is called, THEN returns a list of UserEntity")
 	@Test
 	void getAllUsersByName_test(){
 
@@ -174,6 +177,7 @@ class UserServiceTest {
 
 	}
 
+	@DisplayName("GIVEN a non existing name, WHEN the endpoint is called, THEN throws an exception")
 	@Test
 	void getAllUsersByNameNotFound_test(){
 
@@ -188,6 +192,7 @@ class UserServiceTest {
 
 	}
 
+	@DisplayName("GIVEN no information, WHEN the endpoint is called, THEN returns a list of all users")
 	@Test
 	void getAllUsers() {
 		List<UserEntity> expectedUsers = new ArrayList<>();
@@ -201,6 +206,7 @@ class UserServiceTest {
 		assertEquals(expectedUsers, actualUsers);
 	}
 
+	@DisplayName("GIVEN a list of Users, WHEN the endpoint is called, THEN saves all users to DB")
 	@Test
 	void testSaveAllUsers() {
 
@@ -214,6 +220,7 @@ class UserServiceTest {
 
 	}
 
+	@DisplayName("GIVEN no information, WHEN the endpoint is called, THEN deletes all users on DB")
 	@Test
 	void testDeleteAllUsers() {
 
@@ -223,7 +230,7 @@ class UserServiceTest {
 
 	}
 
-
+	@DisplayName("GIVEN an id, WHEN the endpoint is called, THEN deletes the user with that id to DB")
 	@Test
 	void deleteUserById_test() {
 
@@ -232,6 +239,7 @@ class UserServiceTest {
 		verify(userRepository, times(1)).deleteById(1);
 	}
 
+	@DisplayName("GIVEN a non existing id, WHEN the endpoint is called, THEN throws an exception")
 	@Test
 	void deleteUserByIdNotFound_test() {
 
@@ -244,6 +252,7 @@ class UserServiceTest {
 
 	}
 
+	@DisplayName("GIVEN a UserEntity, WHEN the endpoint is called, THEN adds a user to DB")
 	@Test
 	void createUser_test() {
 		when(userRepository.save(userModel)).thenReturn(userModel);
@@ -251,6 +260,7 @@ class UserServiceTest {
 		assertThat(userModel).isEqualTo(createduser);
 	}
 
+	@DisplayName("GIVEN a UserEntity and id, WHEN the endpoint is called, THEN updates the user with that id to DB")
 	@Test
 	void updateUserById_test() {
 
@@ -273,6 +283,7 @@ class UserServiceTest {
 
 	}
 
+	@DisplayName("GIVEN a non existing id, WHEN the endpoint is called, THEN throws an exception")
 	@Test
 	void updateUserByIdNoValidId_test() {
 
@@ -282,7 +293,7 @@ class UserServiceTest {
 		.isInstanceOf(ResponseStatusException.class).hasMessageContaining("User not found");
 	}
 
-
+	@DisplayName("GIVEN an existing email, WHEN the endpoint is called, THEN throws an exception")
 	@Test
 	void createUserWithEmailThatAlreadyExists_test() {
 
@@ -293,6 +304,7 @@ class UserServiceTest {
 
 	}
 
+	@DisplayName("GIVEN an existing email, WHEN the endpoint is called, THEN throws an exception")
 	@Test
 	void updateUserByIdWithEmailThatAlreadyExists_test() {
 
@@ -307,8 +319,8 @@ class UserServiceTest {
 
 	}
 
+	@DisplayName("GIVEN an email, WHEN the endpoint is called, THEN returns a UserEntity")
 	@Test
-	@DisplayName("Given a user email, Then returns a user, When the emails match")
 	void getUserByEmailBasic_test() {
 
 		userService.createUser(userModel);
@@ -320,7 +332,7 @@ class UserServiceTest {
 	}
 
 	@Test
-	@DisplayName("Given a user email, Then throws exception, When the emails are repeated")
+	@DisplayName("GIVEN a non existing email, WHEN the emails are repeated, THEN throws exception")
 	void getUserByEmailWithEmailNotFound_test() {
 
 		when(userRepository.findByEmail(emailModel)).thenReturn(null);
@@ -331,6 +343,7 @@ class UserServiceTest {
 
 	}
 
+	@DisplayName("GIVEN a user id, WHEN the endpoint is called, THEN returns a UserEntityDTO with fidelityPoints")
 	@Test
 	void getUserPoints_test() throws Exception{
 
@@ -349,6 +362,7 @@ class UserServiceTest {
 		assertThat(0).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getPoints());
 	}
 
+	@DisplayName("GIVEN a user id, WHEN the endpoint is called, THEN returns a UserEntityDTO with  0 avgSpent")
 	@Test
 	void getAvgSpentIs0_test() {
 
@@ -365,6 +379,7 @@ class UserServiceTest {
 
 	}
 
+	@DisplayName("GIVEN a user id, WHEN the endpoint is called, THEN returns a UserEntityDTO with 1 fidelityPoints")
 	@Test
 	void getPoints_is_1_test(){
 
@@ -381,6 +396,7 @@ class UserServiceTest {
 		assertThat(1).isEqualTo(result);
 	}
 
+	@DisplayName("GIVEN a user id, WHEN the endpoint is called, THEN returns a UserEntityDTO with 3 fidelityPoints")
 	@Test
 	void getPoints_is_3_test(){
 
@@ -397,7 +413,7 @@ class UserServiceTest {
 		assertThat(3).isEqualTo(result);
 	}
 
-
+	@DisplayName("GIVEN a user id, WHEN the endpoint is called, THEN returns a UserEntityDTO with 5 fidelityPoints")
 	@Test
 	void getPoints_is_5_test(){
 
@@ -414,9 +430,7 @@ class UserServiceTest {
 		assertThat(5).isEqualTo(result);
 	}
 
-
-
-
+	@DisplayName("GIVEN a user id, WHEN the endpoint is called, THEN returns a UserEntityDTO with 10 fidelityPoints")
 	@Test
 	void getPoints_is_10_test(){
 
@@ -436,7 +450,7 @@ class UserServiceTest {
 	}
 
 
-
+	@DisplayName("GIVEN a user id, WHEN the endpoint is called, THEN returns a UserEntityDTO with avgSpent")
 	@Test
 	void getAvgSpent_test() throws InterruptedException {
 
@@ -457,6 +471,7 @@ class UserServiceTest {
 
 	}
 
+	@DisplayName("GIVEN a user id and product id, WHEN the endpoint is called, THEN adds to the user the favorite product")
 	@Test
 	void addFavoriteProduct_test() {
 
@@ -478,6 +493,7 @@ class UserServiceTest {
 
 	}
 
+	@DisplayName("GIVEN a non existing user id and existing product id, WHEN the endpoint is called, THEN throws an exception")
 	@Test
 	void addFavoriteProductWithNotExistingUser_test() {
 
@@ -489,7 +505,7 @@ class UserServiceTest {
 		.hasMessageContaining("User with id " + userId + " not found");
 	}
 
-
+	@DisplayName("GIVEN a user id and an existing favorite product id, WHEN the endpoint is called, THEN throws an exception")
 	@Test
 	void addFavoriteProductWithExistingFavorite_test() {
 
@@ -506,6 +522,7 @@ class UserServiceTest {
 
 	}
 
+	@DisplayName("GIVEN a user id and product id, WHEN the endpoint is called, THEN deletes to the user the favorite product id")
 	@Test
 	void deleteFavoriteProduct_test() {
 
@@ -517,6 +534,7 @@ class UserServiceTest {
 		verify(favoriteRepository, atLeastOnce()).deleteByUserIdAndProductId(1, 5);
 	}
 
+	@DisplayName("GIVEN a user id and non existing product id, WHEN the endpoint is called, THEN throws an exception")
 	@Test
 	void deleteFavoriteProductWithNotExistingFavorite_test() {
 
@@ -530,7 +548,7 @@ class UserServiceTest {
 		.hasMessageContaining("User with id " + userId + " does not have product with id " + productId + " as favorite");
 	}
 
-
+	@DisplayName("GIVEN a product id, WHEN the endpoint is called, THEN deletes to every user that favorite product id")
 	@Test
 	void deleteFavoriteProductFromAllUsers_test() {
 
@@ -544,6 +562,7 @@ class UserServiceTest {
 		verify(favoriteRepository, atLeastOnce()).deleteByProductId(productId);
 	}
 
+	@DisplayName("GIVEN a non existing product id, WHEN the endpoint is called, THEN throws an exception")
 	@Test
 	void deleteFavoriteProductFromAllUsersWithNoProductInFavorites_test() {
 
@@ -557,6 +576,7 @@ class UserServiceTest {
 
 	}
 
+	@DisplayName("GIVEN a file of userEntities, WHEN the endpoint is called, THEN saves all users to DB")
     @Test
     public void testSaveAllImportedUsers() throws Exception {
         List<UserEntity> users = Arrays.asList(userModel, userModel);
@@ -574,6 +594,7 @@ class UserServiceTest {
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
     }
 
+	@DisplayName("GIVEN a file with wrong userEntities, WHEN the endpoint is called, THEN throws an exception")
 	@Test
 	public void testSaveAllImportedUsersWithError() throws IOException {
 
