@@ -73,7 +73,7 @@ class UserControllerTest {
 	}
 	
 	
-	@DisplayName("Return all of Users in database")
+	@DisplayName("GIVEN no information,WHEN the endpoint is called,THEN return a List of Users")
 	@Test
 	void getAllUsers_test() throws Exception {
 
@@ -85,7 +85,7 @@ class UserControllerTest {
 
 	}
 	
-	@DisplayName("Delete all of Users in database")
+	@DisplayName("GIVEN no information,WHEN the endpoint is called,THEN delete a List of Users")
 	@Test
 	void deleteAllUsers_test() throws Exception {
 
@@ -95,7 +95,7 @@ class UserControllerTest {
 
 	}
 	
-	@DisplayName("Given a file,then import all of Users in file to the database")
+	@DisplayName("GIVEN a file,WHEN import all of Users, THEN save this users into the database")
 	@Test
 	void importUsersByFile() throws Exception{
 
@@ -116,7 +116,9 @@ class UserControllerTest {
 
 	}
 	
-	@DisplayName("Given a file,then import all of Users in file to the database but in the save method throw a exception")
+	
+	@DisplayName("GIVEN a file,WHEN import all of Users, THEN throw an exception")
+	@Test
 	public void testSaveAllImportedUsersWithError() throws IOException {
 
 		MultipartFile file = new MockMultipartFile("file", new byte[0]);
@@ -130,7 +132,8 @@ class UserControllerTest {
 		verifyNoMoreInteractions(userService);
 	}
 
-	@DisplayName("Given a fields,then a user is created and saved into the database")
+	
+	@DisplayName("GIVEN a fields,WHEN user is create , THEN save this user into the database")
 	@Test
 	void createUser_test() {
 
@@ -141,7 +144,7 @@ class UserControllerTest {
 		assertThat(HttpStatus.CREATED).isEqualTo(response.getStatusCode());
 	}
 
-	@DisplayName("Given a fields,then a user is updated and saved into the database")
+	@DisplayName("GIVEN a fields,WHEN user is update , THEN modify and save this user modifications into the database")
 	@Test
 	void updateUserById_test() {
 
@@ -154,7 +157,7 @@ class UserControllerTest {
 
 	}
 	
-	@DisplayName("Given a email,then find a user in database, that matches with the email")
+	@DisplayName("GIVEN and email, WHEN the endpoint is called, THEN returns a UserModel to show a User that matches with the email")
 	@Test
 	void getUserByEmail_test() {
 
@@ -169,8 +172,7 @@ class UserControllerTest {
 
 	}
 	
-	
-	@DisplayName("Given a product,then the product is added into a user to show their favorite product")
+	@DisplayName("GIVEN and product, WHEN the endpoint is called, THEN the product is added into a user to show their favorite product")
 	@Test
 	void addFavoriteProduct_test() throws Exception {
 
@@ -191,7 +193,7 @@ class UserControllerTest {
 
 	}
 	
-	@DisplayName("Given a not existing product,then the product is added into a user but throw an exception")
+	@DisplayName("GIVEN a product, WHEN the endpoint is called, THEN throw an exception")
 	@Test
 	void addFavoriteProductWithNotExistingProduct_test() throws Exception {
 
@@ -205,8 +207,7 @@ class UserControllerTest {
 
 	}
 	
-	
-	@DisplayName("Given a product,then the favorite producte from user is deleted")
+	@DisplayName("GIVEN a product, WHEN the endpoint is called, THEN the favorite producte from user is deleted")
 	@Test
 	void deleteFavoriteProduct_test() throws Exception {
 
@@ -219,8 +220,7 @@ class UserControllerTest {
 
 	}
 	
-
-	@DisplayName("Given a list of Users,then the favorite product is deleted from all Users in database")
+	@DisplayName("GIVEN a list of Users, WHEN the endpoint is called, THEN the favorite producte from all of users is deleted")
 	@Test
 	void deleteFavoriteProductFromAllUsers_test() throws Exception {
 
@@ -235,7 +235,7 @@ class UserControllerTest {
 
 	
 	
-	@DisplayName("Given an id,then find a user in database, that matches with the id")
+	@DisplayName("GIVEN and id, WHEN the endpoint is called, THEN returns a UserModel to show a User that matches with the id")
 	@Test
 	void getUserById () throws InterruptedException {
 
@@ -251,7 +251,7 @@ class UserControllerTest {
 
 	}
 	
-	@DisplayName("Given an id,then find a user in database and connect to the other microservice to return more information, that matches with the id")
+	@DisplayName("GIVEN and id, WHEN the endpoint is called and connect to the other microservice to return more information, THEN returns a UserModelDTO to show a User that matches with the id")
 	@Test
 	void getUserByIdWithExtraInfo () throws InterruptedException {
 
@@ -268,7 +268,7 @@ class UserControllerTest {
 	}
 
 
-	@DisplayName("Given a name,then find a user in database, that matches with the name")
+	@DisplayName("GIVEN a name, WHEN the endpoint is called, THEN returns a UserModel to show a User that matches with the name")
 	@Test
 	void getUserByName_test() {
 
@@ -286,7 +286,7 @@ class UserControllerTest {
 	}
 	
 	
-	@DisplayName("Given a id,then find a user in database, that matches with the id and delete this user")
+	@DisplayName("GIVEN an id, WHEN the endpoint is called, THEN delete a User that matches with the id")
 	@Test
 	void deleteUserById_test() {
 
