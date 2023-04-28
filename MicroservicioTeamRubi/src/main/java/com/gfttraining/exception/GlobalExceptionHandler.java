@@ -17,6 +17,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -110,6 +111,17 @@ public class GlobalExceptionHandler {
 		log.error("Trying to delete a favorite product to a user");
 
 		return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
+	}
+	
+	@ExceptionHandler(RestClientException.class)
+	public ResponseEntity<ExceptionResponse> cantConnectWithExternalMicroservice(RestClientException ex){
+		
+		ExceptionResponse res = new ExceptionResponse(LocalDate.now(), ex.getMessage());
+
+		log.error("Couldn't connect with the microservice");
+
+		return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
+		
 	}
 
 
