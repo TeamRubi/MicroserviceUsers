@@ -118,8 +118,6 @@ public class GlobalExceptionHandler {
 		
 		ExceptionResponse res = new ExceptionResponse(LocalDate.now(), ex.getMessage());
 
-		log.error("Couldn't connect with the microservice");
-
 		return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
 		
 	}

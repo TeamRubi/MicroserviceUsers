@@ -1,13 +1,10 @@
 package com.gfttraining.connection;
 
-import javax.persistence.EntityNotFoundException;
-
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -33,7 +30,7 @@ public class RetrieveInformationFromExternalMicroservice {
 			log.info("Response retrieved from " + path);
 			return response;
 		} catch (RestClientException e) {
-			log.error("Couldn't connect with the microservice.");
+			log.error("Couldn't connect with the microservice.Trying again in 1 second...");
 			throw new RestClientException("Couldn't connect with the microservice");
 		}
 	}
