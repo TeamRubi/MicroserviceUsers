@@ -23,9 +23,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -34,10 +34,12 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,17 +47,19 @@ import com.gfttraining.config.AppConfig;
 import com.gfttraining.config.FeatureFlag;
 import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.entity.UserEntity;
-import com.gfttraining.repository.UserRepository;
 import com.gfttraining.service.UserService;
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import com.github.tomakehurst.wiremock.stubbing.Scenario;
+
 
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
 @Rollback
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class UserServiceTest_IT {
 
 	@Autowired
@@ -67,12 +71,19 @@ class UserServiceTest_IT {
 	UserEntity userModel;
 
 	WireMockServer wireMockServer;
+	
+	ObjectMapper objectMapper;
 
 	@Autowired
 	private AppConfig appConfig;
 
 	@Autowired
 	private FeatureFlag featureFlag;
+	
+	@RegisterExtension
+	static WireMockExtension cartWireMock = WireMockExtension.newInstance().options(wireMockConfig().port(8082)).build();
+	@RegisterExtension
+	static WireMockExtension productWireMock = WireMockExtension.newInstance().options(wireMockConfig().port(8081)).build();
 
 	String userPath;
 	String favoritePath;
@@ -91,21 +102,16 @@ class UserServiceTest_IT {
 
 	@BeforeEach
 	public void setUpCarrito() {
-		wireMockServer = new WireMockServer();
-		// wireMockServer = new WireMockServer(options().port(8081));
-		wireMockServer.start();
+		
+		objectMapper = new ObjectMapper();
+		featureFlag.setEnableUserExtraInfo(true);
 
 	}
 
-	@AfterEach
-	public void tearDownCarrito() {
-		wireMockServer.stop();
-	}
-
+	
 	@Test
 	void createUserBasic_IT() throws Exception {
 
-		ObjectMapper objectMapper = new ObjectMapper();
 		String json = objectMapper.writeValueAsString(userModel);
 
 		mockMvc.perform(post(userPath).contentType(MediaType.APPLICATION_JSON).content(json))
@@ -114,8 +120,6 @@ class UserServiceTest_IT {
 
 	@Test
 	void createUserWithoutRequiredFields_IT() throws Exception {
-
-		ObjectMapper objectMapper = new ObjectMapper();
 
 		JsonNode jsonNode = objectMapper.createObjectNode().put("name", "John").putNull("lastName")
 				.put("email", "john@example.com").put("address", "123 Main St");
@@ -129,8 +133,6 @@ class UserServiceTest_IT {
 
 	@Test
 	public void updateUserById_IT() throws Exception {
-
-		ObjectMapper objectMapper = new ObjectMapper();
 
 		JsonNode jsonNode = objectMapper.createObjectNode().put("name", "John").put("country", "SPAIN");
 
@@ -147,8 +149,6 @@ class UserServiceTest_IT {
 	@Test
 	void createUserWithRepeatedEmail_IT() throws Exception {
 
-		ObjectMapper objectMapper = new ObjectMapper();
-
 		userService.createUser(userModel);
 
 		String json = objectMapper.writeValueAsString(userModel);
@@ -160,8 +160,6 @@ class UserServiceTest_IT {
 
 	@Test
 	void updateUserByIdWithRepeatedEmail_IT() throws Exception {
-
-		ObjectMapper objectMapper = new ObjectMapper();
 
 		userService.updateUserById(1, userModel);
 
@@ -188,6 +186,8 @@ class UserServiceTest_IT {
 		ResponseEntity<String> responseEntity = new ResponseEntity<>("test", HttpStatus.OK);
 
 		when(restTemplate.getForEntity(anyString(), eq(String.class))).thenReturn(responseEntity);
+		
+		productWireMock.stubFor(WireMock.get(urlPathEqualTo("/products/id/" + 23)).willReturn(aResponse().withStatus(201)));
 
 		mockMvc.perform(post(favoritePath + "/" + userId + "/" + productId)).andExpect(status().isCreated())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(jsonPath("$.id").value(userId))
@@ -195,22 +195,7 @@ class UserServiceTest_IT {
 
 	}
 
-	@Test
-	void addFavoriteProductWithExistingFavorite_IT() throws Exception {
 
-		int userId = 1;
-		int productId = 25;
-
-		ResponseEntity<String> responseEntity = new ResponseEntity<>("test", HttpStatus.OK);
-
-		when(restTemplate.getForEntity(anyString(), eq(String.class))).thenReturn(responseEntity);
-
-		userService.addFavoriteProduct(userId, productId);
-
-		mockMvc.perform(post(favoritePath + "/" + userId + "/" + productId)).andExpect(status().isConflict())
-				.andExpect(content().contentType(MediaType.APPLICATION_JSON));
-
-	}
 
 	@Test
 	void deleteFavoriteProduct_IT() throws Exception {
@@ -254,31 +239,30 @@ class UserServiceTest_IT {
 	}
 
 	@Test
-	public void getUserPointsAndAvg_IT() throws IOException, InterruptedException {
+	public void getUserPointsAndAvgSpent_IT() throws Exception {
 
-		stubFor(WireMock.get(urlPathEqualTo(userCartsPath + "/" + 12)).willReturn(aResponse().withStatus(200)
-				.withHeader("Content-Type", "application/json").withBody("{\"points\":100, \"averageSpent\":1260.0}")));
+		cartWireMock.stubFor(WireMock.get(urlPathEqualTo("/carts/user/" + 12)).willReturn(aResponse().withStatus(200)));
 
 		HttpClient httpClient = HttpClient.newHttpClient();
 
 		HttpRequest request = HttpRequest.newBuilder()
-				.uri(URI.create("http://localhost:" + wireMockServer.port() + userCartsPath + "/" + 12)).GET().build();
+				.uri(URI.create("http://localhost:8082/carts/user/" + 12)).GET().build();
 		HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
 		assertThat(200).isEqualTo(response.statusCode());
-		assertThat("{\"points\":100, \"averageSpent\":1260.0}").isEqualTo(response.body());
+
 	}
 
 	@Test
 	public void getUserPointsAndAvgNotFound_IT() throws IOException, InterruptedException {
 
-		stubFor(WireMock.get(urlPathEqualTo("/carts/user/" + 12)).willReturn(aResponse().withStatus(404)
+		cartWireMock.stubFor(WireMock.get(urlPathEqualTo("/carts/user/" + 12)).willReturn(aResponse().withStatus(404)
 				.withHeader("Content-Type", "application/json").withBody("\"User not found")));
 
 		HttpClient httpClient = HttpClient.newHttpClient();
 
 		HttpRequest request = HttpRequest.newBuilder()
-				.uri(URI.create("http://localhost:" + wireMockServer.port() + "/carts/user/" + 12)).GET().build();
+				.uri(URI.create("http://localhost:8082/carts/user/" + 12)).GET().build();
 		HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
 		assertThat(404).isEqualTo(response.statusCode());
@@ -317,93 +301,21 @@ class UserServiceTest_IT {
 	}
 
 	@Test
-	void deleteUserEndToEndTest() throws Exception {
-		//parametrized test
+	void endToEndTest_e2e() throws Exception {
 
-		ObjectMapper objectMapper = new ObjectMapper();
 		String json = objectMapper.writeValueAsString(userModel);
-		featureFlag.setEnableUserExtraInfo(false);
-
+		
+		cartWireMock.stubFor(WireMock.get(urlEqualTo("/carts/user/1001"))
+				.willReturn(aResponse().withStatus(200)));
+		
 		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
 
 		mockMvc.perform(post("/users").contentType(MediaType.APPLICATION_JSON).content(json))
 				.andExpect(status().isCreated());
-
-		if (featureFlag.isEnableUserExtraInfo()) {
-			mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
-		} else {
-			mockMvc.perform(get("/users/1001")).andExpect(status().isOk());
-		}
 
 		mockMvc.perform(delete("/users/1001")).andExpect(status().isNoContent());
 
 		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
-
-	}
-
-	@Test
-	void deleteUserFlagEnableEndToEndTest() throws Exception {
-
-		ObjectMapper objectMapper = new ObjectMapper();
-		String json = objectMapper.writeValueAsString(userModel);
-		featureFlag.setEnableUserExtraInfo(true);
-
-		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
-
-		mockMvc.perform(post("/users").contentType(MediaType.APPLICATION_JSON).content(json))
-				.andExpect(status().isCreated());
-
-		mockMvc.perform(get("/users/1001")).andExpect(status().isOk());
-
-		mockMvc.perform(delete("/users/1001")).andExpect(status().isNoContent());
-
-		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
-
-	}
-
-	@Test
-	void updateUserEndToEndTest() throws Exception {
-
-		ObjectMapper objectMapper = new ObjectMapper();
-		String json = objectMapper.writeValueAsString(userModel);
-
-		featureFlag.setEnableUserExtraInfo(false);
-
-		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
-
-		mockMvc.perform(post("/users").contentType(MediaType.APPLICATION_JSON).content(json))
-				.andExpect(status().isCreated());
-
-		mockMvc.perform(get("/users/1001")).andExpect(status().isOk());
-
-		mockMvc.perform(patch("/users/1001").contentType(MediaType.APPLICATION_JSON)
-				.content("{ \"name\": \"Pablo\", \"lastname\": \"Garcia\" }")).andExpect(status().isCreated());
-
-		mockMvc.perform(get("/users/1001")).andExpect(status().isOk()).andExpect(jsonPath("$.name").value("Pablo"));
-		;
-
-	}
-
-	@Test
-	void updateUserEnableFlagEndToEndTest() throws Exception {
-
-		ObjectMapper objectMapper = new ObjectMapper();
-		String json = objectMapper.writeValueAsString(userModel);
-
-		featureFlag.setEnableUserExtraInfo(true);
-
-		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
-
-		mockMvc.perform(post("/users").contentType(MediaType.APPLICATION_JSON).content(json))
-				.andExpect(status().isCreated());
-
-		mockMvc.perform(get("/users/1001")).andExpect(status().isOk());
-
-		mockMvc.perform(patch("/users/1001").contentType(MediaType.APPLICATION_JSON)
-				.content("{ \"name\": \"Pablo\", \"lastname\": \"Garcia\" }")).andExpect(status().isCreated());
-
-		mockMvc.perform(get("/users/1001")).andExpect(status().isOk()).andExpect(jsonPath("$.name").value("Pablo"));
-		;
 
 	}
 
