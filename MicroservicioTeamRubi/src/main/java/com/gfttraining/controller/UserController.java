@@ -4,9 +4,8 @@ import java.util.List;
 import javax.validation.Valid;
 
 import com.gfttraining.dto.UserEntityDTO;
-import com.gfttraining.exception.HttpRequestFailedException;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.Response;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -19,9 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.reactive.function.client.WebClientException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -33,17 +30,12 @@ import reactor.core.publisher.Mono;
 
 @Slf4j
 @RestController
+@AllArgsConstructor
 public class UserController {
 
 	private final UserService userService;
 	private final FeatureFlag featureFlag;
 	private final RetrieveInformationFromExternalMicroservice retrieveInfo;
-
-	public UserController(UserService userService, FeatureFlag featureFlag, RetrieveInformationFromExternalMicroservice retrieveInfo) {
-		this.userService = userService;
-		this.featureFlag = featureFlag;
-		this.retrieveInfo = retrieveInfo;
-	}
 
 	@GetMapping("/users")
 	public List<UserEntity> getAllUsers() {

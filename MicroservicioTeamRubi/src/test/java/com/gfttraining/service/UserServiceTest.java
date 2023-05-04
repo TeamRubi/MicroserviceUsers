@@ -63,7 +63,6 @@ import reactor.test.StepVerifier;
 class UserServiceTest {
 
 	@InjectMocks
-	@Autowired
 	private UserService userService;
 
 	@Mock
@@ -72,18 +71,17 @@ class UserServiceTest {
 	@Mock
 	private FavoriteRepository favoriteRepository;
 
-	@Autowired
 	@Mock
 	private FeatureFlag featureFlag;
 
 	@Mock
 	private RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice;
+
 	@Mock
 	private ModelMapper modelMapper;
 
 	private String emailModel;
 	private UserEntity userModel;
-	private UserEntityDTO userModelDTO;
 	private Optional<UserEntity> optionalUserModel;
 	private CartEntity cartEntity;
 	private ProductEntity product1point;
@@ -96,7 +94,7 @@ class UserServiceTest {
 		emailModel = "pedro@chapo.com";
 		userModel = new UserEntity(emailModel, "Pedro", "Chapo", "calle falsa", "SPAIN");
 		optionalUserModel = Optional.of(userModel);
-		userModelDTO = new UserEntityDTO(12, emailModel, "Pedro", "Chapo", "calle falsa", "SPAIN", "TRANSFER", BigDecimal.valueOf(0), 0, null);
+		UserEntityDTO userModelDTO = new UserEntityDTO(12, emailModel, "Pedro", "Chapo", "calle falsa", "SPAIN", "TRANSFER", BigDecimal.valueOf(0), 0, null);
 	}
 
 	@BeforeEach
@@ -149,7 +147,6 @@ class UserServiceTest {
 		when(userRepository.findById(1234)).thenReturn((Optional.empty()));
 
 		EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> userService.findUserById(1234));
-
 		assertEquals("Usuario con el id: " + 1234 + " no encontrado", exception.getMessage());
 
 	}
@@ -185,7 +182,6 @@ class UserServiceTest {
 		when(userRepository.findAllByName(name)).thenReturn((userListTest1));
 
 		EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> userService.findAllByName(name));
-
 		assertEquals("Usuario con el nombre: " + name + " no encontrado", exception.getMessage());
 
 	}
@@ -200,7 +196,6 @@ class UserServiceTest {
 		when(userRepository.findAll()).thenReturn(expectedUsers);
 
 		List<UserEntity> actualUsers = userService.findAll();
-
 		assertEquals(expectedUsers, actualUsers);
 	}
 
@@ -213,7 +208,6 @@ class UserServiceTest {
 		usersList.add(userModel);
 
 		userService.saveAllUsers(usersList);
-
 		verify(userRepository).saveAll(usersList);
 
 	}
@@ -229,9 +223,7 @@ class UserServiceTest {
 	@DisplayName("GIVEN an id, WHEN the endpoint is called, THEN deletes the user with that id to DB")
 	@Test
 	void deleteUserById_test() {
-
 		userService.deleteUserById(1);
-
 		verify(userRepository, times(1)).deleteById(1);
 	}
 
@@ -240,7 +232,6 @@ class UserServiceTest {
 	void deleteUserByIdNotFound_test() {
 
 		doThrow(EmptyResultDataAccessException.class).when(userRepository).deleteById(1234);
-
 		EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> userService.deleteUserById(1234));
 
 		assertEquals("No se ha podido eliminar el usuario con el id: " + 1234 + " de la base de datos",
@@ -275,7 +266,7 @@ class UserServiceTest {
 		verify(userRepository, times(1)).findById(1);
 		verify(userRepository, times(1)).save(userModel);
 		assertThat(updatedUser.getName()).isEqualTo(result.getName());
-		assertThat(result.getLastName()).isNotEqualTo(null);
+		assertThat(result.getLastName()).isNotNull();
 
 	}
 
@@ -285,8 +276,8 @@ class UserServiceTest {
 
 		when(userRepository.findById(anyInt())).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> userService.updateUserById(anyInt(), userModel))
-		.isInstanceOf(ResponseStatusException.class).hasMessageContaining("User not found");
+		assertThatThrownBy(() -> userService.updateUserById(1, userModel))
+				.isInstanceOf(ResponseStatusException.class).hasMessageContaining("User not found");
 	}
 
 	@DisplayName("GIVEN an existing email, WHEN the endpoint is called, THEN throws an exception")
@@ -296,7 +287,7 @@ class UserServiceTest {
 		when(userRepository.existsByEmail(emailModel)).thenReturn(true);
 
 		assertThatThrownBy(() -> userService.createUser(userModel)).isInstanceOf(DuplicateEmailException.class)
-		.hasMessageContaining("email " + userModel.getEmail() + " is already in use");
+				.hasMessageContaining("email " + userModel.getEmail() + " is already in use");
 
 	}
 
@@ -304,14 +295,12 @@ class UserServiceTest {
 	@Test
 	void updateUserByIdWithEmailThatAlreadyExists_test() {
 
-		Optional<UserEntity> newUser = Optional.of(userModel);
-
 		when(userRepository.existsByEmail(emailModel)).thenReturn(true);
-		when(userRepository.findById(1)).thenReturn(newUser);
+		when(userRepository.findById(1)).thenReturn(optionalUserModel);
 
-		assertThatThrownBy(() -> userService.updateUserById(1, newUser.get()))
-		.isInstanceOf(DuplicateEmailException.class)
-		.hasMessageContaining("email " + newUser.get().getEmail() + " is already in use");
+		assertThatThrownBy(() -> userService.updateUserById(1, userModel))
+				.isInstanceOf(DuplicateEmailException.class)
+				.hasMessageContaining("email " + userModel.getEmail() + " is already in use");
 
 	}
 
@@ -319,7 +308,6 @@ class UserServiceTest {
 	@Test
 	void getUserByEmailBasic_test() {
 
-		userService.createUser(userModel);
 		when(userRepository.findByEmail(emailModel)).thenReturn(userModel);
 
 		UserEntity foundUser = userService.findUserByEmail(emailModel);
@@ -334,8 +322,8 @@ class UserServiceTest {
 		when(userRepository.findByEmail(emailModel)).thenReturn(null);
 
 		assertThatThrownBy(() -> userService.findUserByEmail(emailModel))
-		.isInstanceOf(ResponseStatusException.class)
-		.hasMessageContaining("User with email " + emailModel + " not found");
+				.isInstanceOf(ResponseStatusException.class)
+				.hasMessageContaining("User with email " + emailModel + " not found");
 
 	}
 
@@ -350,7 +338,10 @@ class UserServiceTest {
 
 		when(retrieveInformationFromExternalMicroservice.getExternalInformation(anyString(), any())).thenReturn(Mono.just(carts));
 		when(userRepository.findById(anyInt())).thenReturn(optionalUserModel);
-		assertThat(userService.getUserWithAvgSpentAndFidelityPoints(12).block().getPoints()).isEqualTo(0);
+
+		Mono<UserEntityDTO> result = userService.getUserWithAvgSpentAndFidelityPoints(12);
+
+		StepVerifier.create(result).assertNext(user -> assertThat(user.getPoints()).isZero()).expectComplete().verify();
 	}
 
 	@DisplayName("GIVEN a user id, WHEN the endpoint is called, THEN returns a UserEntityDTO with  0 avgSpent")
@@ -364,9 +355,9 @@ class UserServiceTest {
 
 		carts.add(cartEntity);
 
-		BigDecimal result=userService.calculateAvgSpent(carts);
+		BigDecimal result= userService.calculateAvgSpent(carts);
 
-		assertThat(BigDecimal.valueOf(0)).isEqualTo(result);
+		assertThat(result).isEqualTo(BigDecimal.valueOf(0));
 
 	}
 
@@ -375,16 +366,14 @@ class UserServiceTest {
 	void getPoints_is_1_test(){
 
 		List<CartEntity> carts = new ArrayList<>();
-
-		List<ProductEntity> products = new ArrayList<>(Arrays.asList(product1point));
-
+		List<ProductEntity> products = new ArrayList<>(Collections.singletonList(product1point));
 		cartEntity.setProducts(products);
 
 		carts.add(cartEntity);
 
 		Integer result = userService.getPoints(carts);
 
-		assertThat(1).isEqualTo(result);
+		assertThat(result).isEqualTo(1);
 	}
 
 	@DisplayName("GIVEN a user id, WHEN the endpoint is called, THEN returns a UserEntityDTO with 3 fidelityPoints")
@@ -392,16 +381,13 @@ class UserServiceTest {
 	void getPoints_is_3_test(){
 
 		List<CartEntity> carts = new ArrayList<>();
-
-		List<ProductEntity> products = new ArrayList<>(Arrays.asList(product3points));
-
+		List<ProductEntity> products = new ArrayList<>(Collections.singletonList(product3points));
 		cartEntity.setProducts(products);
-
 		carts.add(cartEntity);
 
 		Integer result = userService.getPoints(carts);
 
-		assertThat(3).isEqualTo(result);
+		assertThat(result).isEqualTo(3);
 	}
 
 	@DisplayName("GIVEN a user id, WHEN the endpoint is called, THEN returns a UserEntityDTO with 5 fidelityPoints")
@@ -409,16 +395,13 @@ class UserServiceTest {
 	void getPoints_is_5_test(){
 
 		List<CartEntity> carts = new ArrayList<>();
-
-		List<ProductEntity> products = new ArrayList<>(Arrays.asList(product5points));
-
+		List<ProductEntity> products = new ArrayList<>(Collections.singletonList(product5points));
 		cartEntity.setProducts(products);
-
 		carts.add(cartEntity);
 
 		Integer result = userService.getPoints(carts);
 
-		assertThat(5).isEqualTo(result);
+		assertThat(result).isEqualTo(5);
 	}
 
 	@DisplayName("GIVEN a user id, WHEN the endpoint is called, THEN returns a UserEntityDTO with 10 fidelityPoints")
@@ -426,18 +409,14 @@ class UserServiceTest {
 	void getPoints_is_10_test(){
 
 		List<CartEntity> carts = new ArrayList<>();
-
-		List<ProductEntity> products = new ArrayList<>(Arrays.asList(product10points));
-
+		List<ProductEntity> products = new ArrayList<>(Collections.singletonList(product10points));
 		cartEntity.setProducts(products);
-
 		carts.add(cartEntity);
 
 		when(featureFlag.isEnablePromotion()).thenReturn(true);
-
 		Integer result = userService.getPoints(carts);
 
-		assertThat(20).isEqualTo(result);
+		assertThat(result).isEqualTo(20);
 	}
 
 
@@ -456,7 +435,11 @@ class UserServiceTest {
 		when(retrieveInformationFromExternalMicroservice.getExternalInformation(anyString(), any())).thenReturn(Mono.just(carts));
 		when(userRepository.findById(anyInt())).thenReturn(optionalUserModel);
 
-		assertThat(userService.getUserWithAvgSpentAndFidelityPoints(12).block().getAverageSpent()).isEqualTo(BigDecimal.valueOf(50/products.size()));
+		Mono<UserEntityDTO> result = userService.getUserWithAvgSpentAndFidelityPoints(12);
+
+		StepVerifier.create(result)
+				.assertNext(user -> assertThat(user.getAverageSpent()).isEqualTo(BigDecimal.valueOf(50/products.size())))
+				.expectComplete().verify();
 
 	}
 
@@ -471,9 +454,12 @@ class UserServiceTest {
 		when(favoriteRepository.existsByUserIdAndProductId(anyInt(), anyInt())).thenReturn(false);
 		when(favoriteRepository.save(any(FavoriteProduct.class))).thenReturn(favorite);
 
-		UserEntity user = userService.addFavoriteProduct(1, 5).toFuture().get();
+		Mono<UserEntity> result = userService.addFavoriteProduct(1, 5);
 
-		assertThat(user).isEqualTo(userModel);
+		StepVerifier.create(result)
+				.assertNext(user -> assertThat(user).isEqualTo(userModel))
+				.expectComplete().verify();
+
 		verify(favoriteRepository, atLeastOnce()).save(favorite);
 		verify(userRepository, atLeastOnce()).findById(1);
 
@@ -518,7 +504,6 @@ class UserServiceTest {
 	void deleteFavoriteProduct_test() {
 
 		when(favoriteRepository.existsByUserIdAndProductId(anyInt(), anyInt())).thenReturn(true);
-
 		userService.deleteFavoriteProduct(1, 5);
 
 		verify(favoriteRepository, atLeastOnce()).existsByUserIdAndProductId(1, 5);
@@ -535,8 +520,8 @@ class UserServiceTest {
 		when(favoriteRepository.existsByUserIdAndProductId(anyInt(), anyInt())).thenReturn(false);
 
 		assertThatThrownBy(()-> userService.deleteFavoriteProduct(userId,productId))
-		.isInstanceOf(EmptyResultDataAccessException.class)
-		.hasMessageContaining("User with id " + userId + " does not have product with id " + productId + " as favorite");
+				.isInstanceOf(EmptyResultDataAccessException.class)
+				.hasMessageContaining("User with id " + userId + " does not have product with id " + productId + " as favorite");
 	}
 
 	@DisplayName("GIVEN a product id, WHEN the endpoint is called, THEN deletes to every user that favorite product id")
@@ -546,7 +531,6 @@ class UserServiceTest {
 		int productId = 5;
 
 		when(favoriteRepository.existsByProductId(anyInt())).thenReturn(true);
-
 		userService.deleteFavoriteProductFromAllUsers(productId);
 
 		verify(favoriteRepository, atLeastOnce()).existsByProductId(productId);
@@ -558,12 +542,11 @@ class UserServiceTest {
 	void deleteFavoriteProductFromAllUsersWithNoProductInFavorites_test() {
 
 		int productId = 5;
-
 		when(favoriteRepository.existsByProductId(anyInt())).thenReturn(false);
 
 		assertThatThrownBy(()-> userService.deleteFavoriteProductFromAllUsers(productId))
-		.isInstanceOf(EmptyResultDataAccessException.class)
-		.hasMessageContaining("Product " + productId + " is not in the favorites of any user");
+				.isInstanceOf(EmptyResultDataAccessException.class)
+				.hasMessageContaining("Product " + productId + " is not in the favorites of any user");
 
 	}
 
@@ -580,7 +563,7 @@ class UserServiceTest {
         ResponseEntity<Void> response = userService.saveAllImportedUsers(file);
 
         verify(userRepository, times(1)).deleteAll();
-        verify(userRepository, times(1)).saveAll(eq(users));
+        verify(userRepository, times(1)).saveAll(users);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
     }
@@ -594,8 +577,8 @@ class UserServiceTest {
 		doThrow(new RuntimeException("There has been an error at deleting users")).when(userRepository).deleteAll();
 
 		assertThatThrownBy(()-> userService.saveAllImportedUsers(file))
-		.isInstanceOf(RuntimeException.class)
-		.hasMessageContaining("There has been an error saving users to database by file");
+				.isInstanceOf(RuntimeException.class)
+				.hasMessageContaining("There has been an error saving users to database by file");
 
 		verify(userRepository, times(1)).deleteAll();
 		verifyNoMoreInteractions(userRepository);

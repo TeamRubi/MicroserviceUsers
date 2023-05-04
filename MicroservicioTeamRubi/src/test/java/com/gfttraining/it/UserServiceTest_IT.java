@@ -82,9 +82,9 @@ class UserServiceTest_IT {
 	private FeatureFlag featureFlag;
 
 	@RegisterExtension
-	static WireMockExtension cartWireMock = WireMockExtension.newInstance().options(wireMockConfig().port(8082)).build();
+	static WireMockExtension cartWireMock = WireMockExtension.newInstance().options(wireMockConfig().port(8088)).build();
 	@RegisterExtension
-	static WireMockExtension productWireMock = WireMockExtension.newInstance().options(wireMockConfig().port(8081)).build();
+	static WireMockExtension productWireMock = WireMockExtension.newInstance().options(wireMockConfig().port(8087)).build();
 
 	String userPath;
 	String favoritePath;
@@ -255,7 +255,7 @@ class UserServiceTest_IT {
 	}
 
 	@Test
-	public void getUserPointsAndAvgSpent_IT() throws Exception {
+	void getUserPointsAndAvgSpent_IT() throws Exception {
 
 		cartWireMock.stubFor(WireMock.get(urlPathEqualTo("/carts/user/" + 12)).willReturn(aResponse().withStatus(200)));
 
@@ -270,7 +270,7 @@ class UserServiceTest_IT {
 	}
 
 	@Test
-	public void getUserPointsAndAvgNotFound_IT() throws IOException, InterruptedException {
+	 void getUserPointsAndAvgNotFound_IT() throws IOException, InterruptedException {
 
 		cartWireMock.stubFor(WireMock.get(urlPathEqualTo("/carts/user/" + 12)).willReturn(aResponse().withStatus(404)
 				.withHeader("Content-Type", "application/json").withBody("\"User not found")));

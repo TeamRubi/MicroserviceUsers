@@ -6,6 +6,7 @@ import java.util.Optional;
 import javax.persistence.EntityNotFoundException;
 import javax.transaction.Transactional;
 
+import lombok.AllArgsConstructor;
 import org.hibernate.Hibernate;
 import org.modelmapper.ModelMapper;
 import org.springframework.core.ParameterizedTypeReference;
@@ -35,6 +36,7 @@ import reactor.core.publisher.Mono;
 
 @Slf4j
 @Service
+@AllArgsConstructor
 public class UserService {
 
 	private UserRepository userRepository;
@@ -46,15 +48,6 @@ public class UserService {
 	private RetrieveInformationFromExternalMicroservice retrieveInfo;
 
 	private FeatureFlag featureFlag;
-
-	public UserService(UserRepository userRepository, FavoriteRepository favoriteRepository, ModelMapper modelMapper, 
-			RetrieveInformationFromExternalMicroservice retrieveInfo, FeatureFlag featureFlag) {
-		this.userRepository = userRepository;
-		this.favoriteRepository = favoriteRepository;
-		this.modelMapper = modelMapper;
-		this.retrieveInfo = retrieveInfo;
-		this.featureFlag = featureFlag;
-	}
 
 	public List<UserEntity> findAll(){
 		log.info("Finding all users");
@@ -174,7 +167,7 @@ public class UserService {
 				itemsBought++;
 			}
 		}
-		if (totalSpent != BigDecimal.valueOf(0)) {
+		if (!totalSpent.equals(BigDecimal.valueOf(0))) {
 			return totalSpent.divide(BigDecimal.valueOf(itemsBought));
 		}
 		return BigDecimal.valueOf(0);

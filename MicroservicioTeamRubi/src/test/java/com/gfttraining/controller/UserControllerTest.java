@@ -132,7 +132,9 @@ class UserControllerTest {
 		ResponseEntity<UserEntity> response = userController.createUser(userModel);
 
 		assertThat(userModel).isEqualTo(response.getBody());
-		assertThat(HttpStatus.CREATED).isEqualTo(response.getStatusCode());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+
 	}
 
 	@DisplayName("GIVEN a fields,WHEN user is update , THEN modify and save this user modifications into the database")
