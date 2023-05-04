@@ -9,9 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import lombok.Data;
+import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 @Data
@@ -27,6 +27,10 @@ public class AppConfig {
 	@Value("${paths.user-carts}")
 	private String userCartsPath;
 
+	@Bean
+	public WebClient webClient() {
+		return WebClient.create();
+	}
 
 	@Bean
 	public ModelMapper modelMapper() {
@@ -39,11 +43,6 @@ public class AppConfig {
 
 		return modelMapper;
 
-	}
-
-	@Bean
-	public RestTemplate restTemplate() {
-		return new RestTemplate();
 	}
 
 	private Condition<?, ?> skipEmptyLists() {

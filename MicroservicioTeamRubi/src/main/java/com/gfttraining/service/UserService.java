@@ -6,6 +6,7 @@ import java.util.Optional;
 import javax.persistence.EntityNotFoundException;
 import javax.transaction.Transactional;
 
+import org.hibernate.Hibernate;
 import org.modelmapper.ModelMapper;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -30,6 +31,7 @@ import com.gfttraining.repository.FavoriteRepository;
 import com.gfttraining.repository.UserRepository;
 
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 @Service
@@ -55,7 +57,7 @@ public class UserService {
 	}
 
 	public List<UserEntity> findAll(){
-		log.info("Findig all users");
+		log.info("Finding all users");
 		return userRepository.findAll();
 	}
 
@@ -145,19 +147,19 @@ public class UserService {
 
 	}
 
-	public UserEntityDTO getUserWithAvgSpentAndFidelityPoints(int id) throws InterruptedException{
-
-		List<CartEntity> carts = retrieveInfo.getExternalInformation("http://localhost:8082/carts/user/" + id,
-				new ParameterizedTypeReference<List<CartEntity>>() {});
-
-		UserEntityDTO userDTO = new UserEntityDTO();
-
-		modelMapper.map(findUserById(id), userDTO);
-
-		userDTO.setAverageSpent(calculateAvgSpent(carts));
-		userDTO.setPoints(getPoints(carts));
-		log.info("Returning a UserEntityDTO with fidelityPoints and avgSpent");
-		return userDTO;
+	@Transactional
+	public Mono<UserEntityDTO> getUserWithAvgSpentAndFidelityPoints(int id) {
+		return retrieveInfo.getExternalInformation("http://localhost:8082/carts/user/" + id, new ParameterizedTypeReference<List<CartEntity>>() {})
+				.flatMap(cartList -> {
+					UserEntityDTO userDTO = new UserEntityDTO();
+					UserEntity userEntity = findUserById(id);
+					Hibernate.initialize(userEntity.getFavorites());
+					modelMapper.map(userEntity, userDTO);
+					userDTO.setAverageSpent(calculateAvgSpent(cartList));
+					userDTO.setPoints(getPoints(cartList));
+					log.info("Returning a UserEntityDTO with fidelityPoints and avgSpent");
+					return Mono.just(userDTO);
+				});
 	}
 
 	public BigDecimal calculateAvgSpent(List<CartEntity> carts) {
@@ -207,22 +209,19 @@ public class UserService {
 		return points;
 	}
 
-	public UserEntity addFavoriteProduct(int userId, int productId) {
+	public Mono<UserEntity> addFavoriteProduct(int userId, int productId) {
+		return Mono.fromSupplier(() -> {
+			userRepository.findById(userId).orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User with id " + userId + " not found"));
 
-		UserEntity existingUser = userRepository.findById(userId)
-				.orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User with id " + userId + " not found"));
-
-		FavoriteProduct favorite = new FavoriteProduct(userId, productId);
-
-		if(!favoriteRepository.existsByUserIdAndProductId(userId, productId)) {
-			favoriteRepository.save(favorite);
-			log.info("Favorite product saved on database");
-		}
-		else {
-			throw new DuplicateFavoriteException("Product with id " + productId + " is already favorite for user with id " + userId);
-		}
-
-		return existingUser;
+			if(!favoriteRepository.existsByUserIdAndProductId(userId, productId)) {
+				favoriteRepository.save(new FavoriteProduct(userId, productId));
+				log.info("Favorite product " + productId + " saved on database");
+			}
+			else {
+				throw new DuplicateFavoriteException("Product with id " + productId + " is already favorite for user with id " + userId);
+			}
+			return userRepository.findById(userId).orElse(null);
+		});
 	}
 
 	@Transactional

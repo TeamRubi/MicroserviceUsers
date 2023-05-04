@@ -1,46 +1,47 @@
 package com.gfttraining.connection;
 
+import com.gfttraining.exception.HttpRequestFailedException;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClientException;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
+import org.springframework.web.reactive.function.client.WebClient;
+
+
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
+
+import java.net.ConnectException;
+import java.time.Duration;
 
 @Slf4j
 @Service
 public class RetrieveInformationFromExternalMicroservice {
 
-	final int MAX_RETRIES = 3;
-	
-	private RestTemplate restTemplate;
+	private final WebClient webClient;
 
-	public RetrieveInformationFromExternalMicroservice(RestTemplate restTemplate) {
-		this.restTemplate = restTemplate;
+	public RetrieveInformationFromExternalMicroservice(WebClient webClient) {
+		this.webClient = webClient;
 	}
 
-	public <T> T getExternalInformation(String path, ParameterizedTypeReference<T> responseType) throws InterruptedException {
-		
-	    int retryCount = 0;
-	    while (true) {
-	        try {
-	            ResponseEntity<T> responseEntity = restTemplate.exchange(path, HttpMethod.GET, null, responseType);
-	            T response = responseEntity.getBody();
-	            log.info("Response retrieved from " + path);
-	            return response;
-	        } catch (ResourceAccessException e) {
+	public <T> Mono<T> getExternalInformation(String path, ParameterizedTypeReference<T> responseType) {
 
-	            if (++retryCount == MAX_RETRIES) {
-	                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Couldn't connect with the microservice");
-	            }
-	            log.error("Couldn't connect with the microservice. Retrying in 10 second...");
-	            Thread.sleep(10000);
-	        }
-	    }
+		return webClient
+				.method(HttpMethod.GET)
+				.uri(path)
+				.retrieve()
+				.bodyToMono(responseType)
+				.retryWhen(Retry.backoff(3, Duration.ofMillis(100))
+						.doBeforeRetry( retrySignal -> log.warn("Couldn't connect with the microservice. Attempt {}. Retrying in some seconds...", retrySignal.totalRetries()+1))
+						.filter(WebClientRequestException.class::isInstance)
+						.onRetryExhaustedThrow((retryBackoffSpec, retrySignal) ->
+								new HttpRequestFailedException("Retries exhausted after " + retrySignal.totalRetries() + " attempts")));
 	}
 
 }
