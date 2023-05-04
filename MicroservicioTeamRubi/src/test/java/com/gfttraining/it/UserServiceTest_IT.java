@@ -53,7 +53,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import org.springframework.web.reactive.function.client.WebClient;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
-
+import reactor.core.publisher.Mono;
 
 
 @SpringBootTest
@@ -133,7 +133,7 @@ class UserServiceTest_IT {
 	}
 
 	@Test
-	public void updateUserById_IT() throws Exception {
+	void updateUserById_IT() throws Exception {
 
 		JsonNode jsonNode = objectMapper.createObjectNode().put("name", "John").put("country", "SPAIN");
 
@@ -186,7 +186,7 @@ class UserServiceTest_IT {
 
 		ResponseEntity<String> responseEntity = new ResponseEntity<>("test", HttpStatus.OK);
 
-		when(restTemplate.getForEntity(anyString(), eq(String.class))).thenReturn(responseEntity);
+		//when(restTemplate.getForEntity(anyString(), eq(String.class))).thenReturn(responseEntity);
 
 		productWireMock.stubFor(WireMock.get(urlPathEqualTo("/products/id/" + 23)).willReturn(aResponse().withStatus(201)));
 
@@ -204,7 +204,7 @@ class UserServiceTest_IT {
 
 		ResponseEntity<String> responseEntity = new ResponseEntity<>("test", HttpStatus.OK);
 
-		when(restTemplate.getForEntity(anyString(), eq(String.class))).thenReturn(responseEntity);
+		//when(restTemplate.getForEntity(anyString(), eq(String.class))).thenReturn(responseEntity);
 
 		userService.addFavoriteProduct(userId, productId);
 
@@ -286,7 +286,7 @@ class UserServiceTest_IT {
 	}
 
 	@Test
-	public void shouldRetryThreeTimesAndSucceedOnThirdAttempt() {
+	void shouldRetryThreeTimesAndSucceedOnThirdAttempt() {
 
 		RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice = new RetrieveInformationFromExternalMicroservice(
 				webClient);
@@ -303,16 +303,11 @@ class UserServiceTest_IT {
 				.whenScenarioStateIs("Connection failed 2")
 				.willReturn(aResponse().withStatus(200).withBody("{\"result\":\"success\"}")));
 
-		String result = "";
-		try {
-			result = retrieveInformationFromExternalMicroservice.getExternalInformation(
-					"http://localhost:" + wireMockServer.port() + "/external-service",
-					new ParameterizedTypeReference<String>() {
-					});
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 
+		Mono<String> resultMono = retrieveInformationFromExternalMicroservice.getExternalInformation(
+				"http://localhost:" + wireMockServer.port() + "/external-service",
+				new ParameterizedTypeReference<String>() {});
+		String result = resultMono.block();
 		assertThat(result).isEqualTo("{\"result\":\"success\"}");
 	}
 

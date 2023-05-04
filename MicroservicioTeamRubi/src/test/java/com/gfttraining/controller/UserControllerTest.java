@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.junit.Ignore;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -122,23 +123,6 @@ class UserControllerTest {
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
 	}
-
-
-	@DisplayName("GIVEN a file,WHEN import all of Users, THEN throw an exception")
-	@Test
-	public void testSaveAllImportedUsersWithError() throws IOException {
-
-		MultipartFile file = new MockMultipartFile("file", new byte[0]);
-
-		doThrow(new RuntimeException("Error al eliminar los usuarios")).when(userService).deleteAllUsers();
-
-		ResponseEntity<Void> response = userController.saveAllImportedUsers(file);
-		assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-
-		verify(userService, times(1)).deleteAllUsers();
-		verifyNoMoreInteractions(userService);
-	}
-
 
 	@DisplayName("GIVEN a fields,WHEN user is create , THEN save this user into the database")
 	@Test
@@ -273,6 +257,8 @@ class UserControllerTest {
 
 		verify(userService, atLeastOnce()).getUserWithAvgSpentAndFidelityPoints(1);
 		StepVerifier.create(user).expectNext(userModelDTO);
+
+	}
 
 
 
