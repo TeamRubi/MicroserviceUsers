@@ -17,10 +17,13 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
+import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,12 +32,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.gfttraining.config.FeatureFlag;
@@ -43,6 +48,8 @@ import com.gfttraining.dto.UserEntityDTO;
 import com.gfttraining.entity.FavoriteProduct;
 import com.gfttraining.entity.UserEntity;
 import com.gfttraining.service.UserService;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -71,8 +78,8 @@ class UserControllerTest {
 		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
 		userModelDTO = new UserEntityDTO(12, "pepe@pepe.com", "Pedro", "Chapo", "calle falsa", "SPAIN", "TRANSFER", BigDecimal.valueOf(0), 0, null);
 	}
-	
-	
+
+
 	@DisplayName("GIVEN no information,WHEN the endpoint is called,THEN return a List of Users")
 	@Test
 	void getAllUsers_test() throws Exception {
@@ -84,7 +91,7 @@ class UserControllerTest {
 		assertThat(existingUsers).containsAll(users);
 
 	}
-	
+
 	@DisplayName("GIVEN no information,WHEN the endpoint is called,THEN delete a List of Users")
 	@Test
 	void deleteAllUsers_test() throws Exception {
@@ -94,7 +101,7 @@ class UserControllerTest {
 		Mockito.verify(userService, Mockito.times(1)).deleteAllUsers();
 
 	}
-	
+
 	@DisplayName("GIVEN a file,WHEN import all of Users, THEN save this users into the database")
 	@Test
 	void importUsersByFile() throws Exception{
@@ -115,8 +122,8 @@ class UserControllerTest {
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
 	}
-	
-	
+
+
 	@DisplayName("GIVEN a file,WHEN import all of Users, THEN throw an exception")
 	@Test
 	public void testSaveAllImportedUsersWithError() throws IOException {
@@ -132,7 +139,7 @@ class UserControllerTest {
 		verifyNoMoreInteractions(userService);
 	}
 
-	
+
 	@DisplayName("GIVEN a fields,WHEN user is create , THEN save this user into the database")
 	@Test
 	void createUser_test() {
@@ -156,7 +163,7 @@ class UserControllerTest {
 		assertThat(response.getBody()).isEqualTo(userModel);
 
 	}
-	
+
 	@DisplayName("GIVEN and email, WHEN the endpoint is called, THEN returns a UserModel to show a User that matches with the email")
 	@Test
 	void getUserByEmail_test() {
@@ -171,7 +178,7 @@ class UserControllerTest {
 		assertThat(response.getBody()).isEqualTo(userModel);
 
 	}
-	
+
 	@DisplayName("GIVEN and product, WHEN the endpoint is called, THEN the product is added into a user to show their favorite product")
 	@Test
 	void addFavoriteProduct_test() throws Exception {
@@ -179,34 +186,36 @@ class UserControllerTest {
 		//mocking service
 		int productId = 2;
 		userModel.addFavorite(new FavoriteProduct(1,1,productId));
-
-		when(userService.addFavoriteProduct(anyInt(), anyInt())).thenReturn(userModel);
-
+		when(userService.addFavoriteProduct(anyInt(), anyInt())).thenReturn(Mono.just(userModel));
 		//mocking http request
-		when(retrieveInfo.getExternalInformation(anyString(), any())).thenReturn("example");
+		when(retrieveInfo.getExternalInformation(anyString(), any())).thenReturn(Mono.empty());
 
-		ResponseEntity<UserEntity> response = userController.addFavoriteProduct(1, productId);
+		ResponseEntity<UserEntity> response = userController.addFavoriteProduct(1, productId).toFuture().get();
 
 		verify(userService, atLeastOnce()).addFavoriteProduct(1, productId);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 		assertThat(response.getBody()).isEqualTo(userModel);
 
 	}
-	
+
 	@DisplayName("GIVEN a product, WHEN the endpoint is called, THEN throw an exception")
 	@Test
 	void addFavoriteProductWithNotExistingProduct_test() throws Exception {
 
 		int productId = 200;
+		when(retrieveInfo.getExternalInformation(anyString(), any())).thenReturn(Mono.error(WebClientResponseException
+				.create(HttpStatus.NOT_FOUND.value(), "Not found", HttpHeaders.EMPTY, null, Charset.defaultCharset())));
 
-		doThrow(HttpClientErrorException.NotFound.class).when(retrieveInfo).getExternalInformation(anyString(), any());
+		Mono<ResponseEntity<UserEntity>> result = userController.addFavoriteProduct(1,productId);
 
-		assertThatThrownBy(()-> userController.addFavoriteProduct(1, productId))
-		.isInstanceOf(ResponseStatusException.class)
-		.hasMessageContaining("product with id " + productId + " not found");
+		StepVerifier.create(result)
+				.expectErrorMatches(throwable-> throwable instanceof ResponseStatusException &&
+						((ResponseStatusException) throwable).getStatus() == HttpStatus.NOT_FOUND &&
+						Objects.requireNonNull(((ResponseStatusException) throwable).getMessage()).contains("Product with id " + productId + " not found" ))
+				.verify();
 
 	}
-	
+
 	@DisplayName("GIVEN a product, WHEN the endpoint is called, THEN the favorite producte from user is deleted")
 	@Test
 	void deleteFavoriteProduct_test() throws Exception {
@@ -219,7 +228,7 @@ class UserControllerTest {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
 	}
-	
+
 	@DisplayName("GIVEN a list of Users, WHEN the endpoint is called, THEN the favorite producte from all of users is deleted")
 	@Test
 	void deleteFavoriteProductFromAllUsers_test() throws Exception {
@@ -233,8 +242,8 @@ class UserControllerTest {
 
 	}
 
-	
-	
+
+
 	@DisplayName("GIVEN and id, WHEN the endpoint is called, THEN returns a UserModel to show a User that matches with the id")
 	@Test
 	void getUserById () throws InterruptedException {
@@ -244,28 +253,27 @@ class UserControllerTest {
 		when(featureFlag.isEnableUserExtraInfo()).thenReturn(false);
 		when(userService.findUserById(1)).thenReturn(userModel);
 
-		UserEntity user = (UserEntity) userController.getUserById(1);
+		Mono<UserEntity> user = userController.getUserById(1).map(obj -> (UserEntity) obj);
 
 		verify(userService, atLeastOnce()).findUserById(1);
-		assertThat(user.getId()).isEqualTo(1);
+		StepVerifier.create(user).expectNext(userModel);
 
 	}
-	
+
 	@DisplayName("GIVEN and id, WHEN the endpoint is called and connect to the other microservice to return more information, THEN returns a UserModelDTO to show a User that matches with the id")
 	@Test
-	void getUserByIdWithExtraInfo () throws InterruptedException {
+	void getUserByIdWithExtraInfo() throws InterruptedException {
 
 		userModelDTO.setId(1);
 
 		when(featureFlag.isEnableUserExtraInfo()).thenReturn(true);
-		when(userService.getUserWithAvgSpentAndFidelityPoints(1)).thenReturn(userModelDTO);
+		when(userService.getUserWithAvgSpentAndFidelityPoints(1)).thenReturn(Mono.just(userModelDTO));
 
-		UserEntityDTO user = (UserEntityDTO) userController.getUserById(1);
+		Mono<UserEntityDTO> user = userController.getUserById(1).map(obj -> (UserEntityDTO) obj);
 
 		verify(userService, atLeastOnce()).getUserWithAvgSpentAndFidelityPoints(1);
-		assertThat(user.getId()).isEqualTo(1);
+		StepVerifier.create(user).expectNext(userModelDTO);
 
-	}
 
 
 	@DisplayName("GIVEN a name, WHEN the endpoint is called, THEN returns a UserModel to show a User that matches with the name")
@@ -284,8 +292,8 @@ class UserControllerTest {
 		verify(userService, atLeastOnce()).findAllByName(name);
 
 	}
-	
-	
+
+
 	@DisplayName("GIVEN an id, WHEN the endpoint is called, THEN delete a User that matches with the id")
 	@Test
 	void deleteUserById_test() {

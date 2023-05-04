@@ -50,6 +50,7 @@ import com.gfttraining.entity.UserEntity;
 import com.gfttraining.service.UserService;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import org.springframework.web.reactive.function.client.WebClient;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
 
@@ -71,7 +72,7 @@ class UserServiceTest_IT {
 	UserEntity userModel;
 
 	WireMockServer wireMockServer;
-	
+
 	ObjectMapper objectMapper;
 
 	@Autowired
@@ -79,7 +80,7 @@ class UserServiceTest_IT {
 
 	@Autowired
 	private FeatureFlag featureFlag;
-	
+
 	@RegisterExtension
 	static WireMockExtension cartWireMock = WireMockExtension.newInstance().options(wireMockConfig().port(8082)).build();
 	@RegisterExtension
@@ -98,17 +99,17 @@ class UserServiceTest_IT {
 	}
 
 	@Mock
-	RestTemplate restTemplate;
+	WebClient webClient;
 
 	@BeforeEach
 	public void setUpCarrito() {
-		
+
 		objectMapper = new ObjectMapper();
 		featureFlag.setEnableUserExtraInfo(true);
 
 	}
 
-	
+
 	@Test
 	void createUserBasic_IT() throws Exception {
 
@@ -186,7 +187,7 @@ class UserServiceTest_IT {
 		ResponseEntity<String> responseEntity = new ResponseEntity<>("test", HttpStatus.OK);
 
 		when(restTemplate.getForEntity(anyString(), eq(String.class))).thenReturn(responseEntity);
-		
+
 		productWireMock.stubFor(WireMock.get(urlPathEqualTo("/products/id/" + 23)).willReturn(aResponse().withStatus(201)));
 
 		mockMvc.perform(post(favoritePath + "/" + userId + "/" + productId)).andExpect(status().isCreated())
@@ -195,7 +196,22 @@ class UserServiceTest_IT {
 
 	}
 
+	@Test
+	void addFavoriteProductWithExistingFavorite_IT() throws Exception {
 
+		int userId = 1;
+		int productId = 25;
+
+		ResponseEntity<String> responseEntity = new ResponseEntity<>("test", HttpStatus.OK);
+
+		when(restTemplate.getForEntity(anyString(), eq(String.class))).thenReturn(responseEntity);
+
+		userService.addFavoriteProduct(userId, productId);
+
+		mockMvc.perform(post(favoritePath + "/" + userId + "/" + productId)).andExpect(status().isConflict())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+	}
 
 	@Test
 	void deleteFavoriteProduct_IT() throws Exception {
@@ -273,7 +289,7 @@ class UserServiceTest_IT {
 	public void shouldRetryThreeTimesAndSucceedOnThirdAttempt() {
 
 		RetrieveInformationFromExternalMicroservice retrieveInformationFromExternalMicroservice = new RetrieveInformationFromExternalMicroservice(
-				restTemplate);
+				webClient);
 
 		stubFor(WireMock.get(urlEqualTo("/external-service")).inScenario("Connection retries")
 				.whenScenarioStateIs(Scenario.STARTED).willReturn(aResponse().withStatus(500))
@@ -304,10 +320,10 @@ class UserServiceTest_IT {
 	void endToEndTest_e2e() throws Exception {
 
 		String json = objectMapper.writeValueAsString(userModel);
-		
+
 		cartWireMock.stubFor(WireMock.get(urlEqualTo("/carts/user/1001"))
 				.willReturn(aResponse().withStatus(200)));
-		
+
 		mockMvc.perform(get("/users/1001")).andExpect(status().isNotFound());
 
 		mockMvc.perform(post("/users").contentType(MediaType.APPLICATION_JSON).content(json))

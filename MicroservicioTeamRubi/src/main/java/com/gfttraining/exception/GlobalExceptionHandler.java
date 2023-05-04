@@ -2,6 +2,7 @@ package com.gfttraining.exception;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -98,13 +99,13 @@ public class GlobalExceptionHandler {
 
 		ExceptionResponse res = new ExceptionResponse(LocalDate.now(), ex.getMessage());
 
-		log.error("Trying to insert an existing favorite product to a user");
+		log.error(ex.getMessage());
 
 		return new ResponseEntity<>(res, HttpStatus.CONFLICT);
 	}
 
 	@ExceptionHandler(EmptyResultDataAccessException.class)
-	public ResponseEntity<ExceptionResponse> handleDataIntegrityViolationException(EmptyResultDataAccessException ex) {
+	public ResponseEntity<ExceptionResponse> handleEmptyResultDataAccessException(EmptyResultDataAccessException ex) {
 
 		ExceptionResponse res = new ExceptionResponse(LocalDate.now(), ex.getMessage());
 
@@ -120,6 +121,18 @@ public class GlobalExceptionHandler {
 
 		return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
 		
+	}
+
+	@ExceptionHandler(HttpRequestFailedException.class)
+	public ResponseEntity<ExceptionResponse> handleHttpRequestFailedException(HttpRequestFailedException ex) {
+
+		String errorMsg = "Couldn't connect with the microservice. ";
+
+		ExceptionResponse res = new ExceptionResponse(LocalDate.now(), errorMsg, Arrays.asList(ex.getMessage()));
+
+		log.error(errorMsg + ex.getMessage());
+
+		return new ResponseEntity<>(res, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 
