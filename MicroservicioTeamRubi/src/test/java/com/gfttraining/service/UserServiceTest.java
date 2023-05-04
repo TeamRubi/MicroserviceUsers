@@ -19,13 +19,13 @@ import static org.mockito.ArgumentMatchers.*;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 import javax.persistence.EntityNotFoundException;
 
+import org.h2.engine.User;
+import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,6 +56,8 @@ import com.gfttraining.exception.DuplicateEmailException;
 import com.gfttraining.exception.DuplicateFavoriteException;
 import com.gfttraining.repository.FavoriteRepository;
 import com.gfttraining.repository.UserRepository;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -79,9 +81,6 @@ class UserServiceTest {
 	@Mock
 	private ModelMapper modelMapper;
 
-	@Mock
-	RestTemplate restTemplate;
-
 	private String emailModel;
 	private UserEntity userModel;
 	private UserEntityDTO userModelDTO;
@@ -91,7 +90,6 @@ class UserServiceTest {
 	private ProductEntity product3points;
 	private ProductEntity product5points;
 	private ProductEntity product10points;
-	
 
 	@BeforeEach
 	public void createUser() {
@@ -216,13 +214,10 @@ class UserServiceTest {
 
 	@Test
 	void testDeleteAllUsers() {
-
 		userService.deleteAllUsers();
-
 		verify(userRepository).deleteAll();
 
 	}
-
 
 	@Test
 	void deleteUserById_test() {
@@ -335,18 +330,13 @@ class UserServiceTest {
 	void getUserPoints_test() throws Exception{
 
 		List<CartEntity> carts = new ArrayList<>();
-
 		List<ProductEntity> products = new ArrayList<>();
 		cartEntity.setProducts(products);
-
 		carts.add(cartEntity);
 
-		when(retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:8082/carts/user/" + 12, new ParameterizedTypeReference<List<CartEntity>>() {
-		})).thenReturn(carts);
-
+		when(retrieveInformationFromExternalMicroservice.getExternalInformation(anyString(), any())).thenReturn(Mono.just(carts));
 		when(userRepository.findById(anyInt())).thenReturn(optionalUserModel);
-
-		assertThat(0).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getPoints());
+		assertThat(userService.getUserWithAvgSpentAndFidelityPoints(12).block().getPoints()).isEqualTo(0);
 	}
 
 	@Test
@@ -397,7 +387,6 @@ class UserServiceTest {
 		assertThat(3).isEqualTo(result);
 	}
 
-
 	@Test
 	void getPoints_is_5_test(){
 
@@ -413,10 +402,6 @@ class UserServiceTest {
 
 		assertThat(5).isEqualTo(result);
 	}
-
-
-
-
 	@Test
 	void getPoints_is_10_test(){
 
@@ -434,9 +419,6 @@ class UserServiceTest {
 
 		assertThat(20).isEqualTo(result);
 	}
-
-
-
 	@Test
 	void getAvgSpent_test() throws InterruptedException {
 
@@ -448,29 +430,24 @@ class UserServiceTest {
 
 		carts.add(cartEntity);
 
-		when(retrieveInformationFromExternalMicroservice.getExternalInformation("http://localhost:8082/carts/user/" + 12, new ParameterizedTypeReference<List<CartEntity>>() {
-		})).thenReturn(carts);
-
+		when(retrieveInformationFromExternalMicroservice.getExternalInformation(anyString(), any())).thenReturn(Mono.just(carts));
 		when(userRepository.findById(anyInt())).thenReturn(optionalUserModel);
 
-		assertThat(BigDecimal.valueOf(50/products.size())).isEqualTo(userService.getUserWithAvgSpentAndFidelityPoints(12).getAverageSpent());
+		assertThat(userService.getUserWithAvgSpentAndFidelityPoints(12).block().getAverageSpent()).isEqualTo(BigDecimal.valueOf(50/products.size()));
 
 	}
 
 	@Test
-	void addFavoriteProduct_test() {
+	void addFavoriteProduct_test() throws ExecutionException, InterruptedException {
 
 		FavoriteProduct favorite = new FavoriteProduct(1,5);
-
 		userModel.addFavorite(favorite);
 
 		when(userRepository.findById(anyInt())).thenReturn(Optional.of(userModel));
-
 		when(favoriteRepository.existsByUserIdAndProductId(anyInt(), anyInt())).thenReturn(false);
-
 		when(favoriteRepository.save(any(FavoriteProduct.class))).thenReturn(favorite);
 
-		UserEntity user = userService.addFavoriteProduct(1, 5);
+		UserEntity user = userService.addFavoriteProduct(1, 5).toFuture().get();
 
 		assertThat(user).isEqualTo(userModel);
 		verify(favoriteRepository, atLeastOnce()).save(favorite);
@@ -482,13 +459,17 @@ class UserServiceTest {
 	void addFavoriteProductWithNotExistingUser_test() {
 
 		int userId = 600;
-		when(userRepository.findById(anyInt())).thenReturn(Optional.empty());
+		when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(()-> userService.addFavoriteProduct(userId,5))
-		.isInstanceOf(ResponseStatusException.class)
-		.hasMessageContaining("User with id " + userId + " not found");
+		Mono<UserEntity> result = userService.addFavoriteProduct(userId, 5);
+
+		StepVerifier.create(result)
+				.expectErrorMatches(throwable -> throwable instanceof ResponseStatusException &&
+						((ResponseStatusException) throwable).getStatus() == HttpStatus.NOT_FOUND &&
+						Objects.requireNonNull(((ResponseStatusException) throwable).getMessage()).contains("User with id " + userId + " not found"))
+				.verify();
+
 	}
-
 
 	@Test
 	void addFavoriteProductWithExistingFavorite_test() {
@@ -497,12 +478,12 @@ class UserServiceTest {
 		int productId = 50;
 
 		when(userRepository.findById(anyInt())).thenReturn(Optional.of(userModel));
-
 		when(favoriteRepository.existsByUserIdAndProductId(anyInt(), anyInt())).thenReturn(true);
 
-		assertThatThrownBy(()-> userService.addFavoriteProduct(userId,productId))
-		.isInstanceOf(DuplicateFavoriteException.class)
-		.hasMessageContaining("Product with id " + productId + " is already favorite for user with id " + userId);
+		Mono<UserEntity> result = userService.addFavoriteProduct(userId, productId);
+
+		StepVerifier.create(result).expectErrorMatches(throwable -> throwable instanceof DuplicateFavoriteException &&
+				throwable.getMessage().contains("Product with id " + productId + " is already favorite for user with id " + userId)).verify();
 
 	}
 
@@ -558,7 +539,7 @@ class UserServiceTest {
 	}
 
     @Test
-    public void testSaveAllImportedUsers() throws Exception {
+    void testSaveAllImportedUsers() throws Exception {
         List<UserEntity> users = Arrays.asList(userModel, userModel);
         byte[] content = new ObjectMapper().writeValueAsBytes(users);
         MockMultipartFile file = new MockMultipartFile("users.json", content);
@@ -575,7 +556,7 @@ class UserServiceTest {
     }
 
 	@Test
-	public void testSaveAllImportedUsersWithError() throws IOException {
+	void testSaveAllImportedUsersWithError() throws IOException {
 
 		MultipartFile file = new MockMultipartFile("file", new byte[0]);
 

@@ -1,63 +1,80 @@
 package com.gfttraining.connection;
 
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import com.gfttraining.exception.HttpRequestFailedException;
+import org.junit.Assert;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.time.Duration;
 
 @ExtendWith(MockitoExtension.class)
 class RetrieveInformationFromExternalMicroserviceTest {
 	
 	@Mock
-	RestTemplate restTemplate;
-	
-	@Autowired
+	WebClient webClient;
+
 	@InjectMocks
 	private RetrieveInformationFromExternalMicroservice retrieveInformation;
 
+	WebClient.RequestBodyUriSpec requestBodyUriSpecMock = mock(WebClient.RequestBodyUriSpec.class);
+	WebClient.RequestBodySpec requestBodySpecMock = mock(WebClient.RequestBodySpec.class);
+	WebClient.ResponseSpec responseSpecMock = mock(WebClient.ResponseSpec.class);
+
+	String path = "http://localhost:8082/carts/user/12";
+	ParameterizedTypeReference<String> responseType = new ParameterizedTypeReference<>() {};
+
 	@Test
-	public void testGetExternalInformation_Fail() {
-	    String path = "http://localhost:8082/inventedMicroservice/users/12";
-	    String expectedErrorMessage = "Failed to retrieve external information";
+	void testGetExternalInformation_Fail() throws URISyntaxException {
 
-	    when(restTemplate.exchange(path, HttpMethod.GET, null, 
-	        new ParameterizedTypeReference<String>() {}))
-        .thenThrow(new ResourceAccessException(expectedErrorMessage));
+		when(webClient.method(HttpMethod.GET)).thenReturn(requestBodyUriSpecMock);
+		when(requestBodyUriSpecMock.uri(path)).thenReturn(requestBodySpecMock);
+		when(requestBodySpecMock.retrieve()).thenReturn(responseSpecMock);
+		when(responseSpecMock.bodyToMono(responseType)).thenReturn(Mono.error(
+				new WebClientRequestException(new RuntimeException("error"), HttpMethod.GET, new URI("someuri"), HttpHeaders.EMPTY)));
 
-	    Assertions.assertThrows(ResponseStatusException.class, () -> {
-	        retrieveInformation.getExternalInformation(path, new ParameterizedTypeReference<String>() {});
-	    });
+		Mono<String> result = retrieveInformation.getExternalInformation(path, responseType);
+
+		StepVerifier.create(result)
+				.expectErrorMatches(throwable -> throwable instanceof HttpRequestFailedException &&
+						throwable.getMessage().contains("Retries exhausted")).verify();
 	}
 
 	@Test
-	public void testGetExternalInformation_Success() throws InterruptedException {
+	void testGetExternalInformation_Success() throws InterruptedException {
 
-		String path = "http://localhost:8082/cart/users/12";
 		String expectedResponse = "Response";
-		
-		ResponseEntity<String> responseEntity = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
 
-		when(restTemplate.exchange(path, HttpMethod.GET, null, 
-			new ParameterizedTypeReference<String>() {}))
-			.thenReturn(responseEntity);
+		when(webClient.method(HttpMethod.GET)).thenReturn(requestBodyUriSpecMock);
+		when(requestBodyUriSpecMock.uri(path)).thenReturn(requestBodySpecMock);
+		when(requestBodySpecMock.retrieve()).thenReturn(responseSpecMock);
+		when(responseSpecMock.bodyToMono(responseType)).thenReturn(Mono.just(expectedResponse));
 
-		String actualResponse = retrieveInformation.getExternalInformation(path, 
-			new ParameterizedTypeReference<String>() {});
-
-		Assertions.assertEquals(expectedResponse, actualResponse);
-		
+		Mono<String> response = retrieveInformation.getExternalInformation(path, responseType);
+		StepVerifier.create(response).expectNext(expectedResponse).verifyComplete();
 	}
 }
 

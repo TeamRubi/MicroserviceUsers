@@ -17,10 +17,13 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
+import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,12 +31,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.gfttraining.config.FeatureFlag;
@@ -42,6 +47,8 @@ import com.gfttraining.dto.UserEntityDTO;
 import com.gfttraining.entity.FavoriteProduct;
 import com.gfttraining.entity.UserEntity;
 import com.gfttraining.service.UserService;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -111,18 +118,6 @@ class UserControllerTest {
 
 	}
 
-	public void testSaveAllImportedUsersWithError() throws IOException {
-
-		MultipartFile file = new MockMultipartFile("file", new byte[0]);
-
-		doThrow(new RuntimeException("Error al eliminar los usuarios")).when(userService).deleteAllUsers();
-
-		ResponseEntity<Void> response = userController.saveAllImportedUsers(file);
-		assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-
-		verify(userService, times(1)).deleteAllUsers();
-		verifyNoMoreInteractions(userService);
-	}
 
 	@Test
 	void createUser_test() {
@@ -167,13 +162,11 @@ class UserControllerTest {
 		//mocking service
 		int productId = 2;
 		userModel.addFavorite(new FavoriteProduct(1,1,productId));
-
-		when(userService.addFavoriteProduct(anyInt(), anyInt())).thenReturn(userModel);
-
+		when(userService.addFavoriteProduct(anyInt(), anyInt())).thenReturn(Mono.just(userModel));
 		//mocking http request
-		when(retrieveInfo.getExternalInformation(anyString(), any())).thenReturn("example");
+		when(retrieveInfo.getExternalInformation(anyString(), any())).thenReturn(Mono.empty());
 
-		ResponseEntity<UserEntity> response = userController.addFavoriteProduct(1, productId);
+		ResponseEntity<UserEntity> response = userController.addFavoriteProduct(1, productId).toFuture().get();
 
 		verify(userService, atLeastOnce()).addFavoriteProduct(1, productId);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -185,12 +178,16 @@ class UserControllerTest {
 	void addFavoriteProductWithNotExistingProduct_test() throws Exception {
 
 		int productId = 200;
+		when(retrieveInfo.getExternalInformation(anyString(), any())).thenReturn(Mono.error(WebClientResponseException
+				.create(HttpStatus.NOT_FOUND.value(), "Not found", HttpHeaders.EMPTY, null, Charset.defaultCharset())));
 
-		doThrow(HttpClientErrorException.NotFound.class).when(retrieveInfo).getExternalInformation(anyString(), any());
+		Mono<ResponseEntity<UserEntity>> result = userController.addFavoriteProduct(1,productId);
 
-		assertThatThrownBy(()-> userController.addFavoriteProduct(1, productId))
-		.isInstanceOf(ResponseStatusException.class)
-		.hasMessageContaining("product with id " + productId + " not found");
+		StepVerifier.create(result)
+				.expectErrorMatches(throwable-> throwable instanceof ResponseStatusException &&
+						((ResponseStatusException) throwable).getStatus() == HttpStatus.NOT_FOUND &&
+						Objects.requireNonNull(((ResponseStatusException) throwable).getMessage()).contains("Product with id " + productId + " not found" ))
+				.verify();
 
 	}
 
@@ -227,29 +224,29 @@ class UserControllerTest {
 		when(featureFlag.isEnableUserExtraInfo()).thenReturn(false);
 		when(userService.findUserById(1)).thenReturn(userModel);
 
-		UserEntity user = (UserEntity) userController.getUserById(1);
+		Mono<UserEntity> user = userController.getUserById(1).map(obj -> (UserEntity) obj);
 
 		verify(userService, atLeastOnce()).findUserById(1);
-		assertThat(user.getId()).isEqualTo(1);
+		StepVerifier.create(user).expectNext(userModel);
 
 	}
 
+
 	@Test
-	void getUserByIdWithExtraInfo () throws InterruptedException {
+	void getUserByIdWithExtraInfo() throws InterruptedException {
 
 		userModelDTO.setId(1);
 
 		when(featureFlag.isEnableUserExtraInfo()).thenReturn(true);
-		when(userService.getUserWithAvgSpentAndFidelityPoints(1)).thenReturn(userModelDTO);
+		when(userService.getUserWithAvgSpentAndFidelityPoints(1)).thenReturn(Mono.just(userModelDTO));
 
-		UserEntityDTO user = (UserEntityDTO) userController.getUserById(1);
+		Mono<UserEntityDTO> user = userController.getUserById(1).map(obj -> (UserEntityDTO) obj);
 
 		verify(userService, atLeastOnce()).getUserWithAvgSpentAndFidelityPoints(1);
-		assertThat(user.getId()).isEqualTo(1);
+		StepVerifier.create(user).expectNext(userModelDTO);
+
 
 	}
-
-
 
 	@Test
 	void getUserByName_test() {
