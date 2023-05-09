@@ -10,14 +10,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
@@ -84,7 +77,6 @@ public class UserController {
 
 		} else {
 			return Mono.just(userService.findUserById(id));
-
 		}
 	}
 
@@ -106,7 +98,6 @@ public class UserController {
 	public ResponseEntity<Void> deleteFavoriteProduct(@PathVariable int userId, @PathVariable int productId) throws EmptyResultDataAccessException {
 
 		userService.deleteFavoriteProduct(userId, productId);
-
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 
 	}
@@ -115,7 +106,6 @@ public class UserController {
 	public ResponseEntity<Void> deleteFavoriteProductFromAllUsers(@PathVariable int productId) throws EmptyResultDataAccessException {
 
 		userService.deleteFavoriteProductFromAllUsers(productId);
-
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 	}
 

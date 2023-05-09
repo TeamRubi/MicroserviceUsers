@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserEntityDTO {
 
-	private int id;
+	private Long id;
 	@NonNull
 	private String email;
 	@NonNull
@@ -30,7 +30,7 @@ public class UserEntityDTO {
 	private String country;
 	private String paymentMethod;
 	private BigDecimal averageSpent;
-	private int points;
+	private Integer points;
 	private Set<FavoriteProduct> favorites;
 
 }

@@ -58,7 +58,7 @@ public class UserService {
 		Optional<UserEntity> user = userRepository.findById(id);
 		if(user.isEmpty()) {
 			log.error("findUserById() -> no such user with the ID: " + id);
-			throw new EntityNotFoundException("Usuario con el id: "+id+" no encontrado");
+			throw new EntityNotFoundException("User with id: "+id+" not found");
 		}
 		log.info("Found user by ID");
 		return user.get();
