@@ -5,17 +5,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -23,8 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import org.junit.Ignore;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,8 +30,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -60,9 +52,6 @@ class UserControllerTest {
 	private UserService userService;
 
 	@Mock
-	private RestTemplate restTemplate;
-
-	@Mock
 	private RetrieveInformationFromExternalMicroservice retrieveInfo;
 
 	@Mock
@@ -77,7 +66,7 @@ class UserControllerTest {
 	@BeforeEach
 	public void createUser() {
 		userModel = new UserEntity("pepe@pepe.com", "Pepito", "Perez", "calle falsa", "SPAIN");
-		userModelDTO = new UserEntityDTO(12, "pepe@pepe.com", "Pedro", "Chapo", "calle falsa", "SPAIN", "TRANSFER", BigDecimal.valueOf(0), 0, null);
+		userModelDTO = new UserEntityDTO(12L, "pepe@pepe.com", "Pedro", "Chapo", "calle falsa", "SPAIN", "TRANSFER", BigDecimal.valueOf(0), 0, null);
 	}
 
 
@@ -239,10 +228,10 @@ class UserControllerTest {
 		when(featureFlag.isEnableUserExtraInfo()).thenReturn(false);
 		when(userService.findUserById(1)).thenReturn(userModel);
 
-		Mono<UserEntity> user = userController.getUserById(1).map(obj -> (UserEntity) obj);
+		Mono<Object> user = userController.getUserById(1);
 
 		verify(userService, atLeastOnce()).findUserById(1);
-		StepVerifier.create(user).expectNext(userModel);
+		StepVerifier.create(user).expectNext(userModelDTO);
 
 	}
 
@@ -250,7 +239,7 @@ class UserControllerTest {
 	@Test
 	void getUserByIdWithExtraInfo() throws InterruptedException {
 
-		userModelDTO.setId(1);
+		userModelDTO.setId(1L);
 
 		when(featureFlag.isEnableUserExtraInfo()).thenReturn(true);
 		when(userService.getUserWithAvgSpentAndFidelityPoints(1)).thenReturn(Mono.just(userModelDTO));

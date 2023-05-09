@@ -94,7 +94,7 @@ class UserServiceTest {
 		emailModel = "pedro@chapo.com";
 		userModel = new UserEntity(emailModel, "Pedro", "Chapo", "calle falsa", "SPAIN");
 		optionalUserModel = Optional.of(userModel);
-		UserEntityDTO userModelDTO = new UserEntityDTO(12, emailModel, "Pedro", "Chapo", "calle falsa", "SPAIN", "TRANSFER", BigDecimal.valueOf(0), 0, null);
+		UserEntityDTO userModelDTO = new UserEntityDTO(12L, emailModel, "Pedro", "Chapo", "calle falsa", "SPAIN", "TRANSFER", BigDecimal.valueOf(0), 0, null);
 	}
 
 	@BeforeEach
@@ -134,7 +134,7 @@ class UserServiceTest {
 		UserEntity result = userService.findUserById(1);
 
 		assertNotNull(result);
-		assertEquals(userModel.getName(), result.getName());
+		assertThat(result.getName()).isEqualTo(userModel.getName());
 
 		verify(userRepository, times(1)).findById(1);
 
@@ -144,10 +144,12 @@ class UserServiceTest {
 	@Test
 	void getUserByIdNotFound_test(){
 
-		when(userRepository.findById(1234)).thenReturn((Optional.empty()));
+		int userId = 1234;
 
-		EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> userService.findUserById(1234));
-		assertEquals("Usuario con el id: " + 1234 + " no encontrado", exception.getMessage());
+		when(userRepository.findById(userId)).thenReturn((Optional.empty()));
+
+		assertThatThrownBy(() -> userService.findUserById(userId)).isInstanceOf(EntityNotFoundException.class)
+				.hasMessageContaining("User with id: " + userId + " not found");
 
 	}
 
@@ -166,7 +168,7 @@ class UserServiceTest {
 		List<UserEntity> result = userService.findAllByName("Erna");
 
 		assertNotNull(result);
-		assertEquals(userListTest1.get(0).getName(), result.get(0).getName());
+		assertThat(result.get(0).getName()).isEqualTo(userListTest1.get(0).getName());
 
 		verify(userRepository, times(1)).findAllByName("Erna");
 
@@ -181,8 +183,8 @@ class UserServiceTest {
 
 		when(userRepository.findAllByName(name)).thenReturn((userListTest1));
 
-		EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> userService.findAllByName(name));
-		assertEquals("Usuario con el nombre: " + name + " no encontrado", exception.getMessage());
+		assertThatThrownBy(() -> userService.findAllByName(name)).isInstanceOf(EntityNotFoundException.class)
+				.hasMessageContaining("Usuario con el nombre: " + name + " no encontrado");
 
 	}
 
@@ -196,7 +198,7 @@ class UserServiceTest {
 		when(userRepository.findAll()).thenReturn(expectedUsers);
 
 		List<UserEntity> actualUsers = userService.findAll();
-		assertEquals(expectedUsers, actualUsers);
+		assertThat(actualUsers).isEqualTo(expectedUsers);
 	}
 
 	@DisplayName("GIVEN a list of Users, WHEN the endpoint is called, THEN saves all users to DB")
@@ -231,11 +233,12 @@ class UserServiceTest {
 	@Test
 	void deleteUserByIdNotFound_test() {
 
-		doThrow(EmptyResultDataAccessException.class).when(userRepository).deleteById(1234);
-		EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> userService.deleteUserById(1234));
+		int userId = 1234;
 
-		assertEquals("No se ha podido eliminar el usuario con el id: " + 1234 + " de la base de datos",
-				exception.getMessage());
+		doThrow(EmptyResultDataAccessException.class).when(userRepository).deleteById(userId);
+
+		assertThatThrownBy(() -> userService.deleteUserById(userId)).isInstanceOf(EntityNotFoundException.class)
+				.hasMessageContaining("No se ha podido eliminar el usuario con el id: " + 1234 + " de la base de datos");
 
 	}
 
@@ -251,22 +254,23 @@ class UserServiceTest {
 	@Test
 	void updateUserById_test() {
 
-		userModel.setId(1);
+		int userId = 1;
+		userModel.setId(userId);
 		UserEntity updatedUser = new UserEntity();
 		updatedUser.setName("Jose");
 
-		when(userRepository.findById(1)).thenReturn(Optional.of(userModel));
+		when(userRepository.findById(userId)).thenReturn(Optional.of(userModel));
 		when(userRepository.existsByEmail(any())).thenReturn(false);
-
 		userModel.setName(updatedUser.getName());
 		when(userRepository.save(any())).thenReturn(userModel);
 
-		UserEntity result = userService.updateUserById(1, updatedUser);
+		UserEntity user = userService.updateUserById(userId, updatedUser);
 
-		verify(userRepository, times(1)).findById(1);
+		verify(userRepository, times(1)).findById(userId);
 		verify(userRepository, times(1)).save(userModel);
-		assertThat(updatedUser.getName()).isEqualTo(result.getName());
-		assertThat(result.getLastName()).isNotNull();
+		assertThat(updatedUser.getName()).isEqualTo(user.getName());
+		assertThat(user.getLastName()).isNotNull();
+		assertThat(user.getId()).isEqualTo(userId);
 
 	}
 
@@ -330,6 +334,7 @@ class UserServiceTest {
 	@DisplayName("GIVEN a user id, WHEN the endpoint is called, THEN returns a UserEntityDTO with fidelityPoints")
 	@Test
 	void getUserPoints_test() throws Exception{
+		//TODO change asserts
 
 		List<CartEntity> carts = new ArrayList<>();
 		List<ProductEntity> products = new ArrayList<>();
@@ -339,7 +344,7 @@ class UserServiceTest {
 		when(retrieveInformationFromExternalMicroservice.getExternalInformation(anyString(), any())).thenReturn(Mono.just(carts));
 		when(userRepository.findById(anyInt())).thenReturn(optionalUserModel);
 
-		Mono<UserEntityDTO> result = userService.getUserWithAvgSpentAndFidelityPoints(12);
+		Mono<UserEntityDTO> result = userService.getUserWithAvgSpentAndFidelityPoints(12).map(user -> (UserEntityDTO) user );
 
 		StepVerifier.create(result).assertNext(user -> assertThat(user.getPoints()).isZero()).expectComplete().verify();
 	}
@@ -349,10 +354,8 @@ class UserServiceTest {
 	void getAvgSpentIs0_test() {
 
 		List<CartEntity> carts = new ArrayList<>();
-
 		List<ProductEntity> products = new ArrayList<>();
 		cartEntity.setProducts(products);
-
 		carts.add(cartEntity);
 
 		BigDecimal result= userService.calculateAvgSpent(carts);
@@ -435,7 +438,7 @@ class UserServiceTest {
 		when(retrieveInformationFromExternalMicroservice.getExternalInformation(anyString(), any())).thenReturn(Mono.just(carts));
 		when(userRepository.findById(anyInt())).thenReturn(optionalUserModel);
 
-		Mono<UserEntityDTO> result = userService.getUserWithAvgSpentAndFidelityPoints(12);
+		Mono<UserEntityDTO> result = userService.getUserWithAvgSpentAndFidelityPoints(12).map(user -> (UserEntityDTO) user);
 
 		StepVerifier.create(result)
 				.assertNext(user -> assertThat(user.getAverageSpent()).isEqualTo(BigDecimal.valueOf(50/products.size())))
@@ -564,8 +567,7 @@ class UserServiceTest {
 
         verify(userRepository, times(1)).deleteAll();
         verify(userRepository, times(1)).saveAll(users);
-
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     }
 
 	@DisplayName("GIVEN a file with wrong userEntities, WHEN the endpoint is called, THEN throws an exception")

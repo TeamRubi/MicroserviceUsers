@@ -59,9 +59,9 @@ class RetrieveInformationFromExternalMicroserviceTest {
 		Mono<String> result = retrieveInformation.getExternalInformation(path, responseType);
 
 		StepVerifier.create(result)
-				.expectErrorMatches(throwable -> throwable instanceof HttpRequestFailedException &&
-						throwable.getMessage().contains("Retries exhausted")).verify();
-	}
+			.expectErrorMatches(throwable -> throwable instanceof HttpRequestFailedException &&
+			throwable.getMessage().contains("Retries exhausted")).verify();
+}
 
 	@Test
 	void testGetExternalInformation_Success() throws InterruptedException {
