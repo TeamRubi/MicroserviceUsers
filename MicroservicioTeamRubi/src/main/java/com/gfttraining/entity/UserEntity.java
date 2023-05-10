@@ -13,7 +13,7 @@ import org.springframework.lang.Nullable;
 
 @AllArgsConstructor
 @RequiredArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(force = true)
 @Data
 @Entity
 @Table(name="user")
@@ -52,14 +52,10 @@ public class UserEntity {
 
 	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "user_id", referencedColumnName = "id")
-
 	private Set<FavoriteProduct> favorites = new LinkedHashSet<>();
-
 
 	public void addFavorite(FavoriteProduct product) {
 		this.favorites.add(product);
 	}
-
-
 
 }

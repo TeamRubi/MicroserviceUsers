@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(force = true)
 @RequiredArgsConstructor
 public class UserEntityDTO {
 

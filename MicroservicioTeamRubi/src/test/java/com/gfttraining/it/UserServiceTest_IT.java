@@ -1,65 +1,32 @@
 package com.gfttraining.it;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-
-import com.gfttraining.controller.UserController;
 import com.gfttraining.dto.UserEntityDTO;
 import com.gfttraining.entity.FavoriteProduct;
-import com.gfttraining.exception.DuplicateEmailException;
-import com.gfttraining.exception.DuplicateFavoriteException;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.http.Fault;
-import lombok.AllArgsConstructor;
-import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.annotation.Rollback;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.config.AppConfig;
@@ -67,9 +34,7 @@ import com.gfttraining.config.FeatureFlag;
 import com.gfttraining.connection.RetrieveInformationFromExternalMicroservice;
 import com.gfttraining.entity.UserEntity;
 import com.gfttraining.service.UserService;
-import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import org.springframework.web.reactive.function.client.WebClient;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import reactor.core.publisher.Mono;
@@ -116,6 +81,9 @@ class UserServiceTest_IT {
 	String favoritePath;
 	String userCartsPath;
 
+	UserServiceTest_IT() {
+	}
+
 	@BeforeEach
 	public void createUser() {
 		userModel = new UserEntity("pepe@pepsacse.com", "Pepito", "Perez", "calle falsa", "SPAIN");
@@ -127,9 +95,7 @@ class UserServiceTest_IT {
 
 	@BeforeEach
 	public void setUpCarrito() {
-
 		objectMapper = new ObjectMapper();
-
 	}
 
 	@Test
@@ -175,7 +141,7 @@ class UserServiceTest_IT {
 
 		String json = objectMapper.writeValueAsString(userModel);
 
-		MvcResult result = mockMvc.perform(post(userPath).contentType(MediaType.APPLICATION_JSON).content(json))
+		mockMvc.perform(post(userPath).contentType(MediaType.APPLICATION_JSON).content(json))
 				.andExpect(status().isConflict()).andReturn();
 
 	}

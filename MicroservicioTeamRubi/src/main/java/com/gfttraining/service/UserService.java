@@ -7,7 +7,6 @@ import javax.persistence.EntityNotFoundException;
 import javax.transaction.Transactional;
 
 import lombok.AllArgsConstructor;
-import org.hibernate.Hibernate;
 import org.modelmapper.ModelMapper;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -16,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gfttraining.config.FeatureFlag;
@@ -146,7 +144,6 @@ public class UserService {
 				.flatMap(cartList -> {
 					UserEntityDTO userDTO = new UserEntityDTO();
 					UserEntity userEntity = findUserById(id);
-					Hibernate.initialize(userEntity.getFavorites());
 					modelMapper.map(userEntity, userDTO);
 					userDTO.setAverageSpent(calculateAvgSpent(cartList));
 					userDTO.setPoints(getPoints(cartList));
